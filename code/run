@@ -1,0 +1,663 @@
+#!/bin/bash
+set -eo pipefail
+
+if [ ! -f "/data/config0" ]; then
+	printf "❌ Error: config0 not found.\n"
+	exit 1
+else
+	sed -i 's/\r$//' /data/config0
+	source /data/config0
+fi
+
+# tool numbers:
+# 1 = prepare_lists (needs config 1)
+# 2 = id_mapping_info
+# 3 = gprofiler
+# 4 = panther
+# 5 = prep_gsea_inputs (needs config 5)
+# 6 = gsea (needs gsea_parameters)
+# 7 = filter_ea_results (need variables in config0)
+# 8 = build_plots (needs variables in config0)
+
+# tools flags
+annotations_directory=false
+prepare_lists_ran=false
+prep_gsea_inputs_ran=false
+
+# paths
+annotations_dir="/data/annotations"
+prepared_lists_dir="prepared_gene_lists"
+maps_dir="mapped_gene_lists"
+gprof_dir="gprofiler"
+panther_dir="panther"
+gsea_dir="gsea"
+
+# species provided for tools 2,3 or 4?
+if [[ "$tools" =~ (^|,)2($|,) || "$tools" =~ (^|,)3($|,) || "$tools" =~ (^|,)4($|,) ]]; then
+	if [[ -z "$species" ]]; then
+		printf "❌ Error: Species must be defined when using tools 2, 3, or 4.\n"
+		exit 1
+	fi
+
+	if [[ -d "$annotations_dir" ]]; then
+		printf "\nAnnotations directory found, using provided annotations files inside.\n"
+		annotations_directory=true
+	else
+		printf "\nAnnotations directory NOT found, creating new directory and annotations files.\n"
+		mkdir -p "$annotations_dir"
+	fi
+fi
+
+# normalize species name to short form
+species=$(echo "$species" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z_]*//g')
+if [[ "$species" == *"_"* ]]; then
+	species_short="${species:0:1}${species#*_}"
+else
+	species_short="$species"
+fi
+
+IFS=',' read -ra selected_tools <<< "$tools"
+for tool in "${selected_tools[@]}"; do
+	case "$tool" in
+		1)	# Module 1 prepare_lists - config1 file mandatory ()
+			printf "Running tool 1 (prepare_lists): Pre-processing step to prepare gene lists.\n"
+			if [[ -f "/data/config1" ]]; then
+				./1_prepare_lists/run "/data/config1"
+				if [ $? -eq 0 ]; then
+					printf "✅ Prepare lists run completed successfully.\n"
+					prepare_lists_ran=true
+				else
+					printf "❌ Error: Prepare lists run failed.\n"
+					exit 1
+				fi
+			else
+				printf "❌ Error: config1 file not found in assigned /data."
+				exit 1
+			fi
+			;;
+
+		2)	# Module 2 (map_ids_info) - /prepared_gene_lists directory must be present()
+			printf "\nRunning tool 2 (ids-mapping): Mapping gene IDs.\n"
+			mkdir -p "/data/$maps_dir"
+			maps=()
+
+			# handle map file load and unload from /annotations do /data
+			handle_ids_map_file() {
+				local action=$1  # "load" or "unload"
+				local suffix=$2
+				local file_name="${species_short}_${suffix}"
+				local source_file="${annotations_dir}/${file_name}"
+				local working_file="/data/${file_name}"
+
+				if [[ "$action" == "load" ]]; then
+					if [[ -f "$source_file" ]]; then
+						printf "Using IDs map file: %s\n" "$file_name"
+						mv "$source_file" "$working_file"
+					fi
+				elif [[ "$action" == "unload" ]]; then
+					if [[ -f "$working_file" ]]; then
+						mv "$working_file" "$annotations_dir/"
+					fi
+				fi
+			}
+
+			# ensure unload even if script exits early
+			cleanup_ids_mapping() {
+				for suffix in "ids_map"; do
+					handle_ids_map_file unload "$suffix"
+				done
+			}
+			trap cleanup_ids_mapping EXIT
+
+			# detect gene lists to map
+			map_gene_lists() {
+				if [[ "$prepare_lists_ran" == true ]]; then
+					gene_lists=("/data/$prepared_lists_dir"/*_genes_*)
+				else
+					gene_lists=("/data/$prepared_lists_dir"/*)
+				fi
+
+				if [[ ${#gene_lists[@]} -eq 0 ]]; then
+					printf "❌ No genes lists files found in %s.\n" "$prepared_lists_dir"
+					exit 1
+				fi
+
+				printf "Multiple gene condition lists found in %s:\n" "$prepared_lists_dir"
+					for plist in "${gene_lists[@]}"; do
+						run_ids_mapping "$plist"
+					done
+			}
+
+			run_ids_mapping() {
+				local input_path=$1
+				local relative_path="${input_path#/data/}"
+				local base_name
+				base_name=$(basename "$input_path")
+				local map_name="${base_name%.*}_map"	# strip exts for name
+
+				printf "Mapping %s to %s...\n" "$base_name" "$map_name"
+				./2_mapping_info/run "$relative_path" "$species_short" "$map_name"
+				if [ $? -eq 0 ]; then
+					printf "✅ IDs_mapping_info run completed successfully.\n"
+					mv "/data/$map_name" "/data/$maps_dir"
+					maps+=("/data/$maps_dir/$map_name")
+				else
+					printf "❌ Error: IDs_mapping_info run failed for input: %s\n" "$input_path" >&2
+					exit 1
+				fi
+			}
+
+			if [[ "$annotations_directory" == true ]]; then
+				for suffix in "ids_map"; do
+					handle_ids_map_file load "$suffix"
+				done
+			fi
+
+			if [[ "$prepare_lists_ran" == true ]]; then
+				printf "Detected output from Tool 1. Mapping all generated gene lists.\n"
+				map_gene_lists
+
+			elif [[ -d "/data/$prepared_lists_dir" ]]; then
+				map_gene_lists
+
+			else
+				printf "❌ Error: No expression data, gene list, or prepared gene lists found.\n"
+				exit 1
+			fi
+			
+			for suffix in "ids_map"; do
+				handle_ids_map_file unload "$suffix"
+			done
+			;;
+
+		
+		3) # Module 3 (gProfiler plus) - species and gprofiler dbs variables in config0()
+			printf "\nRunning Tool 3 (gProfiler_Plus) - Running Enrichment Analysis with g:Profiler g:GOSt tool\n"
+			gprof_annot_file="${species_short}_gProfiler_annotations.gmt"
+			working_annot_file="/data/$gprof_annot_file"
+			final_annot_path="$annotations_dir/$gprof_annot_file"
+
+			# move annotation file to /data before runs
+			if [[ "$annotations_directory" == true ]]; then
+				annot_file=$(find "$annotations_dir" -type f -name "$gprof_annot_file")
+				if [[ -n "$annot_file" && -f "$annot_file" ]]; then
+					printf "gProfiler annotations file for %s found: %s.\n" "$species" "$annot_file"
+					mv "$annot_file" "$working_annot_file"
+				fi
+			fi
+
+			cleanup_gprof_annotation() {
+				if [[ -f "$working_annot_file" ]]; then
+					mv "$working_annot_file" "$final_annot_path"
+				fi
+			}
+			trap cleanup_gprof_annotation EXIT
+
+			run_gprofiler() {
+				local input_file=$1
+				local base_name
+				local dbs=$2
+				base_name=$(basename "$input_file")
+				local save_name="${base_name%_map}"
+				local save_dir="/data/${gprof_dir}/${save_name}"
+
+				printf "\nRunning gProfiler for: %s\n" "$base_name"
+				./3_gprofiler_plus/run "$maps_dir/$base_name" "$species_short" "$dbs"
+
+				local status=$?
+
+				if [ $status -eq 2 ]; then	#nNo significant results found
+					printf "⚠️ gProfiler run completed with no significant results (exit code 2).\n"
+				elif [ $status -eq 1 ]; then	# actual error
+					printf "❌ Error: gProfiler run failed (exit code 1). Check logs.\n"
+					exit 1
+				else
+					printf "✅ gProfiler run completed successfully.\n"
+					mkdir -p "$save_dir"
+					mv /data/results "$save_dir"
+					cp "$input_file" "$save_dir/"
+					printf "Saved results in: %s\n" "$save_dir/results"
+				fi
+			}
+
+			# input prepared gene lists by module 1
+			if [[ "$prepare_lists_ran" == true ]]; then
+				printf "Running g:Profiler g:GOSt on all prepared gene lists...\n"
+				for gene_map in "${maps[@]}"; do
+					run_gprofiler "$gene_map" "$gprofiler_dbs"
+				done
+			# input pre-generated mapped gene lists
+			else
+				map_files=(/data/"$maps_dir"/*_map)
+				if [[ -d "/data/$maps_dir" && ${#map_files[@]} -gt 0 ]]; then
+					printf "Running gProfiler g:GOSt on mapped files in %s...\n" "/data/$maps_dir"
+					for map_file in "${map_files[@]}"; do
+						run_gprofiler "$map_file" "$gprofiler_dbs"
+					done
+				else
+					printf "❌ No mapped_gene_lists directory found or no *_map files present, and no input provided.\n"
+					exit 1
+				fi
+			fi
+			;;
+
+		4) # Module 4 (PANTHER plus) - species and gprofiler dbs variables in config0()
+			printf "\nRunning Tool 4 (PANTHER plus) - Running enrichment analysis using PANTHER Over-Representation test\n"
+			# load and unload annotations files
+			handle_annotation_file() {
+				local action=$1  # "load" or "unload"
+				local suffix=$2
+				local file_name="${species_short}_${suffix}"
+				local source_file="${annotations_dir}/${file_name}"
+				local working_file="/data/${file_name}"
+
+				if [[ "$action" == "load" ]]; then
+					if [[ -f "$source_file" ]]; then
+						printf "Using annotation: %s\n" "$file_name"
+						mv "$source_file" "$working_file"
+					fi
+				elif [[ "$action" == "unload" ]]; then
+					if [[ -f "$working_file" ]]; then
+						mv "$working_file" "$annotations_dir/"
+					fi
+				fi
+			}
+
+			run_panther() {
+				local input_file=$1
+				local base_name=$(basename "$input_file")
+				local save_name="${base_name%_map}"
+				local save_dir="/data/${panther_dir}/${save_name}"
+				local dbs=$2
+				
+				if [[ "$annotations_directory" == true ]]; then
+					for suffix in "PTHR19.0_annotations" "REAC_annotations" "gene_uniprot"; do
+						handle_annotation_file load "$suffix"
+					done
+				fi
+				
+				printf "\nRunning PANTHER for: %s\n" "$base_name"
+				./4_panther_plus/run "$maps_dir/$base_name" "$species_short" "$dbs"
+
+				local status=$?
+
+				if [[ "$annotations_directory" == true ]]; then
+					for suffix in "PTHR19.0_annotations" "REAC_annotations" "gene_uniprot"; do
+						handle_annotation_file unload "$suffix"
+					done
+				fi
+
+				if [ $status -eq 2 ]; then	# no results found
+					printf "⚠️  PANTHER run completed with no significant results (exit code 2).\n"
+				elif [ $status -eq 1 ]; then	# actual error
+					printf "❌ Error: PANTHER run failed (exit code 1). Check logs.\n"
+					exit 1
+				else
+					printf "✅ PANTHER run completed successfully (exit code $status).\n"
+					mkdir -p "$save_dir"
+					mv /data/results "$save_dir"
+					cp "$input_file" "$save_dir/"
+					printf "Saved results in: %s\n" "$save_dir/results"
+				fi
+			}
+
+			# input prepared gene lists by module 1
+			if [[ "$prepare_lists_ran" == true ]]; then
+				printf "Running PANTHER analysis on all prepared gene lists...\n"
+				for gene_map in "${maps[@]}"; do
+					run_panther "$gene_map" "$panther_dbs"
+				done
+			# input pre-generated mapped gene lists
+			else
+				map_files=(/data/"$maps_dir"/*_map)
+				if [[ -d "/data/$maps_dir" && ${#map_files[@]} -gt 0 ]]; then
+					printf "Running PANTHER analysis on mapped files in %s...\n" "/data/$maps_dir"
+					for map_file in "${map_files[@]}"; do
+						run_panther "$map_file" "$panther_dbs"
+					done
+				else
+					printf "❌ No mapped_gene_lists directory found or no *_map files present, and no input provided.\n"
+					exit 1
+				fi
+			fi
+			;;
+
+		5) # Module 5 (Prep GSEA inputs) - mandatory config5 ()
+			printf "\nRunning tool 5 (Preparing GSEA inputs)\n"
+			config_file="/data/config5"
+			if [[ ! -f "$config_file" ]]; then
+				printf "❌ Error: config5 file not found in assigned /data. Exiting...\n"
+				exit 1
+			else
+				sed -i 's/\r$//' "$config_file"
+				source "$config_file"
+			fi
+
+			mkdir -p "/data/${gsea_dir}/inputs"
+			./5_prep_gsea_inputs/run "$config_file"
+			if [[ $? -ne 0 ]]; then
+				printf "❌ Error: Prepare GSEA inputs failed.\n"
+				exit 1
+			fi
+
+			prep_gsea_inputs_ran=true
+			printf "✅ GSEA inputs prepared successfully. Saved under /gsea/inputs\n"
+			;;
+
+		6) # GSEA plus - mandatory gsea_parameters file()
+			printf "\nRunning tool 6 (GSEA plus)\n"
+			gsea_parameters="/data/gsea_parameters"
+			if [[ ! -f "$gsea_parameters" ]]; then
+				printf "❌ Error: gsea_parameters file not found in assigned /data. Exiting...\n"
+				exit 1
+			fi
+
+			# optional chip file
+			collapse=$(awk -F'\t' '$1 == "collapse" { print $2 }' "$gsea_parameters")
+			chip=$(awk -F'\t' '$1 == "chip" { print $2 }' "$gsea_parameters")
+			if [[ "$collapse" == "Collapse" || "$collapse" == "Remap_Only" ]]; then
+				if [[ -n "$chip" && -f "/data/$chip" ]]; then
+					cp "/data/$chip" "/data/${gsea_dir}/"
+				else
+					printf "❌ Error: collapse '%s' requires chip file. File not found.\n" "$collapse"
+					exit 1
+				fi
+			fi
+
+			if [[ "$prep_gsea_inputs_ran" == true ]]; then
+				printf "Using prepared inputs (method = %s)\n" "$method"
+				gmx_path=$(awk '$1 == "gmx" {print $2}' "$gsea_parameters")
+				if [[ -z "$gmx_path" || ! -f "/data/$gmx_path" ]]; then
+					printf "❌ GMX file missing or invalid in parameter file.\n"
+					exit 1
+				fi
+				cp "/data/$gmx_path" "/data/${gsea_dir}/inputs"
+				
+				save_dir="/data/$gsea_dir/results"
+				if [[ ! -d "$save_dir" ]]; then
+					mkdir -p "$save_dir"
+				fi
+
+				case "$method" in
+					classic)
+						printf "Running GSEA Classic with prepared inputs...\n"
+
+						param_file="/data/${gsea_dir}/inputs/gsea_parameters_classic"
+						cp "$gsea_parameters" "$param_file"
+						[[ $(tail -c1 "$param_file") != "" ]] && printf "\n" >> "$param_file"	#ensure newline to avoid GSEA errros
+						printf "res\texpression_dataset.gct\n" >> "$param_file"
+						printf "cls\tphenotype_labels.cls\n" >> "$param_file"
+						printf "out\tresults\n" >> "$param_file"
+
+						./6_gsea_plus/run "$param_file"
+						if [[ $? -ne 0 ]]; then
+							printf "❌ Classic GSEA failed for %s\n" "$base_rnk"
+							exit 1
+						else
+							printf "✅ Classic GSEA run completed successfully with significant results.\n"
+							mv /data/results/* "$save_dir"
+							printf "Saved results in: %s\n" "$save_dir"
+							rm -r /data/results
+						fi
+						;;
+
+					preranked)
+						printf "➡️ Running GSEAPreranked for all .rnk files in preranked_lists...\n"
+						rnk_dir="/data/${gsea_dir}/inputs/preranked_lists"
+						out_dir="/data/${gsea_dir}/inputs"
+						shopt -s nullglob
+						# multiple GSEA preranked runs with rnk files
+						for rnk_file in "$rnk_dir"/*.rnk; do
+							base_rnk=$(basename "$rnk_file")
+							temp_rnk_path="${out_dir}/${base_rnk}"
+							cp "$rnk_file" "$temp_rnk_path"
+							# run time param file
+							param_file="${out_dir}/gsea_parameters_${base_rnk%.rnk}"
+							cp "$gsea_parameters" "$param_file"
+							[[ $(tail -c1 "$param_file") != "" ]] && printf "\n" >> "$param_file"	#ensure newline to avoid GSEA errros
+							printf "rnk\t%s\n" "$base_rnk" >> "$param_file"
+							printf "out\tresults\n" >> "$param_file"
+
+							./6_gsea_plus/run "$param_file"
+							if [[ $? -ne 0 ]]; then
+								printf "❌ GSEAPreranked failed for %s\n" "$base_rnk"
+								exit 1
+							else
+								printf "✅ GSEAPreranked run completed successfully with significant results.\n"
+								mv /data/results/* "$save_dir"
+								printf "Saved results in: %s\n" "$save_dir"
+								rm -r /data/results
+							fi
+							rm -f "$temp_rnk_path"
+						done
+
+						shopt -u nullglob
+						;;
+
+					*)
+						printf "❌ Error: Unknown method value: '%s'. Expected 'classic' or 'preranked'.\n" "$method"
+						exit 1
+						;;
+				esac
+			else
+				printf "➡️ Running GSEA using manually provided gsea_parameters file...\n"
+				if [[ ! -f "$gsea_parameters" ]]; then
+					printf "❌ Error: gsea_parameters file not found.\n"
+					exit 1
+				else
+					mkdir /data/"$gsea_dir"
+					cp "$gsea_parameters" "/data/${gsea_dir}/"
+				fi
+				param_file="/data/${gsea_dir}/$(basename "$gsea_parameters")"
+				for key in res cls rnk gmx; do
+					val=$(awk -F'\t' -v k="$key" '$1 == k { print $2 }' "$param_file")
+					if [[ -n "$val" && -f "/data/$val" ]]; then
+						cp "/data/$val" "/data/${gsea_dir}/"
+					else
+						printf "Error: No %s file found in /data to run GSEA\n" "$val"
+					fi
+				done
+
+				./6_gsea_plus/run "$param_file"
+				if [[ $? -ne 0 ]]; then
+					printf "❌ GSEA run failed.\n"
+					exit 1
+				else
+					printf "✅ GSEA Plus completed.\n"
+					results_dir=$(awk -F'\t' '$1 == "out" { print $2 }' "$param_file")
+					save_dir="/data/$gsea_dir/$results_dir"
+					if [[ ! -d "$save_dir" ]]; then
+						mkdir -p "$save_dir"
+					fi
+					# organize results
+					if [[ -n "$results_dir" && -d "/data/$results_dir" ]]; then
+						mv /data/"$results_dir"/* "$save_dir"
+						printf "Moved results directory '%s' into GSEA directory.\n" "$results_dir"
+						rm -r /data/"$results_dir"
+					else
+						printf "Warning: results directory not found or not specified.\n"
+					fi
+				fi
+			fi
+			;;
+
+		7) # Module 7 (Filter EA results) - mandatory filtering parametes in config0()
+			printf "\nRunning tool 7 (Filtering Enrichment Analysis Annotations results)\n"
+
+			# set tools directory and structure
+			declare -A TOOL_DIRS=(
+				["gProfiler"]="$gprof_dir"
+				["PANTHER"]="$panther_dir"
+				["GSEA"]="$gsea_dir"
+			)
+			declare -A TOOL_TYPES=(
+				["gProfiler"]="per-map"
+				["PANTHER"]="per-map"
+				["GSEA"]="flat"
+			)
+
+			# find subdirectory lists resutls
+			find_gene_maps() {
+				local dir=$1
+				local found=()
+				if [[ -d "$dir" ]]; then
+					for path in "$dir"/*/results; do
+						[[ -d "$path" ]] && found+=("$(basename "$(dirname "$path")")")
+					done
+				fi
+				echo "${found[@]}"
+			}
+
+			# find gsea results subdirs
+			find_gsea_subdirs() {
+				local dir=$1
+				local found=()
+				if [[ -d "$dir/results" ]]; then
+					for sub in "$dir/results"/*/; do
+						[[ -d "$sub" ]] && found+=("$(basename "$sub")")
+					done
+				fi
+				echo "${found[@]}"
+			}
+
+			#look for results csv
+			has_results_csv() {
+				local dir=$1
+				find "$dir" -type f -name "terms_annotations_results.csv" | grep -q .
+			}
+
+			# process all tools
+			process_tool() {
+				local name=$1
+				local base_dir=$2
+				local mode=$3
+
+				printf "\nFiltering %s results...\n" "$name"
+
+				if [[ "$mode" == "flat" ]]; then
+					local subdirs=()
+					read -ra subdirs <<< "$(find_gsea_subdirs "$base_dir")"
+					if [[ ${#subdirs[@]} -eq 0 ]]; then
+						printf "⚠️  No subdirectories found inside %s/results\n" "$base_dir"
+						return
+					fi
+					for sub in "${subdirs[@]}"; do
+						local results_dir="${base_dir}/results/${sub}"
+						if [[ -f "$results_dir/terms_annotations_results.csv" ]]; then
+							run_filter "$results_dir" "$name" "$sub"
+						else
+							printf "⚠️  No results CSV found in %s\n" "$results_dir"
+						fi
+					done
+				else
+					local maps=()
+					read -ra maps <<< "$(find_gene_maps "$base_dir")"
+					if [[ ${#maps[@]} -eq 0 ]]; then
+						printf "⚠️ No gene maps found in %s\n" "$base_dir"
+						return
+					fi
+					for map in "${maps[@]}"; do
+						local base_name="${map%_map}"  # strip _map suff
+						local results_dir="${base_dir}/${map}/results"
+						if [[ -f "$results_dir/terms_annotations_results.csv" ]]; then
+							run_filter "$results_dir" "$name" "$base_name"
+						else
+							printf "⚠️ No results CSV found in %s\n" "$results_dir"
+						fi
+					done
+				fi
+			}
+
+			run_filter() {
+				local results_dir=$1
+				local tool=$2
+				local target=$3
+
+				if [[ ! -f "$results_dir/terms_annotations_results.csv" ]]; then
+					printf "⚠️  No 'terms_annotations_results.csv' found in %s\n" "$results_dir"
+					return
+				fi
+
+				local rel_path="${results_dir#/data/}"
+				local tool_args="${rel_path}"
+				[[ -n "$max_occur" ]] && tool_args+=" --max-occurrence $max_occur"
+				[[ -n "$max_annot" ]] && tool_args+=" --max-annotations $max_annot"
+				[[ -n "$min_ratio" ]] && tool_args+=" --min-ratio $min_ratio"
+
+				./7_filter_ea_results/run $tool_args
+				if [[ $? -eq 0 ]]; then
+					printf "✅ %s results filtered successfully (%s).\n" "$tool" "$target"
+				else
+					printf "❌ Error: Filtering %s results failed (%s).\n" "$tool" "$target"
+					exit 1
+				fi
+			}
+
+			# run or pre-run enrichment results process
+			any_processed=false
+			for tool in "${!TOOL_DIRS[@]}"; do
+				tool_dir="/data/${TOOL_DIRS[$tool]}"
+				tool_mode="${TOOL_TYPES[$tool]}"
+				if [[ -d "$tool_dir" ]] && has_results_csv "$tool_dir"; then
+					process_tool "$tool" "$tool_dir" "$tool_mode"
+					any_processed=true
+				fi
+			done
+
+			if [[ "$any_processed" == false ]]; then
+				printf "❌ No enrichment analysis results found to filter.\n"
+				exit 1
+			fi
+			;;
+
+		8) # Module 8 (build plots) - necessary variables on config0 file()
+			printf "\nRunning tool 8 (Build Plots) - Building enriched terms counts plots and presence matrices\n"
+			config="/data/config0"
+			./8_build_plots/run "$config"
+			target="/plots_and_gene_matrices/$method"
+			if [[ $? -eq 0 ]]; then
+				printf "✅ Plots and gene matrices built successfully (%s).\n" "$target"
+			else
+				printf "❌ Error: Plotting results failed (%s).\n" "$target"
+				exit 1
+			fi
+	esac
+done
+
+# ---- Additional flags -----
+# gene_occurences file, only if flag set to y, else dont create file
+gene_occurrences="${gene_occurrences,,}"
+if [[ "$gene_occurrences" == "y" ]]; then
+	for method in gprofiler panther gsea; do
+		method_dir="/data/$method"
+		if [[ -d "$method_dir" ]]; then
+			printf "Generating gene occurences files for %s.\n" "$method"
+			./flags/gene_occurrences.sh "$method_dir"
+		fi
+	done
+	printf "Finished\n"
+else
+	# common misspellings
+	case "$gene_occurrences" in
+		"gene_occurences"|"gene_ocurences"|"gene_ocurrences")
+			printf "Warning: Did you mean 'gene_occurrences'? Flag ignored.\n"
+			;;
+	esac
+fi
+
+# build reactome hierarchy files (just for REAC dataset)
+if [[ "$reac_hierarchy" == "y" ]]; then
+	for method in gprofiler panther; do
+		method_dir="/data/$method"
+		if [[ -d "$method_dir" ]]; then
+			printf "Generating REACTOME hierarchy trees for %s.\n" "$method"
+			source ./4_panther_plus/normalize_name.sh "$species"
+			if [[ -z "$long_name" ]]; then
+				printf "Input species '%s' not found.\n" "$species"
+				exit 1
+			fi
+			./flags/reactome_tree/run "$method_dir" "$long_name"
+		fi
+	done
+	printf "Finished\n"
+fi
