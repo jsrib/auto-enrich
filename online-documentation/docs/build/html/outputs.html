@@ -1,0 +1,761 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outputs &mdash; auto-Enrich v1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=e160b93e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Credits" href="references.html" />
+    <link rel="prev" title="Description" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-Enrich
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AUTO-ENRICH:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html"><strong>Quickstart</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html"><strong>Overview</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html#module-index-reference"><strong>Module Index Reference</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html"><strong>Setup and Run</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html"><strong>Test data</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><strong>Description</strong></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><strong>Outputs</strong></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pipeline-outputs"><strong>Pipeline Outputs</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mapping-and-terms-annotations-directory-annotations"><strong>Mapping and Terms Annotations directory</strong> (<code class="docutils literal notranslate"><span class="pre">/annotations</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-1-output-directory-prepared-gene-lists"><strong>Module 1 Output Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/prepared_gene_lists</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-2-output-directory-mapped-gene-lists"><strong>Module 2 Output Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/mapped_gene_lists</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modules-3-4-output-directories-gprofiler-and-panther"><strong>Modules 3 &amp; 4 Output Directories</strong> (<code class="docutils literal notranslate"><span class="pre">/gprofiler</span></code> and <code class="docutils literal notranslate"><span class="pre">/panther</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modules-5-6-gsea-outputs-directory-gsea"><strong>Modules 5 &amp; 6: GSEA Outputs Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/gsea</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-8-build-plots-output-directory-plots-and-gene-matrices"><strong>Module 8: Build Plots Output Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/plots_and_gene_matrices</span></code>)</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html"><strong>Credits</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html#tools-references"><strong>Tools References</strong></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-Enrich</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><strong>Outputs</strong></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/outputs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="outputs">
+<h1><strong>Outputs</strong><a class="headerlink" href="#outputs" title="Link to this heading"></a></h1>
+<section id="pipeline-outputs">
+<h2><strong>Pipeline Outputs</strong><a class="headerlink" href="#pipeline-outputs" title="Link to this heading"></a></h2>
+<p>All results are saved in the mounted data directory (/data), regardless
+of the pipeline configuration. This ensures that input files,
+configuration files, and results are stored together for reproducibility
+and traceability.</p>
+<p>When running the full pipeline with all modules enabled
+(<code class="docutils literal notranslate"><span class="pre">tools=&quot;1,2,3,4,5,6,7,8&quot;</span></code>), the <code class="docutils literal notranslate"><span class="pre">/data</span></code> directory will contain:</p>
+<ul class="simple">
+<li><p><strong>Original inputs and configuration files</strong>
+Raw expression matrices, gene lists, and configuration files
+(e.g., <code class="docutils literal notranslate"><span class="pre">config0</span></code>, <code class="docutils literal notranslate"><span class="pre">config1</span></code>, <code class="docutils literal notranslate"><span class="pre">config5</span></code>, <code class="docutils literal notranslate"><span class="pre">gsea_parameters</span></code>).</p></li>
+<li><p><strong>Module-specific output directories</strong>:</p>
+<ul>
+<li><p><a class="reference internal" href="#out1"><span class="std std-ref">/prepared_gene_lists</span></a> – Gene lists prepared by <strong>Module 1</strong>.</p></li>
+<li><p><a class="reference internal" href="#out2"><span class="std std-ref">/mapped_gene_lists</span></a> – Mapped gene identifier lists generated by <strong>Module 2</strong>.</p></li>
+<li><p><a class="reference internal" href="#out34"><span class="std std-ref">/gprofiler</span></a> – Enrichment results from <strong>Module 3</strong> (g:Profiler plus).</p></li>
+<li><p><a class="reference internal" href="#out34"><span class="std std-ref">/panther</span></a> – Enrichment results from <strong>Module 4</strong> (PANTHER plus).</p></li>
+<li><p><a class="reference internal" href="#out56"><span class="std std-ref">/gsea</span></a> – Input and analysis outputs from <strong>Modules 5 and 6</strong> (GSEA Classic and GSEA Preranked).</p></li>
+<li><p><a class="reference internal" href="#out8"><span class="std std-ref">/plots_and_gene_matrices</span></a> – Time-series enrichment result plots from <strong>Module 8</strong> (Build plots).</p></li>
+<li><p><a class="reference internal" href="#out0"><span class="std std-ref">/annotations</span></a> – Consolidated mapping and term annotation files from <strong>Modules 2–4</strong>,
+enabling easy cross-referencing of enriched terms and gene memberships.</p></li>
+</ul>
+</li>
+<li><p><strong>Isoform-filtered expression matrices</strong>
+Saved if isoform filtering is activated in <strong>Modules 2</strong> or <strong>5</strong>.</p></li>
+</ul>
+</section>
+<section id="mapping-and-terms-annotations-directory-annotations">
+<span id="out0"></span><h2><strong>Mapping and Terms Annotations directory</strong> (<code class="docutils literal notranslate"><span class="pre">/annotations</span></code>)<a class="headerlink" href="#mapping-and-terms-annotations-directory-annotations" title="Link to this heading"></a></h2>
+<p>This directory is created during the first run of the pipeline to keep
+the working environment organized and to centralize species-specific
+mapping and annotation files. The /annotations directory ensures that
+required files are generated once and then reused, avoiding redundant
+processing and repeated external queries.</p>
+<p>When Modules 2, 3, or 4 are executed, the necessary files are
+automatically generated (if missing), saved in /annotations, and reused
+in future runs. During execution, modules temporarily copy the required
+files into /data, then return them to /annotations once finished.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Do not rename these files</strong>, as modules depend on their naming conventions.</p>
+</div>
+<p><strong>Contents of /annotations</strong></p>
+<p>This directory centralizes all annotation and mapping files generated or used across Modules 2–4.</p>
+<ul class="simple">
+<li><p><strong>&lt;species_short&gt;_ids_map</strong> (e.g., <em>mmusculus_ids_map</em>)
+Generated and used by <strong>Module 2</strong>.
+Maps Gene IDs to UniProtKB IDs, Gene Symbols, and official full names.
+Automatically updated with new unmapped IDs.</p></li>
+<li><p><strong>&lt;species_short&gt;_gprofiler_annotations.gmt</strong> (e.g., <em>mmusculus_gprofiler_annotations.gmt</em>)
+Generated and used by <strong>Module 3</strong>.
+Contains species-specific gene set annotations from <strong>g:Profiler’s g:GOSt</strong> sources.</p></li>
+<li><p><strong>&lt;species_short&gt;_REAC_annotations</strong> (e.g., <em>mmusculus_REAC_annotations</em>)
+Generated and used by <strong>Module 4</strong>.
+Provides <strong>Reactome pathway annotations</strong>, obtained directly from the <a class="reference external" href="https://reactome.org/download-data">Reactome Database</a>.</p></li>
+<li><p><strong>&lt;species_short&gt;_PTHR19.0_annotations</strong> (e.g., <em>mmusculus_PTHR19.0_annotations</em>)
+Generated and used by <strong>Module 4</strong>.
+Contains <strong>PANTHER-specific annotations</strong> downloaded from the official
+<a class="reference external" href="https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/">PANTHER FTP</a> resource.</p></li>
+<li><p><strong>&lt;species_short&gt;_gene_uniprot</strong> (e.g., <em>mmusculus_gene_uniprot</em>)
+Generated and used by <strong>Module 4</strong>.
+Maps <strong>Gene Symbols</strong> to <strong>UniProtKB IDs</strong>, enabling translation of Reactome pathway annotations
+(which use UniProtKB IDs) into Gene Symbols.
+Downloaded directly from <a class="reference external" href="https://www.uniprot.org/api-documentation/uniprotkb#operations-UniProtKB-stream">UniProt.org</a>.</p></li>
+</ul>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p><strong>Recommendation:</strong> Always keep these files in /annotations for reuse.
+This ensures faster runs and consistent annotations across analyses.</p>
+</div>
+</section>
+<section id="module-1-output-directory-prepared-gene-lists">
+<span id="out1"></span><h2><strong>Module 1 Output Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/prepared_gene_lists</span></code>)<a class="headerlink" href="#module-1-output-directory-prepared-gene-lists" title="Link to this heading"></a></h2>
+<p>The output results from <strong>Module 1</strong> are stored in the directory named
+/prepared_gene_lists located in the mounted data directory (/data).</p>
+<p><strong>It includes:</strong></p>
+<ul class="simple">
+<li><p><strong>column_header_mapping.txt</strong>
+A mapping file that explains how columns in the input expression matrix correspond to condition parameters.
+It lists:</p>
+<ul>
+<li><p><strong>Parameter names</strong></p></li>
+<li><p><strong>Their set values or indexes</strong></p></li>
+<li><p><strong>The matching input matrix column headers</strong></p></li>
+</ul>
+</li>
+<li><p><strong>evaluation_report.csv</strong>
+A summary file containing calculated averages, conditions, and gene evaluations based on the configuration thresholds.
+It includes the following fields:</p>
+<ul>
+<li><p><strong>Gene ID</strong> — Defined by the <code class="docutils literal notranslate"><span class="pre">gene</span></code> variable in the pipeline configuration file (<code class="docutils literal notranslate"><span class="pre">config0</span></code>).</p></li>
+<li><p><strong>Calculated Averages</strong> — Stored under columns named <code class="docutils literal notranslate"><span class="pre">avgN</span></code> depending on how variables are set in the configuration.</p></li>
+<li><p><strong>Calculated Conditions</strong> — Stored under columns named <code class="docutils literal notranslate"><span class="pre">condN</span></code>.</p></li>
+<li><p><strong>Evaluated Genes</strong> — Binary evaluation (<code class="docutils literal notranslate"><span class="pre">1</span></code> or <code class="docutils literal notranslate"><span class="pre">0</span></code>) of genes according to expression thresholds
+defined by <code class="docutils literal notranslate"><span class="pre">express_min</span></code> and/or <code class="docutils literal notranslate"><span class="pre">express_max</span></code>.</p></li>
+</ul>
+</li>
+<li><p><strong>Select Genes Files</strong> <em>(one per condition)</em>
+These files contain the averages and condition columns for the selected genes.
+There will be <strong>N files</strong> if N conditions were tested.
+Filenames are based on the expression threshold parameters:</p>
+<ul>
+<li><p>If only <code class="docutils literal notranslate"><span class="pre">express_min</span></code> is set → <strong>overexp_condN</strong> <em>(up-regulated genes)</em></p></li>
+<li><p>If only <code class="docutils literal notranslate"><span class="pre">express_max</span></code> is set → <strong>underexp_condN</strong> <em>(down-regulated genes)</em></p></li>
+<li><p>If both are set → <strong>in_range_condN</strong> <em>(genes within the specified expression range)</em></p></li>
+</ul>
+</li>
+<li><p><strong>Gene List Files</strong> <em>(one per condition)</em>
+These files contain lists of the selected genes for each condition.
+There will be <strong>N files</strong> if N conditions were tested.
+Filenames follow the same threshold logic:</p>
+<ul>
+<li><p>If only <code class="docutils literal notranslate"><span class="pre">express_min</span></code> is set → <strong>overexp_genes_condN</strong> <em>(up-regulated genes)</em></p></li>
+<li><p>If only <code class="docutils literal notranslate"><span class="pre">express_max</span></code> is set → <strong>underexp_genes_condN</strong> <em>(down-regulated genes)</em></p></li>
+<li><p>If both are set → <strong>in_range_genes_condN</strong> <em>(genes within the specified expression range)</em></p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more variables details, see the <a class="reference internal" href="modules.html#module1"><span class="std std-ref">Module 1 Details</span></a> section.</p>
+</div>
+</section>
+<section id="module-2-output-directory-mapped-gene-lists">
+<span id="out2"></span><h2><strong>Module 2 Output Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/mapped_gene_lists</span></code>)<a class="headerlink" href="#module-2-output-directory-mapped-gene-lists" title="Link to this heading"></a></h2>
+<p>For each prepared gene list — whether derived from a gene expression matrix,
+a single list specified in the <code class="docutils literal notranslate"><span class="pre">gene_list</span></code> variable of <code class="docutils literal notranslate"><span class="pre">config0</span></code>,
+or located inside <code class="docutils literal notranslate"><span class="pre">/prepared_gene_lists</span></code> in <code class="docutils literal notranslate"><span class="pre">/data</span></code> — a corresponding
+<strong>four-column TSV file</strong> is generated.</p>
+<p>Each line represents one gene and includes:</p>
+<ol class="arabic simple">
+<li><p><strong>Gene ID</strong></p></li>
+<li><p><strong>Representative UniProtKB ID</strong></p></li>
+<li><p><strong>Official Gene Symbol</strong></p></li>
+<li><p><strong>Official Full Name</strong></p></li>
+</ol>
+<p>These mapping files are named after the original input gene lists,
+with the suffix <strong>_map</strong> appended.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more variables details, see the <a class="reference internal" href="modules.html#module2"><span class="std std-ref">Module 2 Details</span></a> section.</p>
+</div>
+</section>
+<section id="modules-3-4-output-directories-gprofiler-and-panther">
+<span id="out34"></span><h2><strong>Modules 3 &amp; 4 Output Directories</strong> (<code class="docutils literal notranslate"><span class="pre">/gprofiler</span></code> and <code class="docutils literal notranslate"><span class="pre">/panther</span></code>)<a class="headerlink" href="#modules-3-4-output-directories-gprofiler-and-panther" title="Link to this heading"></a></h2>
+<p>The outputs of <strong>Module 3</strong> (gProfiler plus) and <strong>Module 4</strong> (PANTHER
+plus) are stored in the <code class="docutils literal notranslate"><span class="pre">/gprofiler</span></code> and <code class="docutils literal notranslate"><span class="pre">/panther</span></code> directories,
+respectively, within the mounted data directory (/data).</p>
+<p>For each mapped gene list located in <code class="docutils literal notranslate"><span class="pre">/mapped_gene_lists</span></code>,
+the pipeline creates a dedicated subdirectory under the corresponding tool directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/data/gprofiler/&lt;gene_list&gt;/results/...</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/data/panther/&lt;gene_list&gt;/results/...</span></code></p></li>
+</ul>
+<p>Within each <code class="docutils literal notranslate"><span class="pre">results</span></code> directory, the following files and subdirectories are generated:</p>
+<p><strong>Enrichment Results</strong> (<a class="reference internal" href="#table3"><span class="std std-ref">gprofiler results fields</span></a>; <a class="reference internal" href="#table4"><span class="std std-ref">panther results fields</span></a>)</p>
+<ul class="simple">
+<li><p><strong>short_results.csv</strong> — Simplified summary of key fields
+(term ID, name, p-value, and source).</p></li>
+<li><p><strong>long_results.csv</strong> — Full enrichment output including
+term ID, name, description, p-value, precision, recall, source,
+effective domain size, fold enrichment, hierarchical parent terms, and more.</p></li>
+</ul>
+<p><strong>Annotations Summary</strong></p>
+<ul class="simple">
+<li><p><strong>terms_annotations_results.csv</strong> — Consolidated file listing each enriched term
+with its ID, name, source, counts of genes (both from the input list and total in term),
+associated gene IDs and symbols, and the ratio of list genes to total term genes.</p></li>
+</ul>
+<p><strong>Per-Source Subdirectories</strong></p>
+<p>Each source directory includes:</p>
+<ul class="simple">
+<li><p>CSV result files (<strong>short</strong>, <strong>long</strong>, and <strong>terms_annotations_results</strong>) for that source only.</p></li>
+<li><p><strong>Per-term annotation subdirectories</strong> (stored under <code class="docutils literal notranslate"><span class="pre">/&lt;source&gt;/terms_annotations/...</span></code>),
+where each enriched term has its own folder (<code class="docutils literal notranslate"><span class="pre">.../&lt;TermID_Name&gt;/</span></code>) containing:</p>
+<ul>
+<li><p><strong>genes_in_list</strong> — Genes from the initial list associated with the term,
+including UniProtKB ID, Gene Symbol, and Full Name.</p></li>
+<li><p><strong>genes_in_term.</strong> — List of all gene symbols annotated to the term (one per line).</p></li>
+<li><p><strong>uniprots_in_term</strong> — List of all UniProtKB IDs annotated to the term (one per line).</p></li>
+<li><p><strong>obsolete_or_merged_uniprots</strong> — UniProtKB IDs not found in
+<code class="docutils literal notranslate"><span class="pre">&lt;species_short&gt;_gene_uniprot</span></code> map; corresponds to obsolete or merged UniProtKB entries.</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Directory Structure for g:Profiler and PANTHER results (Modules 3 &amp; 4):</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>/data/gprofiler/ or /data/panther/
+├── &lt;gene_list&gt;/           # Subdirectory for each mapped gene list
+│   └── results/
+│       ├── short_results.csv
+│       ├── long_results.csv
+│       ├── terms_annotations_results.csv
+│       └── &lt;source&gt;/      # Source-specific results
+│           ├── CSV files (short, long, terms_annotations)
+│           └── terms_annotations/  # Per-term folders
+└── ...
+</pre></div>
+</div>
+<p id="table3"><strong>gProfiler module results fields found in the short, long and terms annotations results files</strong></p>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p>Result Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TermID (original
+Native)</p></td>
+<td><p>Term ID in its native namespace. For non-GO
+terms, the ID is prefixed with the datasource
+abbreviation.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Name</p></td>
+<td><p>Term name.</p></td>
+</tr>
+<tr class="row-even"><td><p>Description</p></td>
+<td><p>Term description if available. If not
+available, repeats the term name.</p></td>
+</tr>
+<tr class="row-odd"><td><p>P-Value_FDR</p></td>
+<td><p>Hypergeometric p-value after FDR multiple
+testing correction</p></td>
+</tr>
+<tr class="row-even"><td><p>Precision</p></td>
+<td><p>The proportion of genes in the input list that
+are annotated to the function. Defined as
+ListCount/query_size.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Recall</p></td>
+<td><p>The proportion of functionally annotated genes
+that the query recovers. Defined as
+ListCount/term_size.</p></td>
+</tr>
+<tr class="row-even"><td><p>ListCount (original
+Intersection_size)</p></td>
+<td><p>The number of genes in the query (list) that
+are annotated to the corresponding term.</p></td>
+</tr>
+<tr class="row-odd"><td><p>TermCount (original
+Term_Size)</p></td>
+<td><p>The number of genes that are annotated to the
+term.</p></td>
+</tr>
+<tr class="row-even"><td><p>Query_Size*</p></td>
+<td><p>The number of genes that were included in the
+query.</p>
+<p>This might be different from the size of the
+original query list</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p>Source</p></td>
+<td><p>The abbreviation of the datasource for the
+term. See possible datasources</p></td>
+</tr>
+<tr class="row-even"><td><p>Source_Order</p></td>
+<td><p>The numeric order for the term within its
+datasource. Important for drawing reproducible
+manhattan plots across different platforms.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Effective_Domain_Size</p></td>
+<td><p>The total number of genes “in the universe”
+which is used as one of the four parameters
+for the hypergeometric probability function of
+statistical significance.</p></td>
+</tr>
+<tr class="row-even"><td><p>Parents</p></td>
+<td><p>List of native IDs that are hierarchically
+above the term. For non-hierarchical
+datasources, points to artificial root node if
+applicable.</p></td>
+</tr>
+<tr class="row-odd"><td><p>GroupID</p></td>
+<td><p>The identifier that defines the group of terms
+that are connected by some previously know
+relations. For example, this as an identifier
+for different Gene Ontology subgraphs that can
+be formed from the results based on the
+connections defined in GO.</p></td>
+</tr>
+<tr class="row-even"><td><p>Significant</p></td>
+<td><p>Indicator for statistically significant
+results.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Genes_in_list</p></td>
+<td><p>The name of the genes in the query that are
+annotated to the corresponding term.</p></td>
+</tr>
+<tr class="row-even"><td><p>Genes_in_term</p></td>
+<td><p>The name of the genes that are annotated to
+the term.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ratio (%)</p></td>
+<td><p>The ratio is equivalent to the total number of
+genes in the initial list associated with a
+given term divided by the number of total gene
+annotations of that term, multiplied by 100.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>*</strong><em>for more information consult</em> <a class="reference external" href="https://biit.cs.ut.ee/gprofiler/page/apis">https://biit.cs.ut.ee/gprofiler/page/apis</a></p>
+<p id="table4"><strong>PANTHER module results fields found in the short, long and terms annotations results files</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Result Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TermID</p></td>
+<td><p>Term ID in its native namespace. For non-GO
+terms, the ID is prefixed with the datasource
+abbreviation.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Name</p></td>
+<td><p>The Term name.</p></td>
+</tr>
+<tr class="row-even"><td><p>P-Value</p></td>
+<td><p>The raw p-value as determined by Fisher’s exact
+test. This is the probability that the number of
+genes you observed in the category occurred by
+chance (randomly), as determined by your
+reference list.</p></td>
+</tr>
+<tr class="row-odd"><td><p>P-Value_FDR</p></td>
+<td><p>Hypergeometric p-value after FDR multiple
+testing correction</p></td>
+</tr>
+<tr class="row-even"><td><p>Fold_Enrichment</p></td>
+<td><p>The Fold Enrichment of the genes observed in the
+query over the expected (number in the query
+divided by the expected number). If it is
+greater than 1, it indicates that the category
+is overrepresented in your experiment.
+Conversely, the category is underrepresented if
+it is less than 1.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Plus_minus</p></td>
+<td><p>Has either a + or -. A plus sign indicates
+over-representation of this category in your
+experiment: you observed more genes than
+expected based on the reference list (for this
+category, the number of genes in your list is
+greater than the expected value). Conversely, a
+negative sign indicates under-representation.</p></td>
+</tr>
+<tr class="row-even"><td><p>Source</p></td>
+<td><p>The abbreviation of the datasource for the term.
+See possible datasources</p></td>
+</tr>
+<tr class="row-odd"><td><p>ListCount
+(original
+Number_in_list)</p></td>
+<td><p>The number of genes in the query (list) that are
+annotated to the corresponding term.</p></td>
+</tr>
+<tr class="row-even"><td><p>TermCount
+(original
+Number_in_term)</p></td>
+<td><p>The number of genes that are annotated to the
+term.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Genes_in_list</p></td>
+<td><p>The name of the genes in the query that are
+annotated to the corresponding term.</p></td>
+</tr>
+<tr class="row-even"><td><p>Genes_in_term</p></td>
+<td><p>The name of the genes that are annotated to the
+term.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ratio (%)</p></td>
+<td><p>The ratio is equivalent to the total number of
+genes in the list associated with a given term
+divided by the number of total gene annotations
+of that term, multiplied by 100.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="modules-5-6-gsea-outputs-directory-gsea">
+<span id="out56"></span><h2><strong>Modules 5 &amp; 6: GSEA Outputs Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/gsea</span></code>)<a class="headerlink" href="#modules-5-6-gsea-outputs-directory-gsea" title="Link to this heading"></a></h2>
+<p>The results from <strong>Module 5</strong> (<em>Prepare GSEA inputs</em>) and <strong>Module 6</strong> (<em>GSEA Plus</em>)
+are stored in the <code class="docutils literal notranslate"><span class="pre">/gsea</span></code> directory within the mounted data directory (<code class="docutils literal notranslate"><span class="pre">/data</span></code>).</p>
+<p>Module 5 generates all required input files — expression matrices, phenotype class files,
+gene set (GMT) files, ranked lists (RNK), and parameter files —
+while Module 6 executes the Gene Set Enrichment Analysis and produces results.</p>
+<p><strong>Directory Structure (after performing both Classic and Preranked runs)</strong></p>
+<ul class="simple">
+<li><p><strong>Input files</strong> — Used to perform enrichment analysis by Module 6, including:
+expression matrices, phenotype labels, GMT files, and parameter files.</p></li>
+<li><p><strong>/gsea/preranked_lists/</strong> — Ranked gene lists prepared for GSEA Preranked.</p></li>
+<li><p><strong>/gsea/results/</strong> — Stores all GSEA output results (Classic and Preranked).</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Each GSEA run produces its own result subdirectory within <code class="docutils literal notranslate"><span class="pre">/results/</span></code>:</p>
+<ul class="simple">
+<li><p><strong>GSEA Classic:</strong> named as <code class="docutils literal notranslate"><span class="pre">&lt;gmt_file&gt;.&lt;phenotype_classes&gt;.GseaClassic</span></code>.</p></li>
+<li><p><strong>GSEA Preranked:</strong> named as <code class="docutils literal notranslate"><span class="pre">&lt;gmt_file&gt;.&lt;ranked_list&gt;.GseaPreranked</span></code>.</p></li>
+<li><p>The <strong>gene set file (GMT)</strong> used for the run is always included as a prefix.</p></li>
+</ul>
+</div>
+<p><strong>Outputs (per run)</strong></p>
+<ul class="simple">
+<li><p><strong>/raw_GSEA_output/</strong> — Contains the original GSEA output, including:
+- HTML visual reports and enrichment plots
+- Ranked list files
+- Enrichment statistics and supporting files generated by the native GSEA tool</p></li>
+<li><p><strong>Gene set file (GMT)</strong> — The gene set file used during the enrichment analysis.</p></li>
+</ul>
+<p><strong>Processed Enrichment Results</strong> (<a class="reference internal" href="#table6"><span class="std std-ref">gsea results fields</span></a>)</p>
+<ul class="simple">
+<li><p><strong>short_results.csv</strong> — Simplified summary with key fields
+(term ID, name, enrichment score, and source).</p></li>
+<li><p><strong>long_results.csv</strong> — Complete enrichment results including
+enrichment score (ES), normalized ES (NES), nominal p-value, FDR q-value,
+rank at maximum enrichment, and leading-edge genes.</p></li>
+<li><p><strong>terms_annotations_results.csv</strong> — Consolidated file listing each enriched term
+with its ID, name, source, counts of genes (in input list and total in term),
+associated gene IDs/symbols, and the ratio of list genes to total term genes.</p></li>
+</ul>
+<p><strong>Per-Source Subdirectories</strong></p>
+<p>Each source directory contains:</p>
+<ul class="simple">
+<li><p>Source-specific CSV result files (<strong>short</strong>, <strong>long</strong>, and <strong>terms_annotations_results</strong>)</p></li>
+<li><p><strong>Per-term annotation subdirectories</strong> (stored under <code class="docutils literal notranslate"><span class="pre">/&lt;source&gt;/terms_annotations/...</span></code>),
+where each enriched term has its own folder (<code class="docutils literal notranslate"><span class="pre">.../&lt;TermID_Name&gt;/</span></code>) containing:</p>
+<ul>
+<li><p><strong>genes_in_list</strong> — Genes from the initial list associated with the term
+(listed as Gene IDs or Gene Symbols, depending on the GMT file used)</p></li>
+<li><p><strong>genes_in_term</strong> — All genes annotated to the term
+(Gene IDs or Gene Symbols, depending on the GMT file used)</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Directory Structure (after Classic and Preranked runs):</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>/data/gsea/
+├── input_files/           # Expression matrices, phenotype labels, GMT, preranked and parameters files
+└── results/
+    ├── &lt;run_name&gt;.GseaClassic/
+    │   ├── raw_GSEA_output/
+    │   ├── short_results.csv
+    │   ├── long_results.csv
+    │   ├── terms_annotations_results.csv
+    │   └── &lt;source&gt;/       # Source-specific results
+    │       └── terms_annotations/
+    │           └── &lt;TermID_Name&gt;/  # Per-term annotation files
+    └── &lt;run_name&gt;.GseaPreranked/
+        ├── raw_GSEA_output/
+        ├── short_results.csv
+        ├── long_results.csv
+        ├── terms_annotations_results.csv
+        └── &lt;source&gt;/       # Source-specific results
+            └── terms_annotations/
+                └── &lt;TermID_Name&gt;/  # Per-term annotation files
+</pre></div>
+</div>
+<p id="table6"><strong>GSEA module results fields found in the short, long and terms annotations results files</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Result Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Name (original
+GS)</p></td>
+<td><p>The Term/Gene Set name</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source</p></td>
+<td><p>The abbreviation of the datasource for the term</p></td>
+</tr>
+<tr class="row-even"><td><p>ListCount
+(original
+Size)</p></td>
+<td><p>Number of genes in the gene set after filtering out those genes is not in the expression dataset</p></td>
+</tr>
+<tr class="row-odd"><td><p>ES*</p></td>
+<td><p><a class="reference external" href="https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_Enrichment_Score_(ES)">Enrichment
+score</a> for
+the gene set; degree of overrepresentation at the top or bottom of the ranked gene list</p></td>
+</tr>
+<tr class="row-even"><td><p>NES*</p></td>
+<td><p><a class="reference external" href="https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_Normalized_Enrichment_Score">Normalized enrichment
+score</a>;
+adjusted across gene sets</p></td>
+</tr>
+<tr class="row-odd"><td><p>NOM_p-val*</p></td>
+<td><p><a class="reference external" href="https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_Nominal_P_Value">Nominal p value</a>
+for ES significance (not adjusted)</p></td>
+</tr>
+<tr class="row-even"><td><p>FDR_q-val*</p></td>
+<td><p><a class="reference external" href="https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_False_Discovery_Rate">False discovery
+rate</a>;
+probability that NES is a false positive</p></td>
+</tr>
+<tr class="row-odd"><td><p>FWER_p-val*</p></td>
+<td><p>Familywise-error rate; conservative false positive estimate</p></td>
+</tr>
+<tr class="row-even"><td><p>RANK-AT-MAX*</p></td>
+<td><p>Rank position where the maximum ES occurs</p></td>
+</tr>
+<tr class="row-odd"><td><p>Leading_edge*</p></td>
+<td><p>Stats for the subset of genes contributing the most to ES, <a class="reference external" href="https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#leading_edge_subset">leading edge
+subset</a>:</p>
+<ul class="simple">
+<li><p>Tags: % of hits before/after ES peak</p></li>
+<li><p>List: % of genes in the ranked list at ES peak</p></li>
+<li><p>Signal: Combined measure of Tags and List (0-100%)</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>Phenotype</p></td>
+<td><p>Indicates the side of the enrichment contrast to which the gene set is associated.</p>
+<ul class="simple">
+<li><p><strong>GSEA Classic:</strong> corresponds to the phenotype labels defined in the CLS file. For example, if
+the CLS file specifies Control vs. Treatment, the column will display which phenotype the
+enrichment is biased toward.</p></li>
+<li><p><strong>GSEA Preranked:</strong> indicates the enrichment direction relative to the ranking of the gene list.
+A value of <strong>“+”</strong> means enrichment at the top of the ranked list, and <strong>“–”</strong> means enrichment
+at the bottom.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>Term_Size</p></td>
+<td><p>The number of genes that are annotated to the term.</p></td>
+</tr>
+<tr class="row-even"><td><p>Genes_in_list</p></td>
+<td><p>The name of the genes in the query that are annotated to the corresponding term.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Genes_in_term</p></td>
+<td><p>The name of the genes that are annotated to the term.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>*</strong><em>for more details consult</em> <a class="reference external" href="https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_Detailed_Enrichment_Results">GSEA Detailed Enrichment Results</a></p>
+</section>
+<section id="module-8-build-plots-output-directory-plots-and-gene-matrices">
+<span id="out8"></span><h2><strong>Module 8: Build Plots Output Directory</strong> (<code class="docutils literal notranslate"><span class="pre">/plots_and_gene_matrices</span></code>)<a class="headerlink" href="#module-8-build-plots-output-directory-plots-and-gene-matrices" title="Link to this heading"></a></h2>
+<p>The results from <strong>Module 8</strong> (<em>Build Plots</em>) are stored in the
+<code class="docutils literal notranslate"><span class="pre">/plots_and_gene_matrices</span></code> directory within the mounted data directory (<code class="docutils literal notranslate"><span class="pre">/data</span></code>).</p>
+<p>After plotting enrichment results from either <strong>g:Profiler</strong> or <strong>PANTHER</strong>,
+the directory structure is organized by tool and source:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/plots_and_gene_matrices/gprofiler/&lt;source&gt;/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/plots_and_gene_matrices/panther/&lt;source&gt;/</span></code></p></li>
+</ul>
+<p>For each <strong>source</strong> inside the enrichment results, a corresponding subdirectory
+is created under the respective tool directory.</p>
+<p>Running this module generates both <strong>tabular reports</strong> and <strong>visual summaries</strong>
+for each enriched term, as well as a centralized plots directory (see <em>Figure 11</em>).</p>
+<p><strong>Global Output</strong></p>
+<ul>
+<li><p><strong>0_plots/</strong></p>
+<p>Contains all heatmaps and line charts across enriched terms,
+allowing quick inspection without browsing individual directories.</p>
+</li>
+</ul>
+<p><strong>Per-Term Directories</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">/R-MMU-111996_Ca_dependent_events</span></code>)</p>
+<p>Each enriched term subdirectory contains the following outputs:</p>
+<ul class="simple">
+<li><p><strong>Counts Report</strong> (<code class="docutils literal notranslate"><span class="pre">counts_&lt;TermID&gt;.tsv</span></code>)
+Contains term metadata (<em>TermID, Name, Source, Term_size</em>)
+and the number of genes from the differential lists at each time point.</p></li>
+<li><p><strong>Gene Members Report</strong> (<code class="docutils literal notranslate"><span class="pre">members_&lt;TermID&gt;.tsv</span></code>)
+Lists the gene names from the differential lists that contribute to the term
+at each time point.</p></li>
+<li><p><strong>Binary Matrix</strong> (<code class="docutils literal notranslate"><span class="pre">gene_matrix_&lt;TermID&gt;.tsv</span></code>)
+A presence/absence (1/0) matrix showing which genes appear in the term
+across time points.</p>
+<ul>
+<li><p><strong>Second column (#Members):</strong> Total number of genes occurring at that time point (row).</p></li>
+<li><p><strong>Last row (Total Occurrences):</strong> Total number of occurrences of each gene
+across all time points.</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Visual Outputs</strong></p>
+<ul>
+<li><p><strong>Line Chart</strong> (<code class="docutils literal notranslate"><span class="pre">linechart_&lt;TermID_Name_TermCount&gt;.pdf</span></code>)
+Plots the number of associated genes per time point,
+with separate curves for up- and down-regulated genes (<em>see Figure 11</em>).</p>
+<p><strong>Title format:</strong>
+<code class="docutils literal notranslate"><span class="pre">&lt;TermID&gt;</span> <span class="pre">&lt;Name&gt;</span> <span class="pre">&lt;Source&gt;</span> <span class="pre">&lt;Signal&gt;</span> <span class="pre">#&lt;TermCount&gt;</span></code>
+Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">R</span><span class="o">-</span><span class="n">MMU</span><span class="o">-</span><span class="mi">111996</span> <span class="n">Ca</span><span class="o">-</span><span class="n">dependent_events</span> <span class="n">REAC</span> <span class="o">+</span> <span class="c1">#27</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>TermID:</strong> R-MMU-111996</p></li>
+<li><p><strong>Name:</strong> Ca-dependent_events</p></li>
+<li><p><strong>Source:</strong> REAC</p></li>
+<li><p><strong>Signal:</strong> +</p></li>
+<li><p><strong>TermCount:</strong> #27</p></li>
+</ul>
+<p><strong>Colors:</strong></p>
+<ul class="simple">
+<li><p>Up-regulated genes → <strong>blue</strong></p></li>
+<li><p>Down-regulated genes → <strong>orange</strong></p></li>
+</ul>
+</li>
+<li><p><strong>Matrix Heatmap</strong> (<code class="docutils literal notranslate"><span class="pre">matrix_&lt;TermID_Name_TermCount&gt;.pdf</span></code>)
+Visualizes the binary matrix, highlighting up- and down-regulated
+gene presence across the time series (<em>see Figure 12</em>).</p>
+<p>The title follows the same convention as the line chart.
+Cell colors indicate the contribution of up- (blue) or down- (orange)
+regulated genes for each time point.</p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All plots and matrices are automatically named according to their <strong>TermID</strong>,
+<strong>Name</strong>, <strong>Source</strong>, and <strong>TermCount</strong>, ensuring traceability
+between plots and enrichment result files.</p>
+</div>
+<p><strong>Directory structure of /plots_and_gene_matrices</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>/data/plots_and_gene_matrices/
+├── gprofiler/
+│   ├── REAC/
+│   │   ├── 0_plots/
+│   │   └── R-MMU-111996_Ca_dependent_events/
+│   │       ├── counts_R-MMU-111996.tsv
+│   │       ├── members_R-MMU-111996.tsv
+│   │       ├── gene_matrix_R-MMU-111996.tsv
+│   │       ├── linechart_R-MMU-111996_Ca_dependent_events_#27.pdf
+│   │       └── matrix_R-MMU-111996_Ca_dependent_events_#27.pdf
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="Description" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="references.html" class="btn btn-neutral float-right" title="Credits" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Phenotypic Evolution Group and SING Research Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
