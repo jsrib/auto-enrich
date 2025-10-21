@@ -59,7 +59,7 @@ The input includes an expression matrix from *Mus musculus*, the necessary confi
 - **config0:** Pipeline configuration file, setup to run input preparation (Modules 1, 2, and 5), enrichment analysis (Modules 3, 4, and 6) on pre-selected sources, and filtering (Module 7).  
 - **config1:** Configuration file to coordinate Module 1, to extract differentially expressed genes (in this test genes with fold change > 1, up-regulated) from the selected data samples.  
 - **config5:** Configuration file to coordinate Module 5, to transform the input expression matrix into the expression dataset (`.gct`) and phenotype labels (`.cls`) to run GSEA classic.  
-- **expression_matrix.tsv:** Gene expression data matrix (Gene ID and gene expression samples data).  
+- **expression_matrix.tsv:** Gene expression data matrix (Gene ID and gene expression samples data, from Nogueira-Rodrigues et al. (2022) https://www.researchgate.net/publication/357595784).  
 - **gsea_parameters:** GSEA run settings.  
 - **m2.all.v2024.Mm.entrez.gmt:** Gene Set file (GMT) containing the gene sets to run GSEA.  
 
