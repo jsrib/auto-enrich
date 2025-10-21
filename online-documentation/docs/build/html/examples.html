@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test data &mdash; auto-Enrich v1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=e160b93e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Description" href="modules.html" />
+    <link rel="prev" title="Setup and Run" href="setup.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-Enrich
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AUTO-ENRICH:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html"><strong>Quickstart</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html"><strong>Overview</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html#module-index-reference"><strong>Module Index Reference</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html"><strong>Setup and Run</strong></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><strong>Test data</strong></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#test-1-running-enrichment-analysis-with-expression-dataset"><strong>Test 1 – Running Enrichment Analysis with Expression Dataset</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-2-running-enrichment-analysis-multiple-gene-lists"><strong>Test 2 – Running Enrichment Analysis Multiple Gene Lists</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-3-preparing-and-running-gsea-preranked"><strong>Test 3 – Preparing and Running GSEA Preranked</strong></a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><strong>Description</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="outputs.html"><strong>Outputs</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html"><strong>Credits</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html#tools-references"><strong>Tools References</strong></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-Enrich</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><strong>Test data</strong></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="test-data">
+<h1><strong>Test data</strong><a class="headerlink" href="#test-data" title="Link to this heading"></a></h1>
+<section id="test-1-running-enrichment-analysis-with-expression-dataset">
+<h2><strong>Test 1 – Running Enrichment Analysis with Expression Dataset</strong><a class="headerlink" href="#test-1-running-enrichment-analysis-with-expression-dataset" title="Link to this heading"></a></h2>
+<p>This test demonstrates how auto-Enrich can be run with all modules
+(expect Module 8) and flags. The input includes an expression matrix
+from <em>Mus musculus</em>, the necessary configuration files and a gene set
+file from the <a class="reference external" href="https://www.gsea-msigdb.org/gsea/msigdb/mouse/collections.jsp">Mouse Collections of
+MSigDB</a>.</p>
+<p>The test files are provided in test1.zip:</p>
+<ul class="simple">
+<li><p><cite>test1.zip &lt;inserir_evo6_url&gt;_</cite> <strong>INSERIR URL</strong></p></li>
+</ul>
+<p><strong>Contents inside the inputs directory of test1.zip</strong>:</p>
+<ul class="simple">
+<li><p><strong>config0</strong>: Pipeline configuration file, setup to run input
+preparation (Modules 1,2 and 5), enrichment analysis (Modules 3, 4 and
+6) on pre-selected sources, and filtering (Module 7)</p></li>
+<li><p><strong>config1</strong>: Configuration file to coordinate Module 1, to extract
+differentially expressed genes (in this test genes fold change &gt; 1,
+up-regulated) from the selected data samples</p></li>
+<li><p><strong>config5</strong>: Configuration file to coordinate Module 5, to transform
+the input expression matrix into the expression dataset (.gct) and
+phenotype labels (.cls) to run GSEA classic</p></li>
+<li><p><strong>expression_matrix.tsv</strong>: Gene expression data matrix (Gene ID and
+gene expression samples data)</p></li>
+<li><p><strong>gsea_parameters</strong>: GSEA run settings</p></li>
+<li><p><strong>m2.all.v2024.Mm.entrez.gmt</strong>: Gene Set file (GMX) containing the
+gene sets to run GSEA</p></li>
+</ul>
+<p><strong>Workflow (tools=”1,2,3,4,5,6,7”):</strong></p>
+<p>1. The expression data is preprocessed (Module 1), building a gene list
+of ove-expressed genes</p>
+<ol class="arabic simple" start="2">
+<li><p>Gene Identifiers list is mapped (Module 2)</p></li>
+<li><p>Over-Representation Enrichment Analysis is run using g:Profiler
+(Module 3)</p></li>
+<li><p>Over-Representation Enrichment Analysis is run using PANTHER (Module
+4)</p></li>
+<li><p>Input files, expression_dataset.gct and phenotype_labels.cls, for
+GSEA are created (Module 5), following the module configuration file,
+config5</p></li>
+<li><p>Gene Set Enrichment Analysis (GSEA) is executed using the prepared
+inputs and gsea_parameters (Module 6)</p></li>
+<li><p>The annotation’s results from the enrichment analysis tools are
+filtered (Module 7)</p></li>
+<li><p>The additional flags of reactome hierarchy three build and gene
+occurrences file act over the enrichment results</p></li>
+</ol>
+<p><strong>Outputs directories after the run:</strong></p>
+<ul class="simple">
+<li><p><strong>/prepared_gene_lists</strong> → gene list prepared by <strong>Module 1</strong>.</p></li>
+<li><p><strong>/mapped_gene_lists</strong> → mapped gene identifier list by <strong>Module 2</strong>.</p></li>
+<li><p><strong>/gprofiler</strong> → enrichment results from <strong>Module 3</strong> (g:Profiler
+plus).</p></li>
+<li><p><strong>/panther</strong> → enrichment results from <strong>Module 4</strong> (PANTHER plus).</p></li>
+<li><p><strong>/gsea</strong> → input and analysis outputs from <strong>Modules 5 and 6</strong></p></li>
+<li><p><strong>/annotations</strong> → consolidated mapping and term annotation files from
+Modules 2–4, enabling easy cross-referencing of enriched terms and
+gene memberships.</p></li>
+</ul>
+</section>
+<section id="test-2-running-enrichment-analysis-multiple-gene-lists">
+<h2><strong>Test 2 – Running Enrichment Analysis Multiple Gene Lists</strong><a class="headerlink" href="#test-2-running-enrichment-analysis-multiple-gene-lists" title="Link to this heading"></a></h2>
+<p>This test demonstrates how auto-Enrich can be run to perform
+<strong>g:Profiler and PANTHER Over-Representation analysis</strong> using
+one or more pre-prepared gene ID lists.</p>
+<ul class="simple">
+<li><p>A <strong>single gene list</strong> can be run by specifying its name in the <code class="docutils literal notranslate"><span class="pre">gene_list</span></code>
+variable in config0.</p></li>
+<li><p><strong>Multiple gene lists</strong> can be run together by placing all the desired
+gene lists in a directory named <code class="docutils literal notranslate"><span class="pre">/prepared_gene_lists</span></code> within your data directory (/data).</p></li>
+</ul>
+<p>In this test, <strong>four gene ID lists</strong> are included, all from <em>Mus
+musculus</em>.</p>
+<p>The test files are provided in test2.zip:</p>
+<ul class="simple">
+<li><p><cite>test2.zip &lt;inserir_evo6_url&gt;_</cite> <strong>INSERIR URL</strong></p></li>
+</ul>
+<p><strong>Contents inside the inputs directory of test2.zip:</strong></p>
+<ul class="simple">
+<li><p><strong>config0</strong>: Pipeline configuration file, setup to map input gene IDs
+(Module 2) and run over-representation analysis (Modules 3 and 4)</p></li>
+<li><p><strong>/prepared_gene_lists</strong>: Contains the input gene ID lists.</p></li>
+</ul>
+<p><strong>Workflow (tools=”2,3,4”):</strong></p>
+<ol class="arabic simple">
+<li><p>All Gene IDs lists inside /prepared_gene_lists are mapped (Module 2)</p></li>
+<li><p>Over-Representation Enrichment Analysis of all mapped Gene IDs lists
+are run using g:Profiler (Module 3)</p></li>
+<li><p>Over-Representation Enrichment Analysis of all mapped Gene IDs lists
+are run using PANTHER (Module 4)</p></li>
+</ol>
+<p><strong>Output directories after the run:</strong></p>
+<ul class="simple">
+<li><p><strong>/mapped_gene_lists</strong> → mapped gene identifier list by <strong>Module 2</strong>.</p></li>
+<li><p><strong>/gprofiler</strong> → enrichment results from <strong>Module 3</strong> (g:Profiler
+plus).</p></li>
+<li><p><strong>/panther</strong> → enrichment results from <strong>Module 4</strong> (PANTHER plus).</p></li>
+<li><p><strong>/annotations</strong> → consolidated mapping and term annotation files from
+Modules 2–4, enabling easy cross-referencing of enriched terms and
+gene memberships.</p></li>
+</ul>
+<p>After running Over-Representation analysis with multiple gene lists, results are organized by <strong>tool</strong> and <strong>gene list</strong>:</p>
+<ul class="simple">
+<li><p>/gprofiler/</p>
+<ul>
+<li><p>/gprofiler/gene_list1/results/ – Enrichment results for <code class="docutils literal notranslate"><span class="pre">gene_list1</span></code> using <code class="docutils literal notranslate"><span class="pre">g:Profiler</span></code></p></li>
+<li><p>/gprofiler/gene_list2/results/ – Enrichment results for <code class="docutils literal notranslate"><span class="pre">gene_list2</span></code> using <code class="docutils literal notranslate"><span class="pre">g:Profiler</span></code></p></li>
+</ul>
+</li>
+<li><p>/panther/</p>
+<ul>
+<li><p>/panther/gene_list1/results/ – Enrichment results for <code class="docutils literal notranslate"><span class="pre">gene_list1</span></code> using <code class="docutils literal notranslate"><span class="pre">PANTHER</span></code></p></li>
+<li><p>/panther/gene_list2/results/ – Enrichment results for <code class="docutils literal notranslate"><span class="pre">gene_list2</span></code> using <code class="docutils literal notranslate"><span class="pre">PANTHER</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>Each <strong>results</strong> directory contains:</p>
+<ul class="simple">
+<li><p><strong>Short and long result tables</strong>: <code class="docutils literal notranslate"><span class="pre">short_results.tsv</span></code> and <code class="docutils literal notranslate"><span class="pre">long_results.tsv</span></code></p></li>
+<li><p><strong>Term annotation files</strong>: <code class="docutils literal notranslate"><span class="pre">terms_annotations_results.tsv</span></code></p></li>
+<li><p><strong>Subdirectories</strong> for each source, containing respective results files, and enriched
+terms annotations.</p></li>
+</ul>
+</section>
+<section id="test-3-preparing-and-running-gsea-preranked">
+<h2><strong>Test 3 – Preparing and Running GSEA Preranked</strong><a class="headerlink" href="#test-3-preparing-and-running-gsea-preranked" title="Link to this heading"></a></h2>
+<p>This test demonstrates how auto-Enrich can be used prepare GSEA
+Preranked inputs from an expression matrix and run GSEA. The input
+includes an expression matrix with pre-calculated averages from <em>Mus
+musculus</em> gene IDs, the necessary configuration files and a gene set
+file from the <a class="reference external" href="https://www.gsea-msigdb.org/gsea/msigdb/mouse/collections.jsp">Mouse Collections of
+MSigDB</a>.
+In this test two Preranked gene lists are generated, and two runs of
+GSEA are performed.</p>
+<p>The test files are provided in test3.zip:</p>
+<ul class="simple">
+<li><p><cite>test3.zip &lt;inserir_evo6_url&gt;_</cite> <strong>INSERIR URL</strong></p></li>
+</ul>
+<p><strong>Contents inside the inputs directory of test3.zip:</strong></p>
+<ul class="simple">
+<li><p><strong>config0</strong>: Pipeline configuration file, set up to run preparation of
+pre-ranked gene lists (Module 5) and GSEA Preranked run (Module 6)</p></li>
+<li><p><strong>config5</strong>: Configuration file to coordinate Module 5, to transform
+the input expression matrix TWO pre-ranked genes lists (.rnk)</p></li>
+<li><p><strong>expression_matrix.tsv</strong>: Gene expression data matrix (Gene ID and
+gene expression averages data)</p></li>
+<li><p><strong>gsea_parameters</strong>: GSEA run settings</p></li>
+<li><p><strong>m2.all.v2024.Mm.entrez.gmt</strong>: Gene Set file (GMT) containing the
+gene sets to run GSEA</p></li>
+</ul>
+<p><strong>Workflow (tools=”5,6”):</strong></p>
+<ol class="arabic simple">
+<li><p>Two preranked gene lists (RNK) for GSEA are generated (<strong>Module 5</strong>),
+following the module configuration file (<strong>config5</strong>).</p></li>
+<li><p>Gene Set Enrichment Analysis (<strong>GSEA</strong>) is executed using the prepared
+inputs and <strong>gsea_parameters</strong> (<strong>Module 6</strong>).</p></li>
+</ol>
+<p><strong>Output directory after the run:</strong></p>
+<ul class="simple">
+<li><p><strong>/gsea</strong>: GSEA inputs and results</p></li>
+</ul>
+<p>The results of the GSEA input preparation and run, are stored inside the <strong>gsea</strong>
+directory, which contains:</p>
+<ul class="simple">
+<li><p><strong>/preranked_gene_lists</strong>: Contains the preranked gene lists generated
+by Module 5</p></li>
+<li><p><strong>/results</strong>: Stores the GSEA results of both runs of the two
+preranked gene lists in separate directories</p>
+<ul>
+<li><p>/m2.all.logFC_M_naive_A_naive.GseaPreranked</p></li>
+<li><p>/m2.all.logFC_M_SCI_A_SCI.GseaPreranked</p></li>
+</ul>
+</li>
+<li><p><strong>gsea_parameters</strong> files: The GSEA settings files used in the runs</p></li>
+<li><p><strong>m2.all.v2024.Mm.entrez.gmt</strong>: Gene Set file (GMT) containing the
+gene sets to run GSEA</p></li>
+</ul>
+<p>Each <strong>results</strong> directory contains:</p>
+<ul class="simple">
+<li><p><strong>Short and long result tables</strong>: <code class="docutils literal notranslate"><span class="pre">short_results.tsv</span></code> and <code class="docutils literal notranslate"><span class="pre">long_results.tsv</span></code></p></li>
+<li><p><strong>Term annotation files</strong>: <code class="docutils literal notranslate"><span class="pre">terms_annotations_results.tsv</span></code></p></li>
+<li><p><strong>Subdirectories</strong> for each source, containing respective results files, and enriched
+terms annotations.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="setup.html" class="btn btn-neutral float-left" title="Setup and Run" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="modules.html" class="btn btn-neutral float-right" title="Description" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Phenotypic Evolution Group and SING Research Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

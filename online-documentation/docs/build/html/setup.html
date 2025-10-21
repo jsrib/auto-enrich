@@ -1,0 +1,462 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Setup and Run &mdash; auto-Enrich v1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=e160b93e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Test data" href="examples.html" />
+    <link rel="prev" title="Overview" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-Enrich
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AUTO-ENRICH:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html"><strong>Quickstart</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html"><strong>Overview</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html#module-index-reference"><strong>Module Index Reference</strong></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><strong>Setup and Run</strong></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pipeline-configuration-file-config0"><strong>Pipeline Configuration File (config0)</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-command"><strong>Run Command</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#behavior"><strong>Behavior</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#customization-of-the-analysis"><strong>Customization of the analysis</strong></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-2-map-ids-info"><strong>Module 2: Map IDs info</strong></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modules-3-and-4-over-representation-enrichment-analysis"><strong>Modules 3 and 4: Over-Representation Enrichment Analysis</strong></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-6-gsea"><strong>Module 6: GSEA</strong></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-7-filter-ea-results"><strong>Module 7: Filter EA results</strong></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-8-build-plots"><strong>Module 8: Build Plots</strong></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#additional-flags"><strong>Additional Flags</strong></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html"><strong>Test data</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><strong>Description</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="outputs.html"><strong>Outputs</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html"><strong>Credits</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html#tools-references"><strong>Tools References</strong></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-Enrich</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><strong>Setup and Run</strong></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/setup.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="setup-and-run">
+<h1><strong>Setup and Run</strong><a class="headerlink" href="#setup-and-run" title="Link to this heading"></a></h1>
+<section id="pipeline-configuration-file-config0">
+<span id="config0"></span><h2><strong>Pipeline Configuration File (config0)</strong><a class="headerlink" href="#pipeline-configuration-file-config0" title="Link to this heading"></a></h2>
+<p>The pipeline configuration file, <strong>config0</strong>, defines the core
+parameters for running the pipeline, including:</p>
+<ul class="simple">
+<li><p>Which <strong>modules</strong> to execute</p></li>
+<li><p>The <strong>target species</strong></p></li>
+<li><p>Selected <strong>data sources</strong> to perform Over-Representation Enrichment
+Analysis (by Modules 3 and 4)</p></li>
+<li><p><strong>Post-processing filtering variables</strong> for enrichment analysis (used
+by Module 7)</p></li>
+<li><p><strong>Post-processing building variables</strong> for enrichment analysis results
+(used by Module 8)</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This file must be named <strong>config0</strong> and placed in the assigned
+<strong>data directory</strong> (<code class="docutils literal notranslate"><span class="pre">/data</span></code>).</p>
+</div>
+<p><strong>Variables defined in the config0 to setup the pipeline execution</strong></p>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variables</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>tools</p></td>
+<td><p>Comma-separated double quoted string of
+modules indexes to run (no spaces).</p>
+<p>Most important and mandatory!</p>
+</td>
+<td><p>‘1,2,3,4,5,6,7,8’</p></td>
+</tr>
+<tr class="row-odd"><td><p>species</p></td>
+<td><p>Target species, either in long form
+(homo_sapiens) or short form (hsapiens)</p></td>
+<td><p>‘homo_sapiens’</p></td>
+</tr>
+<tr class="row-even"><td><p>gene_lists</p></td>
+<td><p>Name of a single gene ID list to run
+g:Profiler and PANTHER enrichment.</p>
+<p>Not mandatory: one or more gene lists can
+also be provided in another directory
+(/data/prepared_gene_lists).</p>
+<p>Useful for running a single, specific
+enrichment analysis without relying on
+preprocessed expression matrices.</p>
+</td>
+<td><p>‘gene_list’</p></td>
+</tr>
+</tbody>
+</table>
+<p>Example of <code class="docutils literal notranslate"><span class="pre">config0</span></code> to run full pipeline (# lines are comments):</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">tools</span><span class="o">=</span><span class="s">&#39;1,2,3,4,5,6,7,8&#39;</span>
+<span class="na">species</span><span class="o">=</span><span class="s">&#39;mus_musculus&#39;</span>
+
+<span class="c1"># Modules 3 and 4 variables</span>
+<span class="na">gprofiler_dbs</span><span class="o">=</span><span class="s">&#39;REAC,GO:CC,GO:MF&#39;</span>
+<span class="na">panther_dbs</span><span class="o">=</span><span class="s">&#39;GO_SLIM_CC,GO:BP,PANTHER_PATHWAYS&#39;</span>
+
+<span class="c1"># Module 7 variables</span>
+<span class="na">max_annot</span><span class="o">=</span><span class="s">500</span>
+<span class="na">min_ratio</span><span class="o">=</span><span class="s">10</span>
+<span class="na">max_occur</span><span class="o">=</span><span class="s">5</span>
+
+<span class="c1"># Module 8 variables</span>
+<span class="na">method</span><span class="o">=</span><span class="s">&#39;panther&#39;</span>
+<span class="na">dir</span><span class="o">=</span><span class="s">&#39;standard&#39;</span>
+<span class="na">order</span><span class="o">=</span><span class="s">&#39;C d1 d3 1w 3w 5w 8w&#39;</span>
+<span class="na">field_separator</span><span class="o">=</span><span class="s">&#39;-&#39;</span>
+</pre></div>
+</div>
+<p><strong>Module defining variables:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">gprofiler_dbs</span></code> and <code class="docutils literal notranslate"><span class="pre">panther_dbs</span></code> define data sources to
+perform enrichment analysis by  Modules 3 and 4 (g:Profiler and PANTHER
+respectively). For a detailed explanation of these variables and
+available data sources, see <a class="reference internal" href="modules.html#module3"><span class="std std-ref">Module 3 section</span></a>  and
+<a class="reference internal" href="modules.html#module4"><span class="std std-ref">Module 4 section</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_occur</span></code>, <code class="docutils literal notranslate"><span class="pre">min_ratio</span></code>, and <code class="docutils literal notranslate"><span class="pre">max_annot</span></code> define
+filtering behavior of Module 7 (Filter EA Results). For a detailed
+explanation of these variables, <a class="reference internal" href="modules.html#module7"><span class="std std-ref">Module 7 section</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dir</span></code>, <code class="docutils literal notranslate"><span class="pre">order</span></code>, <code class="docutils literal notranslate"><span class="pre">field_separator</span></code> and <code class="docutils literal notranslate"><span class="pre">method</span></code>
+define plotting behavior of Module 8 (Build plots). For a detailed
+explanation of these variables, see <a class="reference internal" href="modules.html#module8"><span class="std std-ref">Module 8 section</span></a></p></li>
+</ul>
+<p><strong>Module-specific Configuration Files</strong></p>
+<p>Some modules require their own configuration files, which must also be
+placed in the mounted data directory (/data).</p>
+<p><strong>Module-specific configuration files</strong></p>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p><strong>Module</strong></p></th>
+<th class="head"><p><strong>Config File</strong></p></th>
+<th class="head"><p><strong>Purpose</strong></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Module 1:
+Prepare
+Lists</p></td>
+<td><p>config1</p></td>
+<td><p>Defines input expression matrix
+and gene selection parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Module 5:
+Prepare GSEA
+Inputs</p></td>
+<td><p>config5</p></td>
+<td><p>Defines method
+(Classic/Preranked), group
+assignments, and formulas.</p></td>
+</tr>
+<tr class="row-even"><td><p>Module 6:
+GSEA Plus</p></td>
+<td><p>gsea_parameters</p></td>
+<td><p>Contains key-value pairs for all
+GSEA CLI parameters.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Modules 1 and 6 also depend on the input data files defined in
+these configs (e.g., expression matrix, GMX file). All input files must
+reside in the mounted data directory /data.</p>
+</div>
+<p><strong>Working directory structure (/data)</strong></p>
+<p>Example of a correctly populated data directory to run the full pipeline:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>/data
+├── config0
+├── config1
+├── config5
+├── gsea_parameters
+├── gene_set_file.gmt
+└── expression_matrix.tsv
+</pre></div>
+</div>
+<p>Data files include the <em>expression_matrix.tsv</em>, the gene expression matrix, and <em>gene_set_file.gmt</em> from the
+<cite>Molecular Signature Database &lt;https://www.gsea-msigdb.org/gsea/msigdb&gt;_</cite> (GSEA).</p>
+</section>
+<section id="run-command">
+<h2><strong>Run Command</strong><a class="headerlink" href="#run-command" title="Link to this heading"></a></h2>
+<p>After filling in the configuration files and making sure the input files
+are present, the user should run the following command to use the Docker
+image of the pipeline:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">rm</span> <span class="o">-</span><span class="n">v</span> <span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">working</span><span class="o">/</span><span class="n">directory</span><span class="p">:</span><span class="o">/</span><span class="n">data</span> <span class="n">pegi3s</span><span class="o">/</span><span class="n">auto_enrich</span>
+</pre></div>
+</div>
+<p>A mounted directory structure, where the user should <strong>change your/working/directory</strong> to their data directory.</p>
+</section>
+<section id="behavior">
+<h2><strong>Behavior</strong><a class="headerlink" href="#behavior" title="Link to this heading"></a></h2>
+<p>Modules are executed sequentially according to the tools variable in the
+<strong>config0</strong> file, allowing flexible customization of the analysis flow.</p>
+<p>The pipeline relies on standardized file naming conventions to detect
+outputs from previous modules, removing the need for manual
+re-specification of inputs. Internal state flags coordinate execution
+logic, while embedded sanity checks confirm the presence of required
+files and configurations, providing clear error reporting if issues
+arise.</p>
+<ul class="simple">
+<li><p><strong>Modules 1 → 2:</strong></p></li>
+</ul>
+<blockquote>
+<div><p>When <strong>Module 1</strong> generates gene lists from an expression matrix,
+<strong>Module 2</strong> automatically processes each list to map gene
+identifiers. This ensures that all lists are consistently annotated
+and aligned with the target species defined in <strong>config0</strong>, for
+downstream enrichment analyses.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Modules 2 → 3/4:</strong></p></li>
+</ul>
+<blockquote>
+<div><p><strong>Module 3</strong> (g:Profiler Plus) and <strong>Module 4</strong> (PANTHER Plus)
+require the mapped gene information file from <strong>Module 2</strong>. Running
+Module 2 beforehand is <strong>strongly recommended</strong>, since the correct
+species definition in <strong>config0</strong> is also critical to both identifier
+mapping and the selection of the appropriate annotation sets.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Modules 5 → 6 (GSEA):</strong></p></li>
+</ul>
+<blockquote>
+<div><p>If <strong>Module 5</strong> is executed, it prepares all necessary GSEA input
+files and automatically updates the <em>gsea_parameters</em>
+file with the appropriate key–value pairs. <strong>Module 6</strong> then runs
+either <em>GSEA Classic</em> or <em>GSEA Preranked</em> using these parameters.
+When multiple pre-ranked lists are available, the pipeline
+iteratively runs GSEA for each, using the gene set file (GMX)
+specified in gsea_parameters. This setup supports fully automated
+batch GSEA analyses without manual reconfiguration.</p>
+</div></blockquote>
+</section>
+<section id="customization-of-the-analysis">
+<h2><strong>Customization of the analysis</strong><a class="headerlink" href="#customization-of-the-analysis" title="Link to this heading"></a></h2>
+<p>The pipeline’s modular design allows users to flexibly customize their
+analysis by running modules independently and supplying their own
+pre-prepared inputs. This makes it possible to:</p>
+<ul class="simple">
+<li><p><strong>Skip preprocessing steps</strong> (e.g., bypass <strong>Module 1</strong>) and directly
+use custom gene lists for enrichment analysis.</p></li>
+<li><p><strong>Provide mapped identifiers</strong> without rerunning earlier modules.</p></li>
+<li><p><strong>Integrate ready-made GSEA inputs</strong> for direct execution.</p></li>
+<li><p><strong>Apply post-processing filters</strong> to previously generated results.</p></li>
+<li><p><strong>Build time series plots</strong> with previously generated results.</p></li>
+</ul>
+<p>Below, the accepted input formats and placement requirements are
+detailed for each relevant module.</p>
+<section id="module-2-map-ids-info">
+<h3><strong>Module 2: Map IDs info</strong><a class="headerlink" href="#module-2-map-ids-info" title="Link to this heading"></a></h3>
+<p><strong>Input:</strong> Pre-prepared gene lists.</p>
+<p><strong>Placement:</strong> Store the lists in a directory named /prepared_gene_lists
+inside the assigned /data directory.</p>
+<p><strong>Purpose:</strong> Enables gene identifier mapping directly from one or more
+user-provided gene lists.</p>
+</section>
+<section id="modules-3-and-4-over-representation-enrichment-analysis">
+<h3><strong>Modules 3 and 4: Over-Representation Enrichment Analysis</strong><a class="headerlink" href="#modules-3-and-4-over-representation-enrichment-analysis" title="Link to this heading"></a></h3>
+<p><strong>Input:</strong> Pre-mapped gene lists (as produced by Module 2).</p>
+<p><strong>Placement:</strong> Store the mapped gene lists <strong>with suffix _map</strong> in
+/mapped_gene_lists within the assigned /data directory.</p>
+<p><strong>Purpose:</strong> Runs over-representation analyses directly from
+user-provided mapped lists.</p>
+</section>
+<section id="module-6-gsea">
+<h3><strong>Module 6: GSEA</strong><a class="headerlink" href="#module-6-gsea" title="Link to this heading"></a></h3>
+<p><strong>Input:</strong> Pre-prepared GSEA input files for either <strong>GSEA Classic</strong> or
+<strong>GSEA Preranked</strong>.</p>
+<p><strong>Placement:</strong> Files must be located in the /data directory.</p>
+<p><strong>Configuration:</strong> Ensure the filenames are correctly referenced in the
+gsea_parameters file (also in /data).</p>
+<p><strong>Purpose:</strong> Runs GSEA directly without the need for Module 5.</p>
+</section>
+<section id="module-7-filter-ea-results">
+<h3><strong>Module 7: Filter EA results</strong><a class="headerlink" href="#module-7-filter-ea-results" title="Link to this heading"></a></h3>
+<p><strong>Input:</strong> Enrichment results generated by any enrichment analysis
+module.</p>
+<p><strong>Placement:</strong> Keep results in their default module-specific output
+directories inside /data.</p>
+<p><strong>Configuration:</strong> Define filtering thresholds (max_occur, min_ratio,
+max_annot) in the config0 file.</p>
+<p><strong>Purpose:</strong> Filters and refines results independently of the original
+enrichment run (if it follows the exact same structure as outputted by
+the pipeline).</p>
+</section>
+<section id="module-8-build-plots">
+<h3><strong>Module 8: Build Plots</strong><a class="headerlink" href="#module-8-build-plots" title="Link to this heading"></a></h3>
+<p><strong>Input:</strong> Enrichment results generated by any enrichment analysis
+module (selected).</p>
+<p><strong>Placement:</strong> Keep results in their default module-specific output
+directories inside /data.</p>
+<p><strong>Configuration:</strong> Define plotting parameters (dir, order,
+field_separator, method) in the config0 file.</p>
+<p><strong>Purpose:</strong> Builds plots of the enrichment results independently of the
+original enrichment run (if it follows the exact same structure as
+outputted by the pipeline).</p>
+</section>
+</section>
+<section id="additional-flags">
+<span id="flags"></span><h2><strong>Additional Flags</strong><a class="headerlink" href="#additional-flags" title="Link to this heading"></a></h2>
+<p>This section describes two optional flags that can be run at any time.
+These functions operate on the enrichment analysis results.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These flags must be set in the pipeline configuration file, config0.</p>
+</div>
+<p><strong>Reactome hierarchy flag</strong>
+<code class="docutils literal notranslate"><span class="pre">reac_hierarchy=y</span></code></p>
+<ul class="simple">
+<li><p><strong>Purpose</strong>: Builds a hierarchical tree of Reactome enriched pathways when set to <code class="docutils literal notranslate"><span class="pre">y</span></code>.
+If empty (default), no tree is built.</p></li>
+<li><p><strong>Source</strong>: Automatically uses results from the Reactome source directories:
+<code class="docutils literal notranslate"><span class="pre">/gprofiler/results/REAC/</span></code>.
+Constructs the hierarchy ASCII tree there.</p></li>
+<li><p><strong>Output files</strong> (inside the REAC source directory):</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">enriched_tree_ascii.pdf</span></code> – Hierarchy tree of the enriched Reactome pathways (PDF).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">enriched_tree_ascii.txt</span></code> – Same tree in plain text (TXT).</p></li>
+</ul>
+</li>
+<li><p><strong>Result file organization</strong>:
+All short, long, and terms annotation files inside the REAC source directory
+are ordered according to the hierarchy ASCII tree (top to bottom).</p></li>
+<li><p><strong>Additional column</strong>:
+A new column (<strong>layer</strong>) is added to all short, long, and terms annotation files.
+This column is inserted in the 3<sup>rd</sup> position and indicates the pathway’s hierarchical level:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">P0</span></code> – Root or top-level parent pathway</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">P1</span></code> – Second-level parent (child of P0)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">P2</span></code> – Third-level parent (child of P1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PX</span></code> – Xth-level parent (child of PX-1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">C</span></code> – Leaf node (final branch under previous parent)</p></li>
+</ul>
+</li>
+<li><p><strong>Special case</strong>:
+If both <code class="docutils literal notranslate"><span class="pre">gprofiler</span></code> and <code class="docutils literal notranslate"><span class="pre">panther</span></code> directories exist in <code class="docutils literal notranslate"><span class="pre">/data</span></code>, the tree is built in both locations.</p></li>
+</ul>
+<p><strong>Gene appearance flag</strong>
+<code class="docutils literal notranslate"><span class="pre">gene_occurrences=y</span></code></p>
+<ul class="simple">
+<li><p><strong>Purpose</strong>: Creates a file that analyzes how often genes from the initial list
+appear across enriched terms.
+If empty (default), no file is built.</p></li>
+<li><p><strong>Use case</strong>: Helps determine a cutoff for filtering genes based on their frequency.
+For example, the top 10% of most frequently occurring genes may represent noise
+or overly generic annotations.</p></li>
+<li><p><strong>Source</strong>: Automatically accesses enrichment results in <code class="docutils literal notranslate"><span class="pre">/gprofiler/results</span></code>
+and builds the file there.</p></li>
+<li><p><strong>Output file</strong>: <code class="docutils literal notranslate"><span class="pre">gene_occurrences.tsv</span></code> – contains <strong>four columns</strong>:</p>
+<ul>
+<li><p><strong>N_Occurrences</strong> – Number of unique enriched terms a gene appears in.</p></li>
+<li><p><strong>N_Genes</strong> – Number of unique genes that appear exactly N times.</p></li>
+<li><p><strong>Proportions</strong> – Percentage of all genes that occur exactly N times,
+calculated as <code class="docutils literal notranslate"><span class="pre">(N_Genes</span> <span class="pre">/</span> <span class="pre">Total_Genes)</span> <span class="pre">*</span> <span class="pre">100</span></code>.</p></li>
+<li><p><strong>Cumulative (CDF)</strong> – Running total of the <em>Proportions</em> column, indicating
+the percentage of genes appearing less than or equal to N times.</p></li>
+</ul>
+</li>
+<li><p><strong>Additional file</strong>: <code class="docutils literal notranslate"><span class="pre">gene_counts</span></code> – contains the occurrence count of every gene.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="overview.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Test data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Phenotypic Evolution Group and SING Research Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

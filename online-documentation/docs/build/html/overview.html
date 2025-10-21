@@ -1,0 +1,268 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overview &mdash; auto-Enrich v1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=e160b93e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Setup and Run" href="setup.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-Enrich
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AUTO-ENRICH:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html"><strong>Quickstart</strong></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><strong>Overview</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-index-reference"><strong>Module Index Reference</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html"><strong>Setup and Run</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html"><strong>Test data</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><strong>Description</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="outputs.html"><strong>Outputs</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html"><strong>Credits</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html#tools-references"><strong>Tools References</strong></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-Enrich</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><strong>Overview</strong></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/overview.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="overview">
+<h1><strong>Overview</strong><a class="headerlink" href="#overview" title="Link to this heading"></a></h1>
+<p>auto-Enrich is a Bash script-based pipeline that integrademtes multiple
+widely used enrichment analysis tools into a single, modular framework.
+It is designed to automate enrichment workflows and standardize results.
+Packaged as a Docker image, auto-Enrich allows users to perform
+comprehensive enrichment analysis with three popular tools: g:Profiler,
+PANTHER, and GSEA (Gene Set Enrichment Analysis).</p>
+<p>The pipeline includes preparation, enrichment analysis, and
+post-processing steps, facilitating end-to-end workflows. Its eight core
+modules can be run independently or combined, providing flexibility
+depending on analytical needs. Detailed descriptions of each module are
+provided in <a class="reference internal" href="modules.html"><span class="doc">Modules</span></a> section.</p>
+<p>The auto-Enrich pipeline runs in any computing environment with Docker installed.
+It is distributed as part of the <a class="reference external" href="http://bdip.i3s.up.pt/">pegi3s Bioinformatics Docker Images Project</a>,
+and the corresponding image is available at: <a class="reference external" href="https://hub.docker.com/r/pegi3s/auto-enrich">https://hub.docker.com/r/pegi3s/auto-enrich</a>.
+That page also provides a short guide for installing Docker on both Linux and Windows systems.
+Since Docker is widely adopted, additional installation and usage instructions are readily available in the official Docker documentation.</p>
+<p>The pipeline supports two primary <strong>input data types</strong>:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Gene list files</dt><dd><p>Text files with one Gene ID per line.
+Used for <strong>Over-Representation Analysis</strong> by the <code class="docutils literal notranslate"><span class="pre">g:Profiler</span></code> and <code class="docutils literal notranslate"><span class="pre">PANTHER</span></code> modules.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Gene expression matrix</dt><dd><p>A matrix of gene expression values.
+Used for <strong>GSEA</strong> (Classic or Preranked).</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>At a minimum, the pipeline requires <strong>two files</strong>:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Pipeline configuration file <code class="docutils literal notranslate"><span class="pre">config0</span></code></dt><dd><p>Specifies modules, species, sources, and post-processing settings.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Input file</dt><dd><p>At least one gene list or gene expression matrix.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Depending on modules used, up to three additional configuration files may also be necessary.</p>
+<p>This pipeline is designed to <strong>simplify and standardize</strong> the following steps:</p>
+<ol class="arabic simple">
+<li><p>Extract differentially expressed genes from an expression matrix</p></li>
+<li><p>Map Gene ID information (inncludes UniProtKB ID, Gene Symbol, and Description)</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">g:Profiler</span></code> enrichment analysis, using the <code class="docutils literal notranslate"><span class="pre">g:GOSt</span></code> tool.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">PANTHER</span></code> analysis statistical overrepresentation test.</p></li>
+<li><p>Prepare inputs for <code class="docutils literal notranslate"><span class="pre">GSEA</span></code> (for both Classic and Preranked)</p></li>
+<li><p>Run Gene Set Enrichment Analysis <code class="docutils literal notranslate"><span class="pre">GSEA</span></code></p></li>
+<li><p>Filter enrichment results (to remove non-relevant terms from analysis outputs)</p></li>
+<li><p>Build plots and gene presence matrices (supports time-series visualization)</p></li>
+</ol>
+<p>The pipeline runs in any environment with Docker installed. After
+preparing input and configuration files, execute auto-Enrich with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">rm</span> <span class="o">-</span><span class="n">v</span> <span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">working</span><span class="o">/</span><span class="n">directory</span><span class="p">:</span><span class="o">/</span><span class="n">data</span> <span class="n">pegi3s</span><span class="o">/</span><span class="n">auto_enrich</span>
+</pre></div>
+</div>
+<p>A mounted directory structure, where the user should <strong>change your/working/directory</strong> to their data directory.</p>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="_images/diagram.png"><img alt="_images/diagram.png" src="_images/diagram.png" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-text">Overview of the auto-Enrich pipeline.</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="module-index-reference">
+<h1><strong>Module Index Reference</strong><a class="headerlink" href="#module-index-reference" title="Link to this heading"></a></h1>
+<p>Each module in auto-Enrich is referenced by a <strong>numbered index</strong> defined
+in the <code class="docutils literal notranslate"><span class="pre">tools=</span></code> variable of the pipeline configuration file (<strong>config0</strong>).
+This numbering ensures that modules can be easily called in sequence or
+selected individually. Detailed explanations of each module are provided
+in later sections.</p>
+<p id="index-table"><strong>Module Index Reference Table</strong></p>
+<table class="docutils align-center">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module
+#</p></th>
+<th class="head"><p>Module Name</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Config File
+Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p><a class="reference internal" href="modules.html#module1"><span class="std std-ref">Prepare Gene Lists</span></a></p></td>
+<td><p>Generate differentially
+expressed gene lists from
+expression data</p></td>
+<td><p><a class="reference internal" href="modules.html#config1"><span class="std std-ref">config1</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p><a class="reference internal" href="modules.html#module2"><span class="std std-ref">Map IDs info</span></a></p></td>
+<td><p>Maps gene IDs to standard
+formats (UniProtKB, Gene
+Symbol and Full Name)</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p><a class="reference internal" href="modules.html#module3"><span class="std std-ref">gProfiler plus</span></a></p></td>
+<td><p>Run enrichment analysis
+with g:Profiler (g:GOSt)</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p><a class="reference internal" href="modules.html#module4"><span class="std std-ref">PANTHER plus</span></a></p></td>
+<td><p>Run enrichment analysis
+with PANTHER
+Overrepresentation test</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p><a class="reference internal" href="modules.html#module5"><span class="std std-ref">Prep GSEA inputs</span></a></p></td>
+<td><p>Create <strong>.rnk</strong>, <strong>.gct</strong>
+and <strong>.cls</strong> files from
+expression data</p></td>
+<td><p><a class="reference internal" href="modules.html#config5"><span class="std std-ref">config5</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p><a class="reference internal" href="modules.html#module6"><span class="std std-ref">GSEA plus</span></a></p></td>
+<td><p>Execute GSEA using
+parameters defined in
+<strong>gsea_parameters</strong></p></td>
+<td><p><a class="reference internal" href="modules.html#config6"><span class="std std-ref">gsea_parameters</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p><a class="reference internal" href="modules.html#module7"><span class="std std-ref">Filter EA results</span></a></p></td>
+<td><p>Filter enriched terms
+from enrichment analysis</p></td>
+<td><p><a class="reference internal" href="setup.html#config0"><span class="std std-ref">config0</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p><a class="reference internal" href="modules.html#module8"><span class="std std-ref">Build plots</span></a></p></td>
+<td><p>Build time-series plots for
+enriched terms and gene
+presence matrices</p></td>
+<td><p><a class="reference internal" href="setup.html#config0"><span class="std std-ref">config0</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="setup.html" class="btn btn-neutral float-right" title="Setup and Run" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Phenotypic Evolution Group and SING Research Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
