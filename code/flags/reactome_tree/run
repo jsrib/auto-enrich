@@ -1,0 +1,47 @@
+#!/bin/bash
+cd /opt/flags/reactome_tree
+set -euo pipefail
+
+if [ $# -ne 2 ]; then
+	printf "Usage: %s <input_directory> <species>\n" "$0"
+	exit 1
+fi
+
+input_dir="$1"
+species="$2"
+
+json="reactome_hierarchy.json"
+if [[ ! -f "$json" ]]; then
+	python3 build_reactome_hierarchy.py "$species" "$json"
+	if [[ $? -ne 0 ]]; then
+		echo "Error: Failed to generate $json"
+		exit 1
+	fi
+fi
+
+for dir in "$input_dir"/*/results/REAC/; do
+	file="$dir/REAC_short_results.csv"
+
+	if [[ ! -f "$file" ]]; then
+		echo "Skipping $dir (no short_results.csv found)"
+		exit 1
+	fi
+
+	# generate enriched tree
+	python3 build_enrich_tree.py "$json" "$file"
+	
+	tree="enriched_tree_ascii.txt"
+	tree_pdf="enriched_tree_ascii.pdf"
+	tree_png="enriched_tree.png"
+
+	# ascii tree file exists?
+	if [[ -s "$tree" ]]; then
+		# reorder results files
+		for file in "$dir"/*_results.csv; do
+			./reorder_results.sh "$tree" "$file"
+		done
+		mv "$tree" "$tree_pdf" "$dir"
+	else
+		printf "Warning: hierarchy tree for %s is empty or missing, skipping it." "$dir"
+	fi
+done
