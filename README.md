@@ -25,7 +25,7 @@ Soon to be published online...
 
 ---------------------------------------
 
-First you need to have Docker installed in your computing environment. If you don't, follow the installation guidelines at pegi3s Bioinformatics Docker Images Project website:    http://bdip.i3s.up.pt/
+First you need to have Docker installed in your computing environment. If you don't, follow the installation guidelines at pegi3s Bioinformatics Docker Images Project website:    [http://bdip.i3s.up.pt/](http://bdip.i3s.up.pt/getting-started#install-docker)
 
 After pulling the required files to build the Docker Image (**auto_enrich.zip** and the **dockerfile**) you have to build the Image under the pegi3s domain using the following command:
 `docker build ./ -t pegi3s/auto-enrich`
