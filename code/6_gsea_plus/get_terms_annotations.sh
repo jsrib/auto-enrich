@@ -27,39 +27,32 @@ printf "Name,Source,Phenotype,Ratio(%%),ListCount,Genes_in_list,TermCount,Genes_
 
 # read results
 tail -n +2 "$results_file" | while IFS=',' read -r name phenotype nes fdr ; do
-	# get term row from gmx file (contains name url and genes in term)
 	line_term=$(grep -P "^${name}\t" "$gmx_file")
 	# get source directly from GSEA term page
 	if [[ -n "$line_term" ]]; then
 		genes=$(printf "%s\n" "$line_term" | cut -f3-)
 		url=$(printf "%s\n" "$line_term" | cut -f2)
-		# get page only once
 		page=$(curl -s "$url")
-		# PubMed first then other source
 		source=$(printf "%s\n" "$page" | grep -A1 "Source publication" | tail -n1 | sed 's/<[^>]*>//g' | awk -F'&' '{print $1}' | xargs)
 		if [[ -z "$source" ]]; then
 			source=$(printf "%s\n" "$page" | grep -A1 "Contributed by" | tail -n1 | sed 's/<[^>]*>//g' | awk -F'&' '{print $1}' | xargs)
 		fi
 
-		# clean sources of Pubmed like Pubmed 16611997
 		if [[ $source == Pubmed* ]]; then
 			source="Pubmed"
 		fi
 		term_dir="${analysis_dir}/${source}/terms_annotations/${name}"
 		mkdir -p "$term_dir"
 
-		# Write term gene file
 		printf "%s\n" "$genes" | tr '\t' '\n' > "${term_dir}/genes_in_term"
 	fi
 
-	# get genes in list
 	line_list=$(grep -P "^${name}\t" "$genes_list")
 	if [[ -n "$line_list" ]]; then
 		genes=$(printf "%s\n" "$line_list" | cut -f3-)
 		printf "%s\n" "$genes" | tr '\t' '\n' > "${term_dir}/genes_in_list"
 	fi
 
-	# build outpt file
 	genes_in_list=""
 	[[ -f "${term_dir}/genes_in_list" ]] && genes_in_list=$(< "${term_dir}/genes_in_list")
 
