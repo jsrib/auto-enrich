@@ -6,7 +6,7 @@ if [ $# -ne 2 ]; then
 fi
 
 species="$1"
-short_name="$2"	# short_name to save file
+short_name="$2"
 
 echo "Downloading all Reactome Levels file"
 curl -o uniprot2reactome https://reactome.org/download/current/UniProt2Reactome_All_Levels.txt

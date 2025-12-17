@@ -82,13 +82,13 @@ term_index=0
 		uniprots_in_term="$term_dir/uniprots_in_term"
 		genes_in_list="$term_dir/genes_in_list"
 
-		# get uniprots for PANTHER and Reactome datasets
+		# get uniprots for PANTHER datasets
 		if [[ "$source" == *PANTHER* ]]; then
 			awk -F'\t' -v term="$term" '$2 ~ "(^|;)" term "(;|$)" {print $1}' "$panther_annot" 2>/dev/null | sort -u > "$uniprots_in_term"
 			if [[ ! -s "$uniprots_in_term" ]]; then
 				printf "\nNo annotations found for term '%s' in PANTHER annotations file.\n" "$name"
 			else
-				# convert uniprots to symbols
+				# unis to symbols
 				while read -r uniprot; do
 					[[ -z "$uniprot" ]] && continue
 						if [[ -n "${map_uniprot["$uniprot"]}" ]]; then
