@@ -15,8 +15,8 @@ sup_genomes="supported_genomes"
 # normalize species into "genus species" form
 if [[ "$species" == *"_"* ]]; then
 	normalized_species=$(echo "$species" | tr '_' ' ')
-	genus_initial=$(echo "$normalized_species" | cut -d' ' -f1 | cut -c1)	# first letter
-	species_part=$(echo "$normalized_species" | cut -d' ' -f2)	# rest
+	genus_initial=$(echo "$normalized_species" | cut -d' ' -f1 | cut -c1)
+	species_part=$(echo "$normalized_species" | cut -d' ' -f2)
 else
 	normalized_species=$(echo "$species" | tr -d '_')
 	genus_initial=$(echo "$normalized_species" | cut -c1)

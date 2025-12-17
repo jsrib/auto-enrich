@@ -19,7 +19,7 @@ fi
 # 7 = filter_ea_results (need variables in config0)
 # 8 = build_plots (needs variables in config0)
 
-# tools flags
+# flags
 annotations_directory=false
 prepare_lists_ran=false
 prep_gsea_inputs_ran=false
