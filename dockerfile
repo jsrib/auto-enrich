@@ -20,9 +20,9 @@ RUN pip3 install --break-system-packages -Iv \
 	pandas \
 	seaborn
 
-COPY auto_enrich.zip /opt
+COPY code.zip /opt
 WORKDIR /opt
-RUN unzip auto_enrich.zip && rm auto_enrich.zip
+RUN unzip code.zip && rm code.zip
 RUN chmod -R 777 *
 
 ENTRYPOINT ["./run"]
