@@ -40,10 +40,8 @@ get_go_terms_annotations() {
 		return
 	fi
 
-	# no? download
 	curl -s "https://golr-aux.geneontology.io/solr/select?defType=edismax&qt=standard&indent=on&wt=csv&rows=100000&start=0&fl=bioentity_label&facet=false&fq=document_category:%22annotation%22&fq=isa_partof_closure:%22$GO_TERM_ENC%22&fq=taxon_subset_closure_label:%22$TAXON_LABEL_ENC%22&q=*%3A*" -o "$output_file"
 
-	# extract symbols
 	if [[ $(wc -l < "$output_file") -gt 1 ]]; then
 		awk -F'\t' 'NR > 1 && $1 != "" && !seen[$1]++ { print $1 }' "$output_file" > "$genes_file"
 	else
@@ -52,7 +50,6 @@ get_go_terms_annotations() {
 	fi
 	rm -f "$output_file"
 
-	# save in cache
 	genes_joined=$(paste -sd' ' "$genes_file")
 	echo -e "${GO_TERM}\t${genes_joined}" >> "$go_cache_file"
 }
@@ -87,18 +84,30 @@ term_index=0
 
 		# get uniprots for PANTHER and Reactome datasets
 		if [[ "$source" == *PANTHER* ]]; then
-			awk -F'\t' -v term="$term" '$3 ~ "(^|;)" term "(;|$)" {print $1}' "$panther_annot" 2>/dev/null | sort -u > "$uniprots_in_term"
+			awk -F'\t' -v term="$term" '$2 ~ "(^|;)" term "(;|$)" {print $1}' "$panther_annot" 2>/dev/null | sort -u > "$uniprots_in_term"
 			if [[ ! -s "$uniprots_in_term" ]]; then
 				printf "\nNo annotations found for term '%s' in PANTHER annotations file.\n" "$name"
+			else
+				# convert uniprots to symbols
+				while read -r uniprot; do
+					[[ -z "$uniprot" ]] && continue
+						if [[ -n "${map_uniprot["$uniprot"]}" ]]; then
+							echo "${map_uniprot["$uniprot"]//[; ]/|}" >> "$genes_in_term"	# join symbols by | associated to same uniprot
+						else
+							echo "$uniprot" >> "$unmapped_uniprots"
+						fi
+				done < "$uniprots_in_term"
 			fi
 		elif [[ "$source" == *REAC* ]]; then
-			awk -F'\t' -v term="$term" '
+			awk -F'\t' -v term="REAC:$term" '
 			$1 == term {
-				n = split($3, ids, ",")
-				for (i = 1; i <= n; i++) {
-					print ids[i]
+				for (i = 3; i <= NF; i++) {
+					print $i
 				}
-			}' "$reac_annot" | sort -u > "$uniprots_in_term"
+			}' "$reac_annot" | sort -u > "$genes_in_term"
+			if [[ ! -s "$genes_in_term" ]]; then
+				printf "\nNo annotations found for term '%s' in REACTOME annotations file.\n" "$name"
+			fi
 		# get symbols for gos
 		elif [[ "$source" == GO_* && "$source" != *PANTHER* ]]; then
 			get_go_terms_annotations "$term" "$species" "$term_dir"
@@ -106,14 +115,14 @@ term_index=0
 			continue
 		fi
 
-		# match uniprots, 2col, to input list
+		# match uniprots (2col) to input list for PANTHER > accuracy
 		if [[ -s "$uniprots_in_term" ]]; then
 			awk -F'\t' '
 				NR==FNR { term[$1]; next }
 				($2 in term) { print $0 }
 			' "$uniprots_in_term" "$input_list" > "$genes_in_list"
 
-		# match symbols, 3col to input list
+		# match symbols (3col) to input list
 		elif [[ -s "$genes_in_term" ]]; then
 			awk -F'\t' '
 				NR==FNR { term[$1]; next }
@@ -122,18 +131,6 @@ term_index=0
 		fi
 
 		unmapped_uniprots="$term_dir/obsolete_or_merged_uniprots"
-
-		# convert uniprots to symbols
-		if [[ "$source" == *PANTHER* || "$source" == REAC ]]; then
-			while read -r uniprot; do
-				[[ -z "$uniprot" ]] && continue   # skip empty
-					if [[ -n "${map_uniprot["$uniprot"]}" ]]; then
-						echo "${map_uniprot["$uniprot"]//[; ]/|}" >> "$genes_in_term"	# join symbols by | associated to same uniprot
-					else
-						echo "$uniprot" >> "$unmapped_uniprots"
-					fi
-			done < "$uniprots_in_term"
-		fi
 
 		if [[ ! -f "$genes_in_term" ]]; then
 			printf "Skipping term '%s' — not found.\n" "$term"
