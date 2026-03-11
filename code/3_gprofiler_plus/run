@@ -1,7 +1,7 @@
 #!/bin/bash
 # gProfiler plus Module 3
 cd /opt/3_gprofiler_plus
-set -euo pipefail
+#set -euo pipefail
 
 if [ $# -lt 2 ]; then
 	printf "Usage: %s <ids_map_file> <species> [gprofiler_dbs]\n" "$0"
@@ -29,21 +29,18 @@ else
 	printf "g:Profiler annotations file found for %s.\n" "$species"
 fi
 
-# curl
-./request_curl.sh "${input_file}" "${species}" "${gprofiler_dbs}"	#output: raw_output
+./request_curl.sh "${input_file}" "${species}" "${gprofiler_dbs}"
 raw_out="raw_output"
-# process
-./process_output.sh "${raw_out}"	# Output: short and long results files
-# terms annots
+./process_output.sh "${raw_out}"	
 ./get_term_genes.sh "${input_file}" "/data/${gmt_file}"
 
-# organize results
 for file in *_results.csv; do
 	[[ ! -f "$file" ]] && continue
 
 	line_count=$(wc -l < "$file")
 	if (( line_count <= 1 )); then
 		printf "No statistically significant results in %s\n" "$file"
+		exit 2
 	fi
 	cp "$file" "$results_dir/"
 	case "$file" in
@@ -52,7 +49,7 @@ for file in *_results.csv; do
 		terms_annotations_results.csv) src_col=3 ;;
 		*) continue ;;
 	esac
-	# split to source dirs
+
 	header=$(head -n 1 "$file")
 	mapfile -t sources < <(tail -n +2 "$file" | awk -F',' -v col="$src_col" '{print $col}' | sort -u)
 	for src in "${sources[@]}"; do

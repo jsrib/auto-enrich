@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+#set -eo pipefail
 
 if [ ! -f "/data/config0" ]; then
 	printf "❌ Error: config0 not found.\n"
@@ -19,7 +19,7 @@ fi
 # 7 = filter_ea_results (need variables in config0)
 # 8 = build_plots (needs variables in config0)
 
-# flags
+# tools flags
 annotations_directory=false
 prepare_lists_ran=false
 prep_gsea_inputs_ran=false
@@ -130,13 +130,14 @@ for tool in "${selected_tools[@]}"; do
 
 			run_ids_mapping() {
 				local input_path=$1
-				local relative_path="${input_path#/data/}"
+				local ids_path="${input_path#/data/}"
 				local base_name
 				base_name=$(basename "$input_path")
 				local map_name="${base_name%.*}_map"	# strip exts for name
 
 				printf "Mapping %s to %s...\n" "$base_name" "$map_name"
-				./2_mapping_info/run "$relative_path" "$species_short" "$map_name"
+				sed -i 's/\r$//' "${ids_path}"
+				./2_mapping_info/run "$ids_path" "$species_short" "$map_name"
 				if [ $? -eq 0 ]; then
 					printf "✅ IDs_mapping_info run completed successfully.\n"
 					mv "/data/$map_name" "/data/$maps_dir"

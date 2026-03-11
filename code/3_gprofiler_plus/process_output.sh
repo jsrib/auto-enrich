@@ -11,6 +11,7 @@ if [ ! -f "$input_file" ]; then
 	printf "Error: raw gprofiler output not found.\n"
 	exit 1
 fi
+cp $input_file /data
 
 short_file="short_results.csv"
 long_file="long_results.csv"
@@ -18,7 +19,6 @@ long_file="long_results.csv"
 printf "TermID,Name,P-Value_FDR,Source\n" > "$short_file"
 printf "TermID,Name,Description,P-Value_FDR,Precision,Recall,ListCount,TermCount,Query_size,Source,Source_order,Effective_domain_size,Parents,Group_ID,Significant\n" > "$long_file"
 
-# process json one to one
 jq -c '.result[]' "$input_file" | while IFS= read -r item; do
 	termID=$(jq -r '.native' <<< "$item")
 	name=$(jq -r '.name | gsub(","; " ") | gsub("/"; "_")' <<< "$item")

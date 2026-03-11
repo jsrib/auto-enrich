@@ -8,6 +8,7 @@ fi
 name="$1"	# same organism name as referenced in the field "name" in the panther supported_genomes file
 short="$2"	# short species name
 
+# panther datasets annots file
 printf "Downloading PANTHER annotations file...\n"
 curl -O "https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/PTHR19.0_${name}"
 annotations_file="PTHR19.0_${name}"
@@ -26,16 +27,17 @@ awk -F'\t' '
 	id = $2;
 	gene = $3;
 
-	# join col7 (sep ;)
+	# join columns >7 into string ; separated
 	terms = "";
 	for (i = 7; i <= NF; i++) {
 		terms = terms $i ";";
 	}
 
+	# normalize
 	gsub(/\t/, ";", terms);
 	gsub(/>/, ";", terms);
 
-	# get between # and next ;
+	# get substrings between # and next ;
 	matches = "";
 	while (match(terms, /#[^;]+/)) {
 		term = substr(terms, RSTART + 1, RLENGTH - 1);  # Skip the '#' character

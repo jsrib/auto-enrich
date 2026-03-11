@@ -24,7 +24,7 @@ for dir in "$input_dir"/*/results/REAC/; do
 
 	if [[ ! -f "$file" ]]; then
 		echo "Skipping $dir (no short_results.csv found)"
-		exit 1
+		continue
 	fi
 
 	# generate enriched tree

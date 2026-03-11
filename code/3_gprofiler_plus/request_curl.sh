@@ -47,8 +47,7 @@ fi
 # convert to json
 datasets_json=$(printf '"%s",' "${datasets[@]}" | sed 's/,$//')
 query_array=$(printf "%s\n" "$query_ids" | awk '{printf "\"%s\",", $0}' | sed 's/,$//')
-json_data="{\"organism\": \"$species\", \"query\":[$query_array], \"sources\":[$datasets_json], \"significance_threshold_method\": \"fdr\", \"user_threshold\": \"0.05\"}"
-
+json_data="{\"organism\": \"$species\", \"query\":[$query_array], \"sources\":[$datasets_json], \"significance_threshold_method\": \"fdr\", \"user_threshold\": \"0.05\", \"numeric_ns\": \"ENTREZGENE_ACC\" }"
 curl -s -X POST -H "Content-Type: application/json" \
 	-d "$json_data" \
 	'https://biit.cs.ut.ee/gprofiler/api/gost/profile/' > raw_output

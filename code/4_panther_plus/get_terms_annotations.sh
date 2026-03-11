@@ -81,7 +81,6 @@ term_index=0
 		genes_in_term="$term_dir/genes_in_term"
 		uniprots_in_term="$term_dir/uniprots_in_term"
 		genes_in_list="$term_dir/genes_in_list"
-		unmapped_uniprots="$term_dir/obsolete_uniprots"
 
 		# get uniprots for PANTHER and Reactome datasets
 		if [[ "$source" == *PANTHER* ]]; then
@@ -89,7 +88,7 @@ term_index=0
 			if [[ ! -s "$uniprots_in_term" ]]; then
 				printf "\nNo annotations found for term '%s' in PANTHER annotations file.\n" "$name"
 			else
-				# uniprots to symbols
+				# convert uniprots to symbols
 				while read -r uniprot; do
 					[[ -z "$uniprot" ]] && continue
 						if [[ -n "${map_uniprot["$uniprot"]}" ]]; then
@@ -130,6 +129,8 @@ term_index=0
 				($3 in term) { print $0 }
 			' "$genes_in_term" "$input_list" > "$genes_in_list"
 		fi
+
+		unmapped_uniprots="$term_dir/obsolete_or_merged_uniprots"
 
 		if [[ ! -f "$genes_in_term" ]]; then
 			printf "Skipping term '%s' — not found.\n" "$term"
