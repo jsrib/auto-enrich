@@ -84,7 +84,7 @@ term_index=0
 
 		# get uniprots for PANTHER and Reactome datasets
 		if [[ "$source" == *PANTHER* ]]; then
-			awk -F'\t' -v term="$term" '$2 ~ "(^|;)" term "(;|$)" {print $1}' "$panther_annot" 2>/dev/null | sort -u > "$uniprots_in_term"
+			awk -F'\t' -v term="$term" '$3 ~ "(^|;)" term "(;|$)" {print $1}' "$panther_annot" 2>/dev/null | sort -u > "$uniprots_in_term"
 			if [[ ! -s "$uniprots_in_term" ]]; then
 				printf "\nNo annotations found for term '%s' in PANTHER annotations file.\n" "$name"
 			else
@@ -99,14 +99,25 @@ term_index=0
 				done < "$uniprots_in_term"
 			fi
 		elif [[ "$source" == *REAC* ]]; then
-			awk -F'\t' -v term="REAC:$term" '
+			awk -F'\t' -v term="$term" '
 			$1 == term {
-				for (i = 3; i <= NF; i++) {
-					print $i
-				}
-			}' "$reac_annot" | sort -u > "$genes_in_term"
-			if [[ ! -s "$genes_in_term" ]]; then
+					n = split($3, arr, ",")
+					for (i = 1; i <= n; i++) {
+						print arr[i]
+					}
+			}' "$reac_annot" | sort -u > "$uniprots_in_term"
+			if [[ ! -s "$uniprots_in_term" ]]; then
 				printf "\nNo annotations found for term '%s' in REACTOME annotations file.\n" "$name"
+			else
+				# convert uniprots to symbols
+				while read -r uniprot; do
+					[[ -z "$uniprot" ]] && continue
+						if [[ -n "${map_uniprot["$uniprot"]}" ]]; then
+							echo "${map_uniprot["$uniprot"]//[; ]/|}" >> "$genes_in_term"	# join symbols by | associated to same uniprot
+						else
+							echo "$uniprot" >> "$unmapped_uniprots"
+						fi
+				done < "$uniprots_in_term"
 			fi
 		# get symbols for gos
 		elif [[ "$source" == GO_* && "$source" != *PANTHER* ]]; then
@@ -115,7 +126,7 @@ term_index=0
 			continue
 		fi
 
-		# match uniprots (2col) to input list for PANTHER > accuracy
+		# match uniprots (2col) to input list for PANTHER and REACTOME > accuracy
 		if [[ -s "$uniprots_in_term" ]]; then
 			awk -F'\t' '
 				NR==FNR { term[$1]; next }

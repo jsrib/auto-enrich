@@ -29,7 +29,7 @@ printf "TermID,Name,P-Value,P-Value_FDR,Fold_Enrichment,Plus_Minus,Source,ListCo
 
 # extract data and filter results fdr < 0.05
 jq -r --arg source "$source" \
-	'.results.result[] | select(.fdr < 0.05) | "\(.term.id),\(.term.label | gsub(","; " ") | gsub("/"; "-")),\(.pValue),\(.fdr),\(.fold_enrichment),\(.plus_minus),\($source | gsub(":"; "_")),\(.number_in_list),\(.number_in_reference)"' \
+	'.results.result[] | select(.pValue < 0.05) | "\(.term.id),\(.term.label | gsub(","; " ") | gsub("/"; "-")),\(.pValue),\(.fdr),\(.fold_enrichment),\(.plus_minus),\($source | gsub(":"; "_")),\(.number_in_list),\(.number_in_reference)"' \
 	"$input_file" >> "$output_file"
 
 if [ $? -ne 0 ]; then
