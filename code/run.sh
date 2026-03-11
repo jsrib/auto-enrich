@@ -62,7 +62,7 @@ for tool in "${selected_tools[@]}"; do
 		1)	# Module 1 prepare_lists - config1 file mandatory ()
 			printf "Running tool 1 (prepare_lists): Pre-processing step to prepare gene lists.\n"
 			if [[ -f "/data/config1" ]]; then
-				./1_prepare_lists/run "/data/config1"
+				./1_prepare_lists/run.sh "/data/config1"
 				if [ $? -eq 0 ]; then
 					printf "✅ Prepare lists run completed successfully.\n"
 					prepare_lists_ran=true
@@ -137,7 +137,7 @@ for tool in "${selected_tools[@]}"; do
 
 				printf "Mapping %s to %s...\n" "$base_name" "$map_name"
 				sed -i 's/\r$//' "${ids_path}"
-				./2_mapping_info/run "$ids_path" "$species_short" "$map_name"
+				./2_mapping_info/run.sh "$ids_path" "$species_short" "$map_name"
 				if [ $? -eq 0 ]; then
 					printf "✅ IDs_mapping_info run completed successfully.\n"
 					mv "/data/$map_name" "/data/$maps_dir"
@@ -203,7 +203,7 @@ for tool in "${selected_tools[@]}"; do
 				local save_dir="/data/${gprof_dir}/${save_name}"
 
 				printf "\nRunning gProfiler for: %s\n" "$base_name"
-				./3_gprofiler_plus/run "$maps_dir/$base_name" "$species_short" "$dbs"
+				./3_gprofiler_plus/run.sh "$maps_dir/$base_name" "$species_short" "$dbs"
 
 				local status=$?
 
@@ -278,7 +278,7 @@ for tool in "${selected_tools[@]}"; do
 				fi
 				
 				printf "\nRunning PANTHER for: %s\n" "$base_name"
-				./4_panther_plus/run "$maps_dir/$base_name" "$species_short" "$dbs"
+				./4_panther_plus/run.sh "$maps_dir/$base_name" "$species_short" "$dbs"
 
 				local status=$?
 
@@ -335,7 +335,7 @@ for tool in "${selected_tools[@]}"; do
 			fi
 
 			mkdir -p "/data/${gsea_dir}/inputs"
-			./5_prep_gsea_inputs/run "$config_file"
+			./5_prep_gsea_inputs/run.sh "$config_file"
 			if [[ $? -ne 0 ]]; then
 				printf "❌ Error: Prepare GSEA inputs failed.\n"
 				exit 1
@@ -390,7 +390,7 @@ for tool in "${selected_tools[@]}"; do
 						printf "cls\tphenotype_labels.cls\n" >> "$param_file"
 						printf "out\tresults\n" >> "$param_file"
 
-						./6_gsea_plus/run "$param_file"
+						./6_gsea_plus/run.sh "$param_file"
 						if [[ $? -ne 0 ]]; then
 							printf "❌ Classic GSEA failed for %s\n" "$base_rnk"
 							exit 1
@@ -419,7 +419,7 @@ for tool in "${selected_tools[@]}"; do
 							printf "rnk\t%s\n" "$base_rnk" >> "$param_file"
 							printf "out\tresults\n" >> "$param_file"
 
-							./6_gsea_plus/run "$param_file"
+							./6_gsea_plus/run.sh "$param_file"
 							if [[ $? -ne 0 ]]; then
 								printf "❌ GSEAPreranked failed for %s\n" "$base_rnk"
 								exit 1
@@ -459,7 +459,7 @@ for tool in "${selected_tools[@]}"; do
 					fi
 				done
 
-				./6_gsea_plus/run "$param_file"
+				./6_gsea_plus/run.sh "$param_file"
 				if [[ $? -ne 0 ]]; then
 					printf "❌ GSEA run failed.\n"
 					exit 1
@@ -585,7 +585,7 @@ for tool in "${selected_tools[@]}"; do
 				[[ -n "$max_annot" ]] && tool_args+=" --max-annotations $max_annot"
 				[[ -n "$min_ratio" ]] && tool_args+=" --min-ratio $min_ratio"
 
-				./7_filter_ea_results/run $tool_args
+				./7_filter_ea_results/run.sh $tool_args
 				if [[ $? -eq 0 ]]; then
 					printf "✅ %s results filtered successfully (%s).\n" "$tool" "$target"
 				else
@@ -614,7 +614,7 @@ for tool in "${selected_tools[@]}"; do
 		8) # Module 8 (build plots) - necessary variables on config0 file()
 			printf "\nRunning tool 8 (Build Plots) - Building enriched terms counts plots and presence matrices\n"
 			config="/data/config0"
-			./8_build_plots/run "$config"
+			./8_build_plots/run.sh "$config"
 			target="/plots_and_gene_matrices/$method"
 			if [[ $? -eq 0 ]]; then
 				printf "✅ Plots and gene matrices built successfully (%s).\n" "$target"
@@ -657,7 +657,7 @@ if [[ "$reac_hierarchy" == "y" ]]; then
 				printf "Input species '%s' not found.\n" "$species"
 				exit 1
 			fi
-			./flags/reactome_tree/run "$method_dir" "$long_name"
+			./flags/reactome_tree/run.sh "$method_dir" "$long_name"
 		fi
 	done
 	printf "Finished\n"
