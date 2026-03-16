@@ -23,6 +23,7 @@ else
 	for db_raw in "${selected_dbs[@]}"; do
 		db=$(printf '%s' "$db_raw" | tr '[:lower:]' '[:upper:]' | tr -d ' ')	# normalize
 		case "$db" in
+			GO|GOS|GENE_ONTOLOGY|GENE_ONTOLOGYS) datasets+=("GO:CC" "GO:BP" "GO:MF") ;;
 			GO_CC|GO:CC|GOCC) datasets+=("GO:CC") ;;
 			GO_BP|GO:BP|GOBP) datasets+=("GO:BP") ;;
 			GO_MF|GO:MF|GOMF) datasets+=("GO:MF") ;;

@@ -31,7 +31,7 @@ if [[ -f "unmapped_ids" ]] && [[ -s "unmapped_ids" ]]; then
 	printf "Mapping Gene Symbol and UniprotKB IDs unmapped GeneIDs in '%s'...\n" "${input_file}"
 	./gene-id-to-symbol.sh unmapped_ids 	#output: gene_symbols
 	printf "\nNow mapping UniprotKB IDs\n"
-	./gene-id-to-uniprotkb unmapped_ids new_uniprots	#output: new_uniprots
+	python3 gene-id-to-uniprotkb unmapped_ids new_uniprots	#output: new_uniprots
 	# merge ids, unis, symbols and name
 	awk -F '\t' 'NR==FNR { if (FNR > 1) uniprot[$1] = $2; next }
 				 FNR > 1 && ($1 in uniprot) {
