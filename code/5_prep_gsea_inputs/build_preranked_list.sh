@@ -53,9 +53,9 @@ for varname in "${!formula@}"; do
 	if [ "${#groups[@]}" -ge 2 ]; then
 		group1="${groups[0]}"
 		group2="${groups[1]}"
-		outfile="logFC_${group1}_${group2}.rnk"
+		outfile="log2FC_${group1}_${group2}.rnk"
 	else
-		outfile="logFC_${formula_name}.rnk"
+		outfile="log2FC_${formula_name}.rnk"
 	fi
 
 	# trans formula into awk
@@ -64,10 +64,10 @@ for varname in "${!formula@}"; do
 		awk_formula=$(echo "$awk_formula" | sed "s/\b$name\b/(\$${col_indices[$name]}+1)/g")
 	done
 
-	printf "🔄 Computing %s -> %s\n" "$formula_name" "$formula_body"
+	printf "Computing the log2 Fold Change of %s\n" "$formula_body"
 
 	tail -n +2 "/data/$input" | awk -v g="$gene_col" -v OFS="\t" \
 		"{ logval = log($awk_formula) / log(2); print \$g, logval; }" | sort -k2,2gr > "$outfile"
 
-	printf "✅ Output saved to %s\n" "$outfile"
+	printf "Output saved to %s\n" "$outfile"
 done
