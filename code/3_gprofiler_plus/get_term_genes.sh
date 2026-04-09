@@ -21,7 +21,7 @@ declare -A ID_TO_SYMBOL ID_TO_NAME
 while IFS=$'\t' read -r gene_id _ symbol fullname; do
 	[[ -n "$gene_id" && -n "$symbol" ]] && ID_TO_SYMBOL["$gene_id"]="$symbol"
 	[[ -n "$gene_id" && -n "$fullname" ]] && ID_TO_NAME["$gene_id"]="$fullname"
-done < <"${input_file}"
+done < "${input_file}"
 
 total_terms=$(($(wc -l < "$results_file") - 1))
 term_index=0
@@ -46,7 +46,7 @@ tail -n +2 "$results_file" | while IFS=',' read -r term_id name col3 source; do
 	term_dir="${output_dir}/${term_id}_${sanitized_name}"
 	mkdir -p "$term_dir"
 
-	echo "$matched_lines" | cut -f3- | tr '\t' '\n' | sort -u > "${term_dir}/genes_in_term"
+	echo "$matched_lines" | cut -f3- | tr '\t' '\n' > "${term_dir}/genes_in_term"
 	total_genes=$(wc -l < "${term_dir}/genes_in_term")
 
 	matched_file="${term_dir}/genes_in_list"
