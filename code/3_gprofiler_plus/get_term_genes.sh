@@ -21,7 +21,7 @@ declare -A ID_TO_SYMBOL ID_TO_NAME
 while IFS=$'\t' read -r gene_id _ symbol fullname; do
 	[[ -n "$gene_id" && -n "$symbol" ]] && ID_TO_SYMBOL["$gene_id"]="$symbol"
 	[[ -n "$gene_id" && -n "$fullname" ]] && ID_TO_NAME["$gene_id"]="$fullname"
-done < <(tail -n +2 "$input_file")
+done < <"${input_file}"
 
 total_terms=$(($(wc -l < "$results_file") - 1))
 term_index=0
