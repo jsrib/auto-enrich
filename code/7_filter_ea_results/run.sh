@@ -9,7 +9,7 @@ if [ $# -lt 2 ]; then
 fi
 
 input_dir="$1"
-shift # shift to parse optional arguments
+shift
 
 if [[ ! -d "/data/$input_dir" ]]; then
 	printf "Error: '%s' is not a valid directory.\n" "$input_dir"
@@ -18,9 +18,9 @@ fi
 
 max_annot=""
 max_occr=""
+# changed to coverage
 min_ratio=""
 
-# print usage
 print_usage() {
 	printf "\nUsage: %s [--max-annotations N] [--max-occurrence N] [--min-ratio N]\n" "$(basename "$0")"
 	printf "Options:\n"
@@ -66,6 +66,7 @@ fi
 
 base_data="/data/${input_dir}/terms_annotations_results.csv"
 data_lines=$(tail -n +2 "$base_data" | wc -l)
+# change "_filtered" to beginning and file to TSV
 final_output="terms_annotations_filtered.csv"
 
 # step 1: priority to max-occr (if set)
@@ -86,7 +87,7 @@ if [[ -n "$max_annot" || -n "$min_ratio" ]]; then
 	header=$(head -n 1 "$input_file")
 	IFS=',' read -ra columns <<< "$header"
 
-	# get required cols to filter (termcount and ratio)
+	# get required cols to filter (termcount and ratio - changed to coverage)
 	termcount_idx=""
 	ratio_idx=""
 	for i in "${!columns[@]}"; do

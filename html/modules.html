@@ -1,0 +1,1227 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Description &mdash; auto-Enrich v1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=e160b93e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Outputs" href="outputs.html" />
+    <link rel="prev" title="Test data" href="examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-Enrich
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AUTO-ENRICH:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html"><strong>Quickstart</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html"><strong>Overview</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html#module-index-reference"><strong>Module Index Reference</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html"><strong>Setup and Run</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html"><strong>Test data</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><strong>Description</strong></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-1-prepare-gene-lists"><strong>Module 1: Prepare Gene Lists</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-2-map-ids-info"><strong>Module 2: Map IDs info</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-3-gprofiler-plus"><strong>Module 3: gProfiler plus</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-4-panther-plus"><strong>Module 4: PANTHER plus</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-5-prep-gsea-inputs"><strong>Module 5: Prep GSEA inputs</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-6-gsea-plus"><strong>Module 6: GSEA plus</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-7-filter-ea-results"><strong>Module 7: Filter EA results</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-8-build-plots"><strong>Module 8: Build Plots</strong></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="outputs.html"><strong>Outputs</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html"><strong>Credits</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html#tools-references"><strong>Tools References</strong></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-Enrich</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><strong>Description</strong></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="description">
+<h1><strong>Description</strong><a class="headerlink" href="#description" title="Link to this heading"></a></h1>
+<section id="module-1-prepare-gene-lists">
+<span id="module1"></span><h2><strong>Module 1: Prepare Gene Lists</strong><a class="headerlink" href="#module-1-prepare-gene-lists" title="Link to this heading"></a></h2>
+<p>This module automates the extraction of <strong>over- and under-expressed gene
+lists</strong> from an expression matrix. It applies user-defined thresholds
+and conditions to identify differentially expressed genes across
+experimental groups, eliminating the need for manual preprocessing.</p>
+<p><strong>Purpose</strong></p>
+<ul class="simple">
+<li><p>Standardize the creation of input gene lists for downstream enrichment
+analyses.</p></li>
+<li><p>Automatically generate lists of over- and under-expressed genes based
+on configurable thresholds.</p></li>
+</ul>
+<p><strong>Inputs:</strong></p>
+<ul class="simple">
+<li><p><strong>Expression matrix</strong> (.tsv) containing gene identifiers and
+expression values.</p></li>
+<li><p><strong>Configuration file</strong> (<a class="reference internal" href="#config1"><span class="std std-ref">config1</span></a>)  with user-defined variables.</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Inputs must be placed in the /data directory.</p>
+</div>
+<p><strong>Outputs:</strong></p>
+<ul class="simple">
+<li><p>Gene lists of over- or under-expressed (up- or down-regulated) genes, ready for
+downstream modules (e.g., g:Profiler, PANTHER, GSEA).</p></li>
+</ul>
+<div class="admonition note" id="config1">
+<p class="admonition-title">Note</p>
+<p>For more details, see the <a class="reference internal" href="outputs.html#out1"><span class="std std-ref">Module 1 Outputs</span></a> section.</p>
+</div>
+<p><strong>Variables defined in config1 for controlling Module 1</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>input</p></td>
+<td><p>Name of the input expression
+matrix .tsv file (must be in
+/data).</p></td>
+<td><p>“expression_matrix.tsv”</p></td>
+</tr>
+<tr class="row-odd"><td><p>gene</p></td>
+<td><p>Column index, in the input
+expression matrix file,
+containing Gene Identifiers
+(IDs).</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>control
+(optional)</p></td>
+<td><p>Column index, in the input
+expression matrix file,
+containing the pre-calculated
+average expression values of
+the control samples. Used to
+filter isoforms.</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>avgN</p></td>
+<td><p>Column index (or list of
+indexes), in the input
+expression matrix file, for
+pre-calculated averages or
+sample expression values of a
+group. Supports multiple
+groups.</p></td>
+<td><p>avg1=2</p>
+<p>avg2=”3,4,5”.</p>
+</td>
+</tr>
+<tr class="row-even"><td><p>condN</p></td>
+<td><p>Condition formulas comparing
+average expression values
+between groups. Must use
+previously defined avgN
+parameters.</p></td>
+<td><p>cond1=“avg1/avg2”</p>
+<p>cond2=”(avg1 +
+avg2)/avg2”</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p>expression_min</p></td>
+<td><p>Minimum threshold for
+condition values to mark a
+gene as overexpressed.</p></td>
+<td><p>2</p>
+<p>In this case, only
+genes with values &gt; 2
+are considered
+over-expressed.</p>
+</td>
+</tr>
+<tr class="row-even"><td><p>expression_max</p></td>
+<td><p>Maximum threshold for
+condition values to mark a
+gene as underexpressed.</p></td>
+<td><p>1</p>
+<p>In this case only genes
+with values &lt; 1 are
+considered
+under-expressed.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p>select
+(priority)</p></td>
+<td><p>Column index, in the input
+expression matrix file,
+containing pre-evaluated
+binary values (0 or 1) for
+gene selection.</p></td>
+<td><p>8</p>
+<p>Only genes with a value
+of 1 are selected.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example config1 file:</strong></p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">input</span><span class="o">=</span><span class="s">&#39;expression_matrix.tsv&#39;</span>
+<span class="na">gene</span><span class="o">=</span><span class="s">1</span>
+<span class="na">control</span><span class="o">=</span><span class="s">2</span>
+<span class="na">avg1</span><span class="o">=</span><span class="s">2</span>
+<span class="na">avg2</span><span class="o">=</span><span class="s">&#39;3,4,5&#39;</span>
+<span class="na">cond1</span><span class="o">=</span><span class="s">&#39;avg1/avg2&#39;</span>
+<span class="na">expression_min</span><span class="o">=</span><span class="s">2</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>Column index starts at 1</p></li>
+<li><p>If both <strong>expression_min</strong> and <strong>expression_max</strong> are defined, only genes within the range are included.</p></li>
+<li><p>The <strong>select</strong> parameter takes <strong>priority</strong> over all other rules: only genes with 1 in the specified column will be kept.</p></li>
+</ul>
+</div>
+</section>
+<section id="module-2-map-ids-info">
+<span id="module2"></span><h2><strong>Module 2: Map IDs info</strong><a class="headerlink" href="#module-2-map-ids-info" title="Link to this heading"></a></h2>
+<p>This module standardizes a list of Gene Identifiers (Gene IDs) into a
+unified format to ensure compatibility across enrichment tools and
+biological databases. By harmonizing identifiers, it enables accurate
+cross-referencing and smoother downstream integration.</p>
+<p><strong>Input(s)</strong></p>
+<ul class="simple">
+<li><p>A list(s) of Gene IDs (raw Gene IDs to be standardized).</p></li>
+</ul>
+<p><strong>Output(s)</strong></p>
+<ul class="simple">
+<li><p><strong>TSV file</strong> with one gene per row, including:</p>
+<ul>
+<li><p>Original Gene ID</p></li>
+<li><p>UniProtKB ID</p></li>
+<li><p>Official Gene Symbol</p></li>
+<li><p>Full Gene Name</p></li>
+</ul>
+</li>
+<li><p><strong>Species-specific cache file</strong>, storing retrieved mappings to speed
+up future runs.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more details, see the <a class="reference internal" href="outputs.html#out2"><span class="std std-ref">Module 2 Outputs</span></a> section.</p>
+</div>
+<p><strong>Features</strong></p>
+<ul class="simple">
+<li><p>Provides extended gene information (uniprots, symbols and full names) for easier interpretation.</p></li>
+<li><p>Ensures compatibility with datasets and tools using different identifier standards.</p></li>
+<li><p>Uses local caching to avoid redundant queries, improving efficiency when processing multiple lists.</p></li>
+</ul>
+</section>
+<section id="module-3-gprofiler-plus">
+<span id="module3"></span><h2><strong>Module 3: gProfiler plus</strong><a class="headerlink" href="#module-3-gprofiler-plus" title="Link to this heading"></a></h2>
+<p>This module automates enrichment analysis using the <strong>g:Profiler
+g:GOSt</strong> tool via its API. It handles sending requests across all or
+user-selected annotations sources, applying False Discovery Rate (FDR)
+correction, formatting outputs, and mapping annotation terms to genes.</p>
+<p><strong>Supported annotation sources:</strong></p>
+<ul class="simple">
+<li><p><strong>CORUM</strong> – Manually annotated protein complexes from mammalian
+organisms.</p></li>
+<li><p><strong>GO:MF</strong> – Gene Ontology Molecular Function branch</p></li>
+<li><p><strong>GO:BP</strong> – Gene Ontology Biological Process branch</p></li>
+<li><p><strong>GO:CC</strong> – Gene Ontology Cellular Component branch</p></li>
+<li><p><strong>HPO</strong> – Human Phenotype Ontology, a standardized vocabulary of phenotypic abnormalities encountered in human disease.</p></li>
+<li><p><strong>HPA</strong> - Human Protein Atlas expression data</p></li>
+<li><p><strong>miRNA</strong> – mirTarBase miRNA targets</p></li>
+<li><p><strong>REAC</strong> – Reactome pathways</p></li>
+<li><p><strong>WP</strong> – WikiPathways</p></li>
+<li><p><strong>KEGG</strong>* – KEGG pathways</p></li>
+<li><p><strong>TRANSFAC</strong>* – Transfac transcription factor binding site
+predictions</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><em>KEGG and TRANSFAC are omitted datasources from the terms annotations results file due to licensing issues when downloading the
+combined GMT file archive.</em></p>
+</div>
+<p><strong>Inputs</strong></p>
+<ul>
+<li><p><strong>Mapped gene list(s)</strong> (<code class="docutils literal notranslate"><span class="pre">.tsv</span></code>) generated by <em>Module 2</em>, containing:</p>
+<ul class="simple">
+<li><p>Original Gene ID</p></li>
+<li><p>UniProtKB ID</p></li>
+<li><p>Official Gene Symbol</p></li>
+<li><p>Full Gene Name</p></li>
+</ul>
+</li>
+<li><p><strong>Module configuration variables</strong> (defined in <a class="reference internal" href="setup.html#config0"><span class="std std-ref">config0</span></a>):</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">species</span><span class="o">=</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Specifies the target species for enrichment.
+Can be defined in short format (e.g., <code class="docutils literal notranslate"><span class="pre">hsapiens</span></code>, <code class="docutils literal notranslate"><span class="pre">mmusculus</span></code>)
+or long format (e.g., <code class="docutils literal notranslate"><span class="pre">homo_sapiens</span></code>, <code class="docutils literal notranslate"><span class="pre">mus_musculus</span></code>).</p></li>
+</ul>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">gprofiler_dbs</span><span class="o">=</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Lists the annotation sources to include for enrichment (e.g., <code class="docutils literal notranslate"><span class="pre">GO:BP,</span> <span class="pre">GO:MF,</span> <span class="pre">KEGG,</span> <span class="pre">Reactome</span></code>).
+Leave empty (default) to include <strong>all</strong> sources.</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Available database keys for gprofiler_dbs (in config0)</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Sources</p></th>
+<th class="head"><p>Possible Keys (separated by | )</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference external" href="GO:CC">GO:CC</a></p></td>
+<td><p>GO:CC|GO_CC|GO CC</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="GO:BP">GO:BP</a></p></td>
+<td><p>GO:BP|GO_BP|GO BP</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="GO:MF">GO:MF</a></p></td>
+<td><p>GO:MF|GO_MF|GO MF</p></td>
+</tr>
+<tr class="row-odd"><td><p>REAC</p></td>
+<td><p>REAC|REACTOME|REACTOME_PATHWAY|REACTOME PATHWAY</p></td>
+</tr>
+<tr class="row-even"><td><p>KEGG*</p></td>
+<td><p>KEGG|KEGG PATHWAYS|KEGG
+PATHWAY|KEGG_PATHWAY|KEGG_PATHWAYS</p></td>
+</tr>
+<tr class="row-odd"><td><p>WP</p></td>
+<td><p>WP|WIKI PATHWAYS|WIKI
+PATHWAY|WIKI_PATHWAY|WIKI_PATHWAYS</p></td>
+</tr>
+<tr class="row-even"><td><p>TF*</p></td>
+<td><p>TF|TRANSFAC</p></td>
+</tr>
+<tr class="row-odd"><td><p>MIRNA</p></td>
+<td><p>MIRNA|MIRTARBASE</p></td>
+</tr>
+<tr class="row-even"><td><p>HPA</p></td>
+<td><p>HPA|HUMAN PROTEIN ATLAS|HUMAN_PROTEIN_ATLAS</p></td>
+</tr>
+<tr class="row-odd"><td><p>CORUM</p></td>
+<td><p>CORUM</p></td>
+</tr>
+<tr class="row-even"><td><p>HP</p></td>
+<td><p>HP|HUMAN PHENOTYPE
+ONTOLOGY|HUMAN_PHENOTYPE_ONTOLOGY</p></td>
+</tr>
+</tbody>
+</table>
+<p><em>KEGG and TRANSFAC are omitted datasources from the terms annotations results file due to licensing issues when downloading the
+combined GMT file archive.</em></p>
+<p><strong>Outputs</strong></p>
+<p>The following files and directories are generated after running the g:Profiler enrichment module.</p>
+<ul>
+<li><p><strong>Result files (CSV)</strong> — generated for all sources and for each individual source:</p>
+<ul class="simple">
+<li><p><strong>short_results.csv</strong> – Summary metrics for quick interpretation.</p></li>
+<li><p><strong>long_results.csv</strong> – Complete enrichment results, including all terms and mappings.</p></li>
+<li><p><strong>terms_annotations_results.csv</strong> – Enriched terms mapped back to the original gene list.</p></li>
+</ul>
+</li>
+<li><p><strong>Per-source subdirectories</strong> — one for each annotation source (e.g., GO, KEGG, Reactome):</p>
+<ul class="simple">
+<li><p>Contain CSV result files specific to that source.</p></li>
+<li><p>Include subdirectories for each enriched term, each containing:
+- A TSV file with genes from the initial list associated with the term.
+- A plain text file listing all linked genes from the input list.</p></li>
+</ul>
+</li>
+<li><p><strong>Species-specific annotation file (GMT format)</strong></p>
+<p>A locally cached file containing annotations and pathways used by g:Profiler,
+downloaded directly from the g:GOSt sources tab.
+This file enables mapping enriched terms back to the initial gene list.
+Saved as:</p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;short_species&gt;_gprofiler_annotations.gmt</span></code> <em>(e.g., hsapiens_gprofiler_annotations.gmt)</em></p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more details, see the <a class="reference internal" href="outputs.html#out34"><span class="std std-ref">Module 3 Outputs</span></a> section.</p>
+</div>
+<p><strong>Features</strong></p>
+<ul class="simple">
+<li><p>Connects directly to the g:Profiler API, ensuring analysis uses
+current annotations.</p></li>
+<li><p>Allows selection of specific annotation sources.</p></li>
+<li><p>Applies FDR correction to improve confidence in reported enriched
+terms.</p></li>
+<li><p>Caches species-specific GMT files to speed up consecutive runs.</p></li>
+<li><p>Organizes results in a clear, hierarchical structure for easy
+exploration and visualization.</p></li>
+<li><p>Central run script automates requests, formatting, annotation
+retrieval, and result management, ensuring reproducibility and
+reducing manual errors.</p></li>
+</ul>
+</section>
+<section id="module-4-panther-plus">
+<span id="module4"></span><h2><strong>Module 4: PANTHER plus</strong><a class="headerlink" href="#module-4-panther-plus" title="Link to this heading"></a></h2>
+<p>This module performs functional enrichment analysis using the PANTHER
+Classification System via its API. It runs statistical
+over-representation tests across all or user-selected annotations
+sources, applying False Discovery Rate (FDR) correction to ensure
+reliability of the reported terms.</p>
+<p><strong>Supported annotation sources:</strong></p>
+<ul class="simple">
+<li><p>Gene Ontology (Biological Process, Molecular Function, Cellular
+Component)</p></li>
+<li><p>Curated GO-SLIM subset</p></li>
+<li><p>Reactome Pathways</p></li>
+<li><p>PANTHER Pathways</p></li>
+<li><p>PANTHER Protein Class ontology</p></li>
+</ul>
+<p><strong>Inputs</strong></p>
+<ul>
+<li><p><strong>Mapped gene list(s)</strong> (<code class="docutils literal notranslate"><span class="pre">.tsv</span></code>) generated by <em>Module 2</em>, containing:</p>
+<ul class="simple">
+<li><p>Original Gene ID</p></li>
+<li><p>UniProtKB ID</p></li>
+<li><p>Official Gene Symbol</p></li>
+<li><p>Full Gene Name</p></li>
+</ul>
+</li>
+<li><p><strong>Module configuration variables</strong> (defined in <a class="reference internal" href="setup.html#config0"><span class="std std-ref">config0</span></a>):</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">species</span><span class="o">=</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Specifies the target species for enrichment.
+Can be defined in short format (e.g., <code class="docutils literal notranslate"><span class="pre">hsapiens</span></code>, <code class="docutils literal notranslate"><span class="pre">mmusculus</span></code>)
+or long format (e.g., <code class="docutils literal notranslate"><span class="pre">homo_sapiens</span></code>, <code class="docutils literal notranslate"><span class="pre">mus_musculus</span></code>).</p></li>
+</ul>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">panther_dbs</span><span class="o">=</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Lists the annotation sources to include for enrichment (e.g., <code class="docutils literal notranslate"><span class="pre">GO:BP,</span> <span class="pre">GO:MF,</span> <span class="pre">Reactome,</span> <span class="pre">PANTHER</span> <span class="pre">SPathways</span></code>).
+Leave empty (default) to include <strong>all</strong> sources.</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Available database keys for panther_dbs (in config0)</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Database/Source</p></th>
+<th class="head"><p>Possible Keys (separated by | )</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference external" href="GO:CC">GO:CC</a></p></td>
+<td><p>GO_CC|GO:CC|GO CC</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="GO:BP">GO:BP</a></p></td>
+<td><p>GO_BP|GO:BP|GO BP</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="GO:MF">GO:MF</a></p></td>
+<td><p>GO_MF|GO:MF|GO MF</p></td>
+</tr>
+<tr class="row-odd"><td><p>REAC</p></td>
+<td><p>REAC|REACTOME|REACTOME_PATHWAY|REACTOME PATHWAY</p></td>
+</tr>
+<tr class="row-even"><td><p>PTR_GO_SLIM_CC</p></td>
+<td><p>GO_SLIM_CC|GO:SLIM:CC|PANTHER_GO_CC|PANTHER GO
+CC|PANTHER GO:CC|PANTHER GO SLIM CC</p></td>
+</tr>
+<tr class="row-odd"><td><p>PTR_GO_SLIM_BP</p></td>
+<td><p>GO_SLIM_BP|GO:SLIM:BP|PANTHER_GO_BP|PANTHER GO
+BP|PANTHER GO:BP|PANTHER GO SLIM BP</p></td>
+</tr>
+<tr class="row-even"><td><p>PTR_GO_SLIM_MF</p></td>
+<td><p>GO_SLIM_MF|GO:SLIM:MF|PANTHER_GO_MF|PANTHER GO
+MF|PANTHER GO:MF|PANTHER GO SLIM MF</p></td>
+</tr>
+<tr class="row-odd"><td><p>PANTHER_PATHWAY</p></td>
+<td><p>PANTHER_PATH|PANTHER
+PATH|PANTHER_PATHWAY|PANTHER PATHWAY</p></td>
+</tr>
+<tr class="row-even"><td><p>PANTHER_PC</p></td>
+<td><p>PANTHER_PC|PANTHER PC|PANTHER_PC</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Outputs</strong></p>
+<p>The following files and directories are generated after running the PANTHER enrichment module.</p>
+<ul class="simple">
+<li><p><strong>Result files (CSV)</strong> — produced for all sources and each individual source:</p>
+<ul>
+<li><p><strong>short_results.csv</strong> – Summary metrics for quick interpretation.</p></li>
+<li><p><strong>long_results.csv</strong> – Complete enrichment results, including all terms and detailed fields.</p></li>
+<li><p><strong>terms_annotations_results.csv</strong> – Enriched terms mapped back to the original gene list.</p></li>
+</ul>
+</li>
+<li><p><strong>Per-source subdirectories</strong> — one for each annotation source:</p>
+<ul>
+<li><p>Contain CSV result files specific to that source.</p></li>
+<li><p>Include subdirectories for each enriched term, containing:
+- A TSV file listing genes from the initial list associated with the term.
+- A plain text file with all linked genes from the input list.</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Annotation files</strong> <em>(species-specific, cached locally for reuse)</em></p>
+<p>Annotation data are automatically downloaded, processed, and cached locally for reuse.</p>
+<ul>
+<li><p><strong>From PANTHER FTP</strong> – GO-SLIM, PANTHER Pathways, and Protein Class annotations.
+Cleaned and saved as:</p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;species_prefix&gt;_PTHR19.0_annotations</span></code></p>
+</li>
+<li><p><strong>From Gene Ontology (AmiGO)</strong> – Real-time annotations for:
+- Biological Process (BP)
+- Molecular Function (MF)
+- Cellular Component (CC)</p></li>
+<li><p><strong>From Reactome Database</strong> – Pathway annotations, saved as:</p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;species_prefix&gt;_REAC_annotations</span></code></p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more details, see the <a class="reference internal" href="outputs.html#out34"><span class="std std-ref">Module 4 Outputs</span></a> section.</p>
+</div>
+<p><strong>Features</strong></p>
+<ul class="simple">
+<li><p>Direct integration with the PANTHER API for up-to-date enrichmentmresults.</p></li>
+<li><p>FDR correction applied to all results.</p></li>
+<li><p>Local caching of species-specific annotation files to improve efficiency and reproducibility.</p></li>
+<li><p>Organized output structure for easy exploration and downstream use.</p></li>
+<li><p>Central run script automates the workflow: API requests, parsing,
+corrections, annotation retrieval, and results organization.</p></li>
+</ul>
+</section>
+<section id="module-5-prep-gsea-inputs">
+<span id="module5"></span><h2><strong>Module 5: Prep GSEA inputs</strong><a class="headerlink" href="#module-5-prep-gsea-inputs" title="Link to this heading"></a></h2>
+<p>This module automates the creation of input files required for <strong>Gene
+Set Enrichment Analysis (GSEA)</strong>. It transforms a gene expression matrix
+into the proper formats for either:</p>
+<ul class="simple">
+<li><p><strong>GSEA Classic</strong> – uses expression matrices to compare predefined
+sample groups.</p></li>
+<li><p><strong>GSEA Preranked</strong> – uses ranked gene lists derived from user-defined
+formulas.</p></li>
+</ul>
+<p>By handling isoform filtering, formula evaluation, and file formatting,
+the module eliminates manual preprocessing steps and ensures
+compatibility with GSEA.</p>
+<p><strong>Inputs:</strong></p>
+<ul class="simple">
+<li><p><strong>Gene expression matrix (TSV)</strong> – raw input expression matrix file.</p></li>
+<li><p><strong>Configuration file</strong> (<a class="reference internal" href="#config5"><span class="std std-ref">config5</span></a>) – module configuraion file
+the specifies the method (classic or preranked), group/sample definitions, formulas,
+and optional variables.</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Inputs must be placed in the /data directory.</p>
+</div>
+<p><strong>Outputs:</strong></p>
+<p><strong>For GSEA Classic</strong></p>
+<ul class="simple">
+<li><p>Formatted expression GCT dataset <strong>(.gct)</strong></p></li>
+<li><p>Phenotype labels CSL file <strong>(.cls)</strong></p></li>
+<li><p>Isoform filtering step, retaining the highest-expressed
+isoform per gene <strong>(optional)</strong></p></li>
+</ul>
+<p><strong>For GSEA Preranked</strong></p>
+<ul class="simple">
+<li><p>Preranked gene lists generated from user-defined formulas (One or more <strong>.rnk</strong> files)</p>
+<ul>
+<li><p>Supports multiple formulas (formula1, formula2, …) to create
+multiple ranked lists in a single run.</p></li>
+<li><p>Values are log2-transformed for consistency.</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition note" id="config5">
+<p class="admonition-title">Note</p>
+<p>For more details, see the <a class="reference internal" href="outputs.html#out56"><span class="std std-ref">Module 5 Outputs</span></a> section.</p>
+</div>
+<p><strong>Variables defined in config5 for controlling Module 5</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Method</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>method</p></td>
+<td><p>both</p></td>
+<td><p>Selects workflow:
+“classic” or
+“preranked”.</p></td>
+<td><p>“classic”</p></td>
+</tr>
+<tr class="row-odd"><td><p>input</p></td>
+<td><p>both</p></td>
+<td><p>Name of expression
+matrix file (must
+be in /data).</p></td>
+<td><p>“expression_matrix.tsv”</p></td>
+</tr>
+<tr class="row-even"><td><p>gene</p></td>
+<td><p>both</p></td>
+<td><p>Column header name
+containing gene
+identifiers (IDs
+or symbols). Must
+match MSigDB sets.</p></td>
+<td><p>“GeneID”</p></td>
+</tr>
+<tr class="row-odd"><td><p>control</p></td>
+<td><p>classic</p></td>
+<td><p>(Optional) Column
+index with average
+expression values
+of control
+samples, used for
+isoform filtering.</p></td>
+<td><p>“2,3,4”</p></td>
+</tr>
+<tr class="row-even"><td><p>description</p></td>
+<td><p>classic</p></td>
+<td><p>(Optional) Column
+index with gene
+descriptions
+(default = N/A).</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>number_samples</p></td>
+<td><p>classic</p></td>
+<td><p>Total number of
+samples across all
+groups.</p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-even"><td><p>samples</p></td>
+<td><p>classic</p></td>
+<td><p>Column indexes of
+expression values
+(comma-separated).
+Must match
+number_samples.</p></td>
+<td><p>“3,4,5,6,7,8,9,10”</p></td>
+</tr>
+<tr class="row-odd"><td><p>number_groups</p></td>
+<td><p>classic</p></td>
+<td><p>Number of distinct
+groups.</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>group_order</p></td>
+<td><p>classic</p></td>
+<td><p>Group names and
+counts, matching
+samples order.</p></td>
+<td><p>“Control 4 Exp 4”</p></td>
+</tr>
+<tr class="row-odd"><td><p>formulaN</p></td>
+<td><p>preranked</p></td>
+<td><p>Custom formulas to
+compute ranked
+lists, multiple
+allowed. Use
+columns names
+(<strong>cannot have
+spaces</strong>) with
+pre-calculated
+averages.</p></td>
+<td><p>formula1=”col1/col2”</p>
+<p>formula2=”col2/col1”</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example configurations of config5 file:</strong></p>
+<p><strong>To prepare GSEA Classic inputs:</strong></p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">method</span><span class="o">=</span><span class="s">&#39;classic&#39;</span>
+<span class="na">input</span><span class="o">=</span><span class="s">&#39;expression_matrix.tsv&#39;</span>
+<span class="na">gene</span><span class="o">=</span><span class="s">&#39;GeneID&#39;</span>
+<span class="na">control</span><span class="o">=</span><span class="s">&#39;3,4,5&#39;</span>
+<span class="na">description</span><span class="o">=</span><span class="s">2</span>
+<span class="na">samples</span><span class="o">=</span><span class="s">&#39;3,4,5,6,7,8,9,10&#39;</span>
+<span class="na">number_groups</span><span class="o">=</span><span class="s">2</span>
+<span class="na">group_order</span><span class="o">=</span><span class="s">&#39;Control 4 Exp 4&#39;</span>
+</pre></div>
+</div>
+<p><strong>To prepare GSEA Preranked inputs:</strong></p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">method</span><span class="o">=</span><span class="s">&#39;preranked&#39;</span>
+<span class="na">input</span><span class="o">=</span><span class="s">&#39;expression_matrix.tsv&#39;</span>
+<span class="na">gene</span><span class="o">=</span><span class="s">&#39;GeneID&#39;</span>
+<span class="na">formula1</span><span class="o">=</span><span class="s">&#39;Control_avg / Exp_avg&#39;</span>
+<span class="na">formula2</span><span class="o">=</span><span class="s">&#39;Exp_avg / Control_avg&#39;</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>Column indexes are 1-based.</p></li>
+<li><p>The identifier specified in parameter <strong>gene</strong> must match the
+identifier format of the gene sets used in GSEA (NCBI Entrez IDs or
+Gene Symbols).</p></li>
+<li><p>Group order must match the order of samples listed in <cite>samples</cite>.</p></li>
+</ul>
+</div>
+</section>
+<section id="module-6-gsea-plus">
+<span id="module6"></span><h2><strong>Module 6: GSEA plus</strong><a class="headerlink" href="#module-6-gsea-plus" title="Link to this heading"></a></h2>
+<p>This module integrates the <strong>Gene Set Enrichment Analysis (GSEA)</strong>
+workflow by wrapping the gsea-cli.sh tool (<a class="reference external" href="https://www.gsea-msigdb.org/gsea/index.jsp">GSEA v4.4.0, Broad
+Institute</a>).
+It automates file handling, parameter setup, and results
+parsing, making it easier to run <strong>GSEA Classic</strong> or <strong>GSEA Preranked</strong>
+analyses.</p>
+<p><strong>Inputs:</strong></p>
+<ul class="simple">
+<li><p><strong>Parameter file</strong> (<a class="reference internal" href="#config6"><span class="std std-ref">gsea_parameters</span></a>): tab-separated key-value pairs
+that define the run settings.</p></li>
+<li><p><strong>Data files</strong>:</p>
+<ul>
+<li><p>Expression dataset (.gct or .res)</p></li>
+<li><p>Phenotype labels (.cls)</p></li>
+<li><p>Gene set matrix (.gmt, .gmx, or .grp) or preranked gene list (.rnk)</p></li>
+<li><p>(Optional) Chip annotation file (.chip)</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Inputs must be placed in the /data directory.</p>
+</div>
+<p><strong>Outputs:</strong></p>
+<ul class="simple">
+<li><p><strong>CSV results files</strong></p>
+<ul>
+<li><p><strong>short_results.csv</strong>: Summary metrics for quick interpretation</p></li>
+<li><p><strong>long_results.csv</strong>: Full enrichment results, including all terms
+and detailed mappings.</p></li>
+<li><p><strong>terms_annotations_results.csv</strong>: Enriched terms mapped back to the
+original gene list.</p></li>
+</ul>
+</li>
+<li><p><strong>Per-source subdirectories</strong>, each including:</p>
+<ul>
+<li><p>CSV results files for only the source itself</p></li>
+<li><p>Subdirectories for each enriched term, containing:</p>
+<ul>
+<li><p>TSV of the genes from the initial list associated with the term</p></li>
+<li><p>Plain text file listing all linked genes from initial list</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more details, see the <a class="reference internal" href="outputs.html#out56"><span class="std std-ref">Module 5 Outputs</span></a> section.</p>
+</div>
+<p><strong>Example (tab-separated key-values) of gsea_parameters file:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>res    expression_dataset.gct
+cls phenotype_labels.cls
+gmx m2.all.v2024.1.Mm.entrez.gmt
+collapse    No_Collapse
+chip \*
+nperm  1000
+permute gene_set
+plot_top_x  20
+out results
+</pre></div>
+</div>
+<p>To perform Gene Set Enrichment Analysis the described parameters in
+the following table must be set in the gsea_parameters file that must be present in
+the mounted data directory (/data).</p>
+<p id="config6"><strong>Mandatory key parameters defined in the gsea_parameters file to run Module 6 GSEA</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>res</p></td>
+<td><p>Indicate the name of the expression
+dataset file (GCT or RES format).</p></td>
+<td><p>expression_dataset.gct</p></td>
+</tr>
+<tr class="row-odd"><td><p>cls</p></td>
+<td><p>Indicate the name of the phenotype
+labels file (CLS format), of the set
+expression dataset file, which can
+define either categorical phenotypes
+(e.g., tumor vs normal) or continuous
+phenotype.</p></td>
+<td><p>phenotype_labels.cls</p></td>
+</tr>
+<tr class="row-even"><td><p>gmx</p></td>
+<td><p>Indicate the name of the gene set file
+(GMT format), such as those provided by
+Molecular Signature</p></td>
+<td><p>M2.all.v2024.1.Mm.entrez.gmt from Molecular Signature Database <a class="reference external" href="https://www.gsea-msigdb.org/gsea/msigdb/mouse/collections.jsp">Mouse
+collections</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>collapse</p></td>
+<td><p>Define how gene identifiers are
+handled:</p>
+<ul class="simple">
+<li><p>Collapse (default): Use the chip file
+to convert to gene symbols</p></li>
+<li><p>No_Collapse: Use gene symbols as-is;
+no chip file needed</p></li>
+<li><p>Remap_Only: Remap identifiers without
+collapsing data</p></li>
+</ul>
+<p><strong>Note:</strong> Only use No_Collapse if your
+expression dataset already uses the
+same gene identifiers as the selected
+gene set file (either Gene IDs or Gene
+Symbols)</p>
+</td>
+<td><p>No_Collapse</p>
+<p>In this case, no chip annotation file set</p>
+</td>
+</tr>
+<tr class="row-even"><td><p>chip *
+(optional)</p></td>
+<td><p>(Optional) Indicate the name of the
+chip annotation file that maps array
+probe IDs to gene symbols. <strong>Required
+if collapse is set to Collapse or
+Remap_Only.</strong></p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>out</p></td>
+<td><p>Indicate the name of the output
+directory to where the analysis results
+will be saved. <strong>Default: results.</strong></p></td>
+<td><p>results</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<ul class="simple">
+<li><p>All files assigned to file-based parameters (RES, CLS, GMX and CHIP)
+must be located in the same directory as the parameter file</p></li>
+<li><p><strong>Gene sets file (GMX)</strong> - Contains one or more gene sets. For each
+gene set, it gives the gene set name and list of features (genes or
+probes) in that gene set. Features can be downloaded in either NCBI
+(Entrez) Gene IDs or Gene Symbols identifiers. Format is GMX, GMT or
+GRP and can be individually downloaded from <a class="reference external" href="https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp">Human MSigbDB
+Collections</a>
+or <a class="reference external" href="https://www.gsea-msigdb.org/gsea/msigdb/mouse/collections.jsp">Mouse MSigDB
+Collections</a>,
+or complete collection from <a class="reference external" href="https://www.gsea-msigdb.org/gsea/downloads.jsp">GSEA
+Downloads</a>.</p></li>
+<li><p><strong>Collapse parameter -</strong> Since the default value of collapse is
+‘Collapse’ it’s advised to set the parameter value yourself. If not
+set, GSEA falls to the default value which requires the chip
+annotation file, leading to an error if not provided.</p></li>
+<li><p><strong>Chip annotations files (CHIP) -</strong> Lists each identifier on a
+platform and its matching HGNC Gene Symbol. <strong>Optional</strong> for Gene Set
+Enrichment Analysis. CHIP format can be downloaded from the <a class="reference external" href="https://www.gsea-msigdb.org/gsea/downloads.jsp">GSEA
+Downloads</a>
+(<a class="reference external" href="https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations/human/">Human</a>
+or
+<a class="reference external" href="https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations/mouse/">Mouse</a>
+Chip Annotations files).</p></li>
+</ul>
+</div>
+<p><strong>Additional recommended parameters to define in the gsea_parameters file to run Module 6 GSEA</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>permute</p></td>
+<td><p>Define the permutation type:</p>
+<ul class="simple">
+<li><p>phenotype <strong>(default):</strong> Shuffles sample
+labels. Recommended for datasets with ≥7
+samples per group</p></li>
+<li><p>gene_set: Randomizes gene sets. Used for
+small datasets (&lt;7 samples per group)</p></li>
+</ul>
+</td>
+<td><p>gene_set</p></td>
+</tr>
+<tr class="row-odd"><td><p>nperm</p></td>
+<td><p>Define the number of permutations for
+statistical significance (e.g., 1000
+recommended, start with 10 to test setup).</p>
+<p><strong>Default: 1000</strong></p>
+</td>
+<td><p>1000</p></td>
+</tr>
+<tr class="row-even"><td><p>plot_top_x</p></td>
+<td><p>Define the number of top enriched gene sets,
+highest normalized enrichment score, to include
+in result plots.</p>
+<p><strong>Default: 20</strong></p>
+</td>
+<td><p>20</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Additional parameters</strong></p>
+<p>This module supports nearly all options from the <strong>GSEA CLI</strong>, including:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">metric</span></code>, <code class="docutils literal notranslate"><span class="pre">scoring_scheme</span></code>, <code class="docutils literal notranslate"><span class="pre">rpt_label</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sort</span></code>, <code class="docutils literal notranslate"><span class="pre">set_max</span></code>, <code class="docutils literal notranslate"><span class="pre">set_min</span></code>, <code class="docutils literal notranslate"><span class="pre">norm</span></code>,
+<code class="docutils literal notranslate"><span class="pre">rnd_seed</span></code>, <code class="docutils literal notranslate"><span class="pre">zip_report</span></code>, <code class="docutils literal notranslate"><span class="pre">create_svgs</span></code>, and others.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>See the GSEA CLI User Guide for a complete reference <a class="reference external" href="https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideTEXT.htm#_Metrics_for_Ranking">GSEA CLI User
+Guide</a>.</p>
+</div>
+</section>
+<section id="module-7-filter-ea-results">
+<span id="module7"></span><h2><strong>Module 7: Filter EA results</strong><a class="headerlink" href="#module-7-filter-ea-results" title="Link to this heading"></a></h2>
+<p>This module filters enrichment analysis (EA) results to remove overly
+common or biologically unspecific terms and genes. It applies
+user-defined thresholds to refine the final annotations, retaining only
+the most relevant associations for downstream interpretation.</p>
+<p><strong>Input:</strong></p>
+<ul class="simple">
+<li><p>A directory containing enrichment analysis results, including the term
+annotations file</p></li>
+<li><p><strong>Filter variables</strong> – to be defined in the
+pipeline configuration file, <code class="docutils literal notranslate"><span class="pre">config0</span></code>.</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Inputs must be placed in the /data directory.</p>
+</div>
+<p><strong>Output:</strong></p>
+<ul class="simple">
+<li><p><strong>terms_annotations_filtered.csv</strong> – A filtered version of term
+annotations results CSV file with only the most relevant and specific
+results retained. This file is saved inside the enrichment results
+directory of each tool.</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>At least one of the variables described in following table must be set in the
+<strong>config0</strong> file (pipeline configuration file).</p>
+</div>
+<p><strong>Variables defined in the config0 to control execution of Module 7</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>max_annot</p></td>
+<td><p>Maximum number of genes allowed to be
+annotated to a term (Max. Term_size).
+Enriched terms exceeding this are excluded.</p></td>
+<td><p>500</p></td>
+</tr>
+<tr class="row-odd"><td><p>min_ratio</p></td>
+<td><p>Minimum ratio (0–100) of genes from the
+initial list in the term compared to all
+genes annotated to that term. Terms below
+this ratio are excluded.</p></td>
+<td><p>20</p></td>
+</tr>
+<tr class="row-even"><td><p>max_occur</p></td>
+<td><p>Maximum number of terms in which a gene may
+appear. Genes exceeding this threshold are
+removed from the genes_in_list field.</p></td>
+<td><p>5</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<p>Suppose an enrichment results file contains:</p>
+<ul class="simple">
+<li><p>Gene <strong>TP53</strong> (from the initial gene lists) appearing in <strong>15 terms</strong>.</p></li>
+<li><p>Term <strong>GO:0008150</strong> (biological process) annotated with <strong>1200
+genes</strong>.</p></li>
+<li><p>Term <strong>GO:0006915</strong> (apoptotic process) where <strong>8 of 50 annotated
+genes</strong> are in the user’s input list (ratio = 16%).</p></li>
+</ul>
+<p>With the following parameters:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">max_annot</span><span class="o">=</span><span class="s">500</span>
+<span class="na">min_ratio</span><span class="o">=</span><span class="s">20</span>
+<span class="na">max_occur</span><span class="o">=</span><span class="s">10</span>
+</pre></div>
+</div>
+<p>The module would:</p>
+<ul class="simple">
+<li><p><strong>Exclude GO:0008150</strong> (too broad, annotated with 1200 genes,
+exceeding max_annot=500).</p></li>
+<li><p><strong>Exclude GO:0006915</strong> (ratio 16% &lt; threshold 20%).</p></li>
+<li><p><strong>Remove TP53</strong> from all term annotations (since it occurs in 15
+terms, exceeding max_occur=10).</p></li>
+</ul>
+<p>Only terms and gene associations passing all active filters remain in
+the final output.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<ul class="simple">
+<li><p>The <strong>best thresholds depend on the dataset</strong> and <strong>research goal</strong>.
+Users should first inspect unfiltered results to identify suitable
+cutoffs.</p></li>
+<li><p>To guide parameter choice, a <strong>gene occurrences flag</strong> exists
+to generate a <strong>TSV file</strong> showing gene frequency across terms (see
+<a class="reference internal" href="setup.html#flags"><span class="std std-ref">Additional Flags</span></a> section  for more detail on this).</p></li>
+</ul>
+</div>
+</section>
+<section id="module-8-build-plots">
+<span id="module8"></span><h2><strong>Module 8: Build Plots</strong><a class="headerlink" href="#module-8-build-plots" title="Link to this heading"></a></h2>
+<p>This module helps you see how biological processes change over time by
+analyzing enrichment results across a temporal series. It tracks which
+genes are switched on or off at each timepoint and shows how their
+involvement in specific pathways or functions grows or shrinks.
+It gathers several enrichment analysis results built has a time series
+of both up- and down-regulated genes and analyzes which ones are
+annotated in enriched terms at each timepoint, counts them and produces
+two visual outputs.</p>
+<p><strong>Inputs:</strong></p>
+<ul class="simple">
+<li><p>Parameters configuration such as samples selection and order</p></li>
+<li><p>Enrichment analysis (in data directory /data):</p>
+<ul>
+<li><p>Enrichment results (/panther or /gprofiler)</p></li>
+<li><p>Directory of gene lists used (/prepared_gene_lists or custom)</p></li>
+<li><p>Directory of mapped gene lists used (/mapped_gene_lists)</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Input files must be placed in the <cite>/data</cite> directory.</p>
+<p>Gene list filenames <strong>must</strong> follow a consistent <cite>timepoint1-timepoint2-direction</cite> pattern
+(e.g., <cite>C-d1-up</cite>, <cite>d1-d3-down</cite>) - See <a class="reference internal" href="#exp"><span class="std std-ref">example</span></a> down below.</p>
+<p>The same naming convention applies to mapped gene lists.</p>
+</div>
+<p><strong>Outputs:</strong></p>
+<p>Running this module produces both tabular reports and visual summaries
+for each enriched term, along with a centralized plots directory.</p>
+<ul class="simple">
+<li><p><strong>Per-term directories</strong> (named after the enriched term):</p>
+<ul>
+<li><p><strong>Counts report</strong> (counts.&lt;TermID&gt;) – contains enriched term
+metadata (<em>TermID, Name, Source, Term_size</em>) and the number of genes
+from the lists involved at each timepoint.</p></li>
+<li><p><strong>Gene members report</strong> (members.&lt;TermID&gt;) – lists the gene names
+from the differential lists contributing to the term at each
+timepoint.</p></li>
+<li><p><strong>Binary matrix</strong> – a presence/absence (1/0) matrix showing which
+genes appear in the term across timepoints.</p></li>
+<li><p><strong>Heatmap</strong> – visualization of the binary matrix, highlighting up-
+and down-regulated gene presence across the time series.</p></li>
+<li><p><strong>Line chart</strong> – plots the number of associated genes per timepoint,
+with separate curves for up- and down-regulated genes.</p></li>
+</ul>
+</li>
+<li><p><strong>Global outputs:</strong></p>
+<ul>
+<li><p>A directory named “0_plots”, which aggregates all visual plots
+(heatmaps and line charts) for quick inspection across all enriched
+terms.</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more details, see the <a class="reference internal" href="outputs.html#out8"><span class="std std-ref">Module 8 Outputs</span></a> section.</p>
+</div>
+<p><strong>Variables defined in the config0 to control execution of Module 8</strong></p>
+<table class="docutils align-left">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variables</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>dir</p></td>
+<td><p>Target directory name containing the gene
+lists. The directory must be in /data.
+Possible to also use “standard” as a
+value and it falls to the
+“preparaed_gene_lists” directory if it
+exists in /data.</p></td>
+<td><p>‘standard’</p></td>
+</tr>
+<tr class="row-odd"><td><p>order</p></td>
+<td><p>Define the time points order. Time points
+must be specified in the gene lists files
+names saved in the assigned “dir”
+parameter.</p></td>
+<td><p>‘C d1 d3
+1w’</p></td>
+</tr>
+<tr class="row-even"><td><p>field_separator</p></td>
+<td><p>Indicate the field separator of the gene
+lists file names.</p></td>
+<td><p>‘-’</p></td>
+</tr>
+<tr class="row-odd"><td><p>method</p></td>
+<td><p>Directory with the enrichment results to
+build the plots.</p></td>
+<td><p>‘panther’</p>
+<p>‘gprofiler’</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p id="exp"><strong>Example:</strong></p>
+<p>Suppose you have the following <strong>gene list files</strong> in /data/prepared_gene_lists directory:</p>
+<ul class="simple">
+<li><p>C-d1-up, C-d1-down, d1-d3-up, d1-d3-down, d3-1w-down, d3-1w-up,
+1w-3w-up and 1w-3w-down.</p></li>
+</ul>
+<p>And define the parameters in config0 as:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">method</span><span class="o">=</span><span class="s">&#39;panther&#39;</span>
+<span class="na">dir</span><span class="o">=</span><span class="s">&#39;standard&#39;</span>
+<span class="na">order</span><span class="o">=</span><span class="s">&#39;C d1 d3 1w&#39;</span>
+<span class="na">field_separator</span><span class="o">=</span><span class="s">&#39;-&#39;</span>
+</pre></div>
+</div>
+<p><strong>What happens:</strong></p>
+<ol class="arabic simple">
+<li><p>The module reads enrichment results from the panther results
+directory.</p></li>
+<li><p>Parses the filenames to match comparisons (e.g., C-d1-up
+corresponds to “control vs day 1, up-regulated genes”, 1w-3w-down
+corresponds to “1 week vs 3 week, down-regulated genes”).</p></li>
+<li><p>Counts how many genes from each differential list are annotated in
+each enriched term at each timepoint.</p></li>
+<li><p>Results are aggregated across timepoints for plotting.</p></li>
+</ol>
+<p><strong>Visual outputs generated:</strong></p>
+<ul class="simple">
+<li><p><strong>Heatmap</strong>: Rows represent enriched terms (e.g., <em>apoptotic process</em>,
+<em>T-cell activation</em>). Columns represent ordered timepoints (C, d1, d3,
+1w). Cell colors show whether up- (blue) or down- (red) regulated
+genes contribute to that term at each stage.</p></li>
+<li><p><strong>Line chart</strong>: For each enriched term, two lines are drawn:</p>
+<ul>
+<li><p>Orange = number of up-regulated genes associated with the term.</p></li>
+<li><p>Blue = number of down-regulated genes associated with the term.
+This reveals trends like “apoptotic process increases in
+up-regulation between C → d1 but decreases after 1w.”</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<ul class="simple">
+<li><p>Gene list filenames <strong>must contain timepoint identifiers</strong> consistent
+with the order parameter.</p></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples.html" class="btn btn-neutral float-left" title="Test data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="outputs.html" class="btn btn-neutral float-right" title="Outputs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Phenotypic Evolution Group and SING Research Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

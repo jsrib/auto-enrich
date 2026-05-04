@@ -34,7 +34,7 @@ sed -i 's/\r$//' "/data/${input}"
 
 # filter isoforms
 ./process_isoforms.sh "$config"
-filtered_isoforms="filtered_isoforms_gsea_${input}"
+filtered_isoforms="filtered_isoforms_${input}"
 
 run_config="run_config"	#runtime config to change input to filtered
 
@@ -61,6 +61,7 @@ else
 	cp "$config" "$run_config"
 fi
 source "$run_config"
+head -50 "$run_config"
 
 # classic or preranked method input, outputs
 case "$method" in

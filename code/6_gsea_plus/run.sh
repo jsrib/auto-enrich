@@ -152,41 +152,41 @@ printf "Organizing results directory...\n"
 ./organize_directory.sh "${new_dir}"
 printf "Processing report files...\n"
 ./process_reports.sh "${new_dir}"
-printf "Getting terms annotations...\n"
-./get_terms_annotations.sh "${out_dir}" "$gmx_file"	#output=terms_results_file
+# printf "Getting terms annotations...\n"
+#./get_terms_annotations.sh "${out_dir}" "$gmx_file"	#output=terms_results_file
 
-terms_results_file="$new_dir/terms_annotations_results.csv"
+#terms_results_file="$new_dir/terms_annotations_results.csv"
 results_files=("$new_dir/short_results.csv" "$new_dir/long_results.csv")
 
 # add source column from termos results file to short and long
-for file in "${results_files[@]}"; do
-	tmp_name="$new_dir/tmp_name"
-	tmp_source="$new_dir/tmp_source"
-	tmp_rest="$new_dir/tmp_rest"
+# for file in "${results_files[@]}"; do
+# 	tmp_name="$new_dir/tmp_name"
+# 	tmp_source="$new_dir/tmp_source"
+# 	tmp_rest="$new_dir/tmp_rest"
 
-	cut -d',' -f1 "$file" > "$tmp_name"
-	cut -d',' -f2 "$terms_results_file" > "$tmp_source"
-	cut -d',' -f2- "$file" > "$tmp_rest"
-	paste -d',' "$tmp_name" "$tmp_source" "$tmp_rest" > "$file.tmp"
-	mv "$file.tmp" "$file"
-	rm "$tmp_name" "$tmp_source" "$tmp_rest"
-done
+# 	cut -d',' -f1 "$file" > "$tmp_name"
+# 	#cut -d',' -f2 "$terms_results_file" > "$tmp_source"
+# 	cut -d',' -f2- "$file" > "$tmp_rest"
+# 	paste -d',' "$tmp_name" "$tmp_source" "$tmp_rest" > "$file.tmp"
+# 	mv "$file.tmp" "$file"
+# 	rm "$tmp_name" "$tmp_source" "$tmp_rest"
+# done
 
-# organize sources directory
-for file in "$new_dir"/*_results.csv; do
-	[[ ! -f "$file" ]] && continue
-	base_file=$(basename "$file")
-	header=$(head -n 1 "$file")
-	# unique sources
-	mapfile -t sources < <(tail -n +2 "$file" | cut -d',' -f2 | sort -u)
-	for source in "${sources[@]}"; do
-		[[ -z "$source" ]] && continue
-		{
-			echo "$header"
-			awk -F',' -v col=2 -v val="$source" '$col == val' "$file"
-		} > "$new_dir/$source/${source}_$base_file"
-	done
-done
+# # organize sources directory
+# for file in "$new_dir"/*_results.csv; do
+# 	[[ ! -f "$file" ]] && continue
+# 	base_file=$(basename "$file")
+# 	header=$(head -n 1 "$file")
+# 	# unique sources
+# 	mapfile -t sources < <(tail -n +2 "$file" | cut -d',' -f2 | sort -u)
+# 	for source in "${sources[@]}"; do
+# 		[[ -z "$source" ]] && continue
+# 		{
+# 			echo "$header"
+# 			awk -F',' -v col=2 -v val="$source" '$col == val' "$file"
+# 		} > "$new_dir/$source/${source}_$base_file"
+# 	done
+# done
 
 rm "$new_dir"/*report*
 mv "$new_dir" "/data/$out_dir"

@@ -72,4 +72,6 @@ for dataset in "${datasets[@]}"; do
 		-o "$output_file"
 
 	printf "Output saved to %s.\n\n" "$output_file"
+	# get query size from this file ----
+	cp $output_file /data
 done
