@@ -5,25 +5,37 @@ if [ $# -ne 1 ]; then
 	exit 1
 fi
 
-config="$1"
+source "$1"
 output="expression_dataset.gct"
 
-source "$config"
+required_vars=("gene" "number_groups" "number_samples" "samples" "groups")
 
-if [[ -z "/data/$input" || -z "$gene" || -z "$samples" || -z "$number_samples" ]]; then
-	echo "Error: Config must define input, gene, samples, and number_samples"
+for var in "${required_vars[@]}"; do
+    if [[ -z "${!var}" ]]; then
+        printf "❌ [MODULE 1] Configuration Error: Variable '%s' is undefined or empty.\n" "$var"
+        exit 1
+    fi
+done
+
+# check provided samples with sample number
+IFS=',' read -ra sample_cols <<< "$samples"
+true_sample_count=${#sample_cols[@]}
+if [[ "$number_samples" -ne "$true_sample_count" ]]; then
+	printf "❌ [MODULE 1] Sample mismatch error: Expected %s (from 'number_samples' in config), but found %s in 'samples' string.\n" "$number_samples" "$true_sample_count">&2
 	exit 1
-else
-	sed -i 's/\r$//' "/data/$input"
 fi
 
-# read sample cols idxs
-IFS=',' read -ra sample_cols <<< "$samples"
-actual_sample_count=${#sample_cols[@]}
+# check number of samples defined in groups with total number of samples
+total_group_samps=$(echo "$groups" | awk '{sum=0; for(i=2; i<=NF; i+=2) sum+=$i; print sum}')
+if [[ "$total_group_samps" -ne "$number_samples" ]]; then
+	printf "❌ [MODULE 1] Sample mismatch error: Number of group samples (%s in 'groups') is not the same as the total number samples indicated (%s in 'samples').\n" "$total_group_samps" "$number_samples" >&2
+	exit 1
+fi
 
-# valid?
-if [[ "$number_samples" -ne "$actual_sample_count" ]]; then
-	echo "Error: number_samples=$number_samples but samples= has $actual_sample_count columns" >&2
+# check number of groups
+true_group_count=$(echo "$groups" | awk '{print NF/2}')
+if [[ "$true_group_count" -ne "$number_groups" ]]; then
+	printf "❌ [MODULE 1] Group mismatch error: Number of set groups (%s in 'groups') is not the same as indicated in 'number_groups' (%s).\n" "$true_group_count" "$number_groups" >&2
 	exit 1
 fi
 

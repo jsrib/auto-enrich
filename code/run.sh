@@ -1,77 +1,77 @@
 #!/bin/bash
 #set -eo pipefail
 
-if [ ! -f "/data/config0" ]; then
-	printf "❌ Error: config0 not found.\n"
+config="/data/config"
+
+if [ ! -f "$config" ]; then
+	printf "❌ [MAIN] Configuration Error: Pipeline configuration file ('config') not found in set working directory.\n"
 	exit 1
 else
-	sed -i 's/\r$//' /data/config0
-	source /data/config0
+	sed -i 's/\r$//' $config
+	source $config
 fi
 
-# tool numbers:
-# 1 = prepare_lists (needs config 1)
+# check if main variable set
+if [[ -z "$modules" ]]; then
+	printf "❌ [MAIN] Configuration Error: Variable 'modules' is undefined. Please set it in the 'config' file.\n"
+	exit 1
+fi
+
+# module numbers:
+# 1 = prepare_lists
 # 2 = id_mapping_info
 # 3 = gprofiler
 # 4 = panther
-# 5 = prep_gsea_inputs (needs config 5)
-# 6 = gsea (needs gsea_parameters)
-# 7 = filter_ea_results (need variables in config0)
-# 8 = build_plots (needs variables in config0)
+# 5 = prep_gsea_inputs
+# 6 = gsea
+# 7 = filter_ea_results
 
-# tools flags
+# paths
+annotations_dir="/data/annotations"
+prepared_lists_dir="/data/prepared_gene_lists"
+maps_dir="/data/mapped_gene_lists"
+gprof_dir="/data/gprofiler"
+panther_dir="/data/panther"
+gsea_dir="/data/gsea"
+
+# modules run flags
 annotations_directory=false
 prepare_lists_ran=false
 prep_gsea_inputs_ran=false
 
-# paths
-annotations_dir="/data/annotations"
-prepared_lists_dir="prepared_gene_lists"
-maps_dir="mapped_gene_lists"
-gprof_dir="gprofiler"
-panther_dir="panther"
-gsea_dir="gsea"
-
-# species provided for tools 2,3 or 4?
-if [[ "$tools" =~ (^|,)2($|,) || "$tools" =~ (^|,)3($|,) || "$tools" =~ (^|,)4($|,) ]]; then
-	if [[ -z "$species" ]]; then
-		printf "❌ Error: Species must be defined when using tools 2, 3, or 4.\n"
-		exit 1
-	fi
-
-	if [[ -d "$annotations_dir" ]]; then
-		printf "\nAnnotations directory found, using provided annotations files inside.\n"
-		annotations_directory=true
-	else
-		printf "\nAnnotations directory NOT found, creating new directory and annotations files.\n"
-		mkdir -p "$annotations_dir"
-	fi
-fi
-
-# normalize species name to short form
-species=$(echo "$species" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z_]*//g')
-if [[ "$species" == *"_"* ]]; then
-	species_short="${species:0:1}${species#*_}"
+if [[ -d "$annotations_dir" ]]; then
+	printf "Using provided annotations files inside annotations directory..\n"
+	annotations_directory=true
 else
-	species_short="$species"
+	printf "Annotations directory NOT found, creating new directory and generating new files.\n"
+	mkdir -p "$annotations_dir"
 fi
 
-IFS=',' read -ra selected_tools <<< "$tools"
-for tool in "${selected_tools[@]}"; do
-	case "$tool" in
-		1)	# Module 1 prepare_lists - config1 file mandatory ()
-			printf "Running tool 1 (prepare_lists): Pre-processing step to prepare gene lists.\n"
-			if [[ -f "/data/config1" ]]; then
-				./1_prepare_lists/run.sh "/data/config1"
-				if [ $? -eq 0 ]; then
-					printf "✅ Prepare lists run completed successfully.\n"
-					prepare_lists_ran=true
-				else
-					printf "❌ Error: Prepare lists run failed.\n"
-					exit 1
-				fi
+# handle species name
+if [[ -z "$species" ]]; then
+	printf "❌ [MAIN] Configuration Error: Variable 'species' is undefined. Please set it in the 'config' file.\n"
+	exit 1
+else
+	# normalize species name to short form (from homo_sapiens to hsapiens)
+	species=$(echo "$species" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z_]*//g')
+	if [[ "$species" == *"_"* ]]; then
+		species_short="${species:0:1}${species#*_}"
+	else
+		species_short="$species"
+	fi
+fi
+
+IFS=',' read -ra selected_modules <<< "$modules"
+for module in "${selected_modules[@]}"; do
+	case "$module" in
+		1)	# Module 1 (prepare_lists)
+			printf "[MODULE 1] Initializing: Preparing gene lists using input expression matrix...\n"
+			./1_prepare_lists/run.sh "$config"
+			if [ $? -eq 0 ]; then
+				printf "✅ [MODULE 1] Success: Gene lists generated! Saved in %s.\n" "$prepared_lists_dir"
+				prepare_lists_ran=true
 			else
-				printf "❌ Error: config1 file not found in assigned /data."
+				printf "❌ [MODULE 1] Critical Error: Failed to process expression matrix. Check logs for details.\n"
 				exit 1
 			fi
 			;;

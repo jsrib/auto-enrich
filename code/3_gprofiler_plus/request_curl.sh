@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -lt 2 ]; then
-	printf "Usage: %s <ids_map_file> <species> [gprofiler_dbs]\n" "$0"
+	printf "Usage: %s <input_ids_map> <species> [gprofiler_dbs]\n" "$0"
 	exit 1
 fi
 
@@ -41,7 +41,7 @@ else
 fi
 
 if [ ${#datasets[@]} -eq 0 ]; then
-	printf "No valid datasets selected. Exiting.\n"
+	printf "Error: No valid datasets selected declared in 'gprofiler_dbs'.\n"
 	exit 1
 fi
 
