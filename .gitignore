@@ -1,2 +1,7 @@
 *.zip
-online-documentation/**
+
+online-documentation/docs/*
+!online-documentation/docs/build/
+
+online-documentation/docs/build/*
+!online-documentation/docs/build/html/
