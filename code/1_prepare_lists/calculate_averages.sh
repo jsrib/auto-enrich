@@ -9,6 +9,11 @@ source "$1"
 basename=$(basename "$input")
 output_file="$2"
 
+if [ ! -f "/data/${input}" ]; then
+	printf "❌ [MODULE 1] Input File Missing: Input expression matrix file '%s' not found for averages calculations.\n" "${input}" >&2
+	exit 1
+fi
+
 # required variables check
 required_vars=("input" "gene" "number_groups" "number_samples" "samples" "groups")
 for var in "${required_vars[@]}"; do

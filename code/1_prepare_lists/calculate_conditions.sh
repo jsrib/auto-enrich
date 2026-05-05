@@ -7,8 +7,13 @@ fi
 
 source "$1"
 # possible new input if averages or conditions preivous calculated
-input_file="/data/$2"
+input_file="$2"
 output_file="$3"
+
+if [ ! -f "${input_file}" ]; then
+	printf "❌ [MODULE 1] Input File Missing: Input expression matrix file '%s' not found for conditions calculations.\n" "${input_file}" >&2
+	exit 1
+fi
 
 cond_string=""
 for var in $(compgen -v | grep '^cond[0-9]\+$'); do
@@ -29,9 +34,8 @@ BEGIN {
 	num_conds = length(cond_names);
 }
 
-# Map header and create new
+# map header and create new
 NR == 1 {
-	# Remove trailing \r for Windows compatibility
 	sub(/\r$/, "", $0);
 	
 	for (i = 1; i <= NF; i++) {
@@ -39,9 +43,9 @@ NR == 1 {
 	}
 	
 	printf "%s", $0;
-	# Fix: use the same array name (cond_names) defined in BEGIN
+	# add new cond columns
 	for (i=1; i<=num_conds; i++) {
-		printf "\t%s_log2", cond_names[i];
+		printf "\tlog2_%s", cond_names[i];
 	}
 	printf "\n";
 	next;

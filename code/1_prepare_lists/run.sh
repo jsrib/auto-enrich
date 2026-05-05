@@ -9,12 +9,12 @@ if [ $# -ne 1 ]; then
 fi
 
 source "$1"
-results_dir="prepared_gene_lists"
+results_dir="/data/prepared_gene_lists"
 rm -rf "$results_dir"
 mkdir -p "$results_dir"
 
 if [[ -d "/data/$results_dir" ]]; then
-	printf "❌ [MODULE 1] Error: Output directory /%s found in /data. Please clean or rename.\n" "$results_dir" >&2
+	printf "❌ [MODULE 1] Output directory Error: Output directory 'prepared_gene_lists' found in /data. Please rename or remove it.\n" >&2
 	exit 1
 fi
 
@@ -23,7 +23,7 @@ if [ ! -f "/data/${input}" ]; then
 	exit 1
 else
 	sed -i 's/\r$//' "/data/${input}"
-	basename_ori=$(basename "$input")
+	input_basename=$(basename "$input")
 fi
 
 if [[ -z "$gene" ]]; then
@@ -41,19 +41,18 @@ if [[ -n "$selected" ]]; then
 	# output: select_genes_list"
 	selected_genes="selected_genes_list"
 	if [ -f "${selected_genes}" ]; then
-		printf "Selected genes written to '%s'\n" "$selected_genes"
-		cp "${selected_genes}" "${results_dir}"
-		mv "${results_dir}" /data
+		mv "${selected_genes}" "${results_dir}"
+		printf "Selected genes saved as: %s in /%s\n" "$selected_genes" "${results_dir}"
 		exit 0
 	fi
 fi
 
 required_vars=("number_groups" "number_samples" "samples" "groups")
 for var in "${required_vars[@]}"; do
-    if [[ -z "${!var}" ]]; then
-        printf "❌ [MODULE 1] Configuration Error: Variable '%s' is undefined or empty.\n" "$var" >&2
-        exit 1
-    fi
+	if [[ -z "${!var}" ]]; then
+		printf "❌ [MODULE 1] Configuration Error: Variable '%s' is undefined or empty.\n" "$var" >&2
+		exit 1
+	fi
 done
 
 # check provided samples with sample number
@@ -78,28 +77,22 @@ if [[ "$true_group_count" -ne "$number_groups" ]]; then
 	exit 1
 fi
 
-# create header mapping
-# ./map_config_to_header.sh "$run_config"
-# config_map="column_header_mapping.txt"
-# mv "$config_map" "${results_dir}"
-# printf "\nConfig variables to input file headers mapping saved to %s.\n" "$config_map"
-
 # calculate averages
 if [[ "$calculated_averages" == "true" ]]; then
-	output_averages="${basename_ori%%.*}_averages.tsv"
-	./calculate_averages.sh "$config" "$output_averages"
+	output_averages="${input_basename%%.*}_averages.tsv"
+	./calculate_averages.sh "$config" "${output_averages}"
 	if [ $? -eq 0 ]; then
 		printf "Group samples average obtained successfully. Results in: %s\n" "$output_averages"
 		cp "$output_averages" /data
 		input="${output_averages}"
- 	fi
+	fi
 fi
 
 # filter isoform
 if [[ -z "$isoform" ]]; then
 	printf "Skipping isoform filtering.\n"
 else
-	output_filtered="${basename_ori%%.*}_filtered.tsv"
+	output_filtered="${input_basename%%.*}_filtered.tsv"
 	./isoform_filter.sh "$config" "${input}" "${output_filtered}"
 	if [ $? -eq 0 ]; then
 		printf "Successfully filtered '%s' based on highest '%s'. Results in: %s\n" "$input" "$isoform" "$output_filtered"
@@ -108,36 +101,21 @@ else
 	fi
 fi
 
-# calculate conditions
-output_conditions="${basename_ori%%.*}_conditions.tsv"
-./calculate_conditions.sh "$config" "${input}" "${output_conditions}"
+printf "Calculating set conditions using '%s'..." "$input"
+output_conditions="${input_basename%%.*}_conditions.tsv"
+./calculate_conditions.sh "$config" "${input}"
 if [ $? -eq 0 ]; then
 	cp "$output_conditions" "${results_dir}"
 	printf "Log2 calculations complete. Results in: %s\n" "$output_file"
 fi
 
+printf "Evaluating calculated conditions with set thresholds '%s' and '%s'..." "$expression_min" "$expression_max"
+output_evaluated="${input_basename%%.*}_evaluated.tsv"
+./apply_threshold.sh "$config" "${input}" "${output_evaluated}"
+cp "$output_evaluated" /data
 
-# continue here
-
-
-# apply thresholds
-./apply_threshold.sh "$run_config" "${out_cond}"
-rm $out_cond
-report="evaluation_report.tsv"
-mv $report "${results_dir}"
-for file in *_cond*; do
-	if [[ "$file" == *.sh ]]; then	# skip calculate_conditions.sh
-		continue
-	fi
-	if [[ "$file" == *_genes_* ]]; then
-		printf "Prepared gene lists saved as: %s in /%s\n" "$file" "${results_dir}"
-	else
-		printf "Selected genes saved as: %s in /%s\n" "$file" "${results_dir}"
-	fi
+for file in *_genes_list; do
 	mv "$file" "${results_dir}"
-done
-mv "${results_dir}" /data
-
-
-
+	printf "Prepared genes list saved as: %s in /%s\n" "$file" "${results_dir}"
+fi
 
