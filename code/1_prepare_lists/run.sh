@@ -8,14 +8,17 @@ if [ $# -ne 1 ]; then
 	exit 1
 fi
 
-source "$1"
+config="$1"
+source "$config"
 results_dir="/data/prepared_gene_lists"
-rm -rf "$results_dir"
-mkdir -p "$results_dir"
 
-if [[ -d "/data/$results_dir" ]]; then
-	printf "❌ [MODULE 1] Output directory Error: Output directory 'prepared_gene_lists' found in /data. Please rename or remove it.\n" >&2
-	exit 1
+if [[ -d "$results_dir" ]]; then
+	if [[ -n "$(ls -A "$results_dir" 2>/dev/null)" ]]; then
+		printf "⚠️ [MODULE 1] Error: Directory '%s' exists and is NOT empty. Please clear it first.\n" "$results_dir" >&2
+		exit 1
+	fi
+else
+	mkdir -p "$results_dir"
 fi
 
 if [ ! -f "/data/${input}" ]; then
@@ -31,12 +34,13 @@ if [[ -z "$gene" ]]; then
 	exit 1
 else
 	if ! [[ "$gene" =~ ^[0-9]+$ ]]; then
-	echo "❌ [MODULE 1] Column name error: 'gene' must be a numeric column index (starting at 1)." >&2
+	printf "❌ [MODULE 1] Configuration Error: Variable 'gene' must be a numeric column index (starting at 1).\n" >&2
 	exit 1
+	fi
 fi
 
 # verify select pre evaluated genes first
-if [[ -n "$selected" ]]; then
+if [[ -n "${selected:-}" ]]; then
 	./pre_selected.sh "$config"
 	# output: select_genes_list"
 	selected_genes="selected_genes_list"
@@ -78,7 +82,7 @@ if [[ "$true_group_count" -ne "$number_groups" ]]; then
 fi
 
 # calculate averages
-if [[ "$calculated_averages" == "true" ]]; then
+if [[ "$calculate_averages" == "true" ]]; then
 	output_averages="${input_basename%%.*}_averages.tsv"
 	./calculate_averages.sh "$config" "${output_averages}"
 	if [ $? -eq 0 ]; then
@@ -101,21 +105,27 @@ else
 	fi
 fi
 
-printf "Calculating set conditions using '%s'..." "$input"
+printf "Calculating set conditions using '%s'...\n" "$input"
 output_conditions="${input_basename%%.*}_conditions.tsv"
-./calculate_conditions.sh "$config" "${input}"
+./calculate_conditions.sh "$config" "${input}" "${output_conditions}"
 if [ $? -eq 0 ]; then
-	cp "$output_conditions" "${results_dir}"
-	printf "Log2 calculations complete. Results in: %s\n" "$output_file"
+	printf "Log2 calculations complete. Results in: %s\n" "$output_conditions"
 fi
 
-printf "Evaluating calculated conditions with set thresholds '%s' and '%s'..." "$expression_min" "$expression_max"
+printf "Evaluating calculated conditions with set thresholds...\n"
 output_evaluated="${input_basename%%.*}_evaluated.tsv"
-./apply_threshold.sh "$config" "${input}" "${output_evaluated}"
+./apply_threshold.sh "$config" "${output_conditions}" "${output_evaluated}"
 cp "$output_evaluated" /data
 
-for file in *_genes_list; do
-	mv "$file" "${results_dir}"
-	printf "Prepared genes list saved as: %s in /%s\n" "$file" "${results_dir}"
+# check for files before moving
+if ls *_genes_list >/dev/null 2>&1; then
+	for file in *_genes_list; do
+		if [[ -f "$file" ]]; then
+			mv "$file" "${results_dir}/"
+			printf "Prepared genes list saved as: %s in 'prepared_gene_lists'\n" "$file"
+		fi
+	done
+else
+	printf "⚠️ No gene list files found.\n"
+	exit 2
 fi
-

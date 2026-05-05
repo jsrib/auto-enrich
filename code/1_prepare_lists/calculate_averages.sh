@@ -6,7 +6,6 @@ if [ $# -ne 2 ]; then
 fi
 
 source "$1"
-basename=$(basename "$input")
 output_file="$2"
 
 if [ ! -f "/data/${input}" ]; then

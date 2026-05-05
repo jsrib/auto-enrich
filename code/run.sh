@@ -40,10 +40,10 @@ prepare_lists_ran=false
 prep_gsea_inputs_ran=false
 
 if [[ -d "$annotations_dir" ]]; then
-	printf "Using provided annotations files inside annotations directory..\n"
+	printf "[MAIN] Using provided annotations files inside annotations directory...\n"
 	annotations_directory=true
 else
-	printf "Annotations directory NOT found, creating new directory and generating new files.\n"
+	printf "[MAIN] Annotations directory NOT found, creating new directory and generating new files.\n"
 	mkdir -p "$annotations_dir"
 fi
 
@@ -70,6 +70,8 @@ for module in "${selected_modules[@]}"; do
 			if [ $? -eq 0 ]; then
 				printf "✅ [MODULE 1] Success: Gene lists generated! Saved in %s.\n" "$prepared_lists_dir"
 				prepare_lists_ran=true
+			elif [ $? -eq 2 ]; then	# no results found
+				printf "⚠️ [MODULE 1] No genes left after set calculations and thresholds."
 			else
 				printf "❌ [MODULE 1] Critical Error: Failed to process expression matrix. Check logs for details.\n"
 				exit 1
