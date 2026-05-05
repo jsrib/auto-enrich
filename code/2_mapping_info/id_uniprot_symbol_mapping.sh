@@ -1,22 +1,20 @@
 #!/bin/bash
-# uniprot to symbol reference file
 
 if [ $# -ne 2 ]; then
-	printf "Usage: %s <short_name> <taxon_id>\n" "$0"
+	printf "Usage: %s <taxon_id> <output_name>\n" "$0"
 	exit 1
 fi
 
-short_name="$1"
-taxon="$2"
-output_file="${short_name}_gene_uniprot"
+taxon="$1"
+output_file="$2"
 
-echo  "Downloading UniprotKB to Gene Symbol reference file..."
+echo "Downloading UniprotKB to Gene Symbol reference file..."
 tmp_file="raw_uniprot_${taxon}"
 curl -o "$tmp_file" \
 	"https://rest.uniprot.org/uniprotkb/stream?query=organism_id:${taxon}&format=tsv&fields=xref_geneid,accession,gene_primary,protein_name,organism_name"
 
 if [[ ! -s "$tmp_file" ]]; then
-	echo "❌ Error: Download failed or file is empty."
+	echo "❌ [MODULE 2] Error: Gene mapping file download failed or file is empty."
 	exit 1
 fi
 
@@ -46,4 +44,4 @@ NR > 1 {
 	
 } > "$output_file"
 
-#rm "$tmp_file"
+rm "$tmp_file" "unsorted"

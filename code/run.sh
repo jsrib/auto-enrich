@@ -4,7 +4,7 @@
 config="/data/config"
 
 if [ ! -f "$config" ]; then
-	printf "❌ [MAIN] Configuration Error: Pipeline configuration file ('config') not found in set working directory.\n"
+	printf "❌ [MAIN] Configuration Error: Pipeline configuration file ('config') not found in set working directory.\n" >&2
 	exit 1
 else
 	sed -i 's/\r$//' $config
@@ -13,7 +13,7 @@ fi
 
 # check if main variable set
 if [[ -z "$modules" ]]; then
-	printf "❌ [MAIN] Configuration Error: Variable 'modules' is undefined. Please set it in the 'config' file.\n"
+	printf "❌ [MAIN] Configuration Error: Variable 'modules' is undefined. Please set it in the 'config' file.\n" >&2
 	exit 1
 fi
 
@@ -27,39 +27,81 @@ fi
 # 7 = filter_ea_results
 
 # paths
-annotations_dir="/data/annotations"
-prepared_lists_dir="/data/prepared_gene_lists"
-maps_dir="/data/mapped_gene_lists"
-gprof_dir="/data/gprofiler"
-panther_dir="/data/panther"
-gsea_dir="/data/gsea"
+annotations_dir="annotations"
+prepared_lists_dir="prepared_gene_lists"
+maps_dir="mapped_gene_lists"
+gprof_dir="gprofiler"
+panther_dir="panther"
+gsea_dir="gsea"
 
 # modules run flags
 annotations_directory=false
 prepare_lists_ran=false
 prep_gsea_inputs_ran=false
 
-if [[ -d "$annotations_dir" ]]; then
+if [[ -d "/data/$annotations_dir" ]]; then
 	printf "[MAIN] Using provided annotations files inside annotations directory...\n"
 	annotations_directory=true
 else
 	printf "[MAIN] Annotations directory NOT found, creating new directory and generating new files.\n"
-	mkdir -p "$annotations_dir"
+	mkdir -p "/data/$annotations_dir"
 fi
 
-# handle species name
-if [[ -z "$species" ]]; then
-	printf "❌ [MAIN] Configuration Error: Variable 'species' is undefined. Please set it in the 'config' file.\n"
-	exit 1
-else
-	# normalize species name to short form (from homo_sapiens to hsapiens)
-	species=$(echo "$species" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z_]*//g')
-	if [[ "$species" == *"_"* ]]; then
-		species_short="${species:0:1}${species#*_}"
+# organism name correspondency index
+organism_idx="/data/$annotations_dir/organisms_index"
+if [[ ! -f "$organism_idx" || ! -s "$organism_idx" ]]; then
+	printf "[MAIN] Organisms Index file not found. Downloading from g:Profiler (https://biit.cs.ut.ee/gprofiler/page/organism-list)...\n"
+	url="https://biit.cs.ut.ee/gprofiler/api/util/organisms_list/"
+
+	curl -s "$url" | jq -r '
+	(.[0] | keys_unsorted | @tsv), 
+	(.[] | map(.) | @tsv)
+	' > "$organism_idx"
+
+	if [ $? -eq 0 ]; then
+		echo "Success! Data saved to $organism_idx"
+		column -t -s $'\t' "$organism_idx" | head -n 5
 	else
-		species_short="$species"
+		echo "Error: Failed to process the data."
+		exit 1
 	fi
 fi
+
+# handle species name normalization
+if [[ -z "${species}" ]]; then
+	printf "❌ [MAIN] Configuration Error: Variable 'species' is undefined.\n" >&2
+	exit 1
+else
+	printf "[MAIN] Searching for nomenclature match: '%s'\n" "${species}"
+	# $1=display_name, $2=id, $3=scientific_name, $4=taxon
+	result=$(awk -F'\t' -v search="${species}" '
+		NR > 1 {
+			for (i=1; i<=NF; i++) {
+				if ($i == search) {
+					print $1, $2, $3, $4
+					exit 0
+				}
+			}
+		}' OFS='\t' "$organism_idx")
+
+	if [[ -z "$result" ]]; then
+		printf "⚠️ [MAIN] No match found for '%s'. Try the exact Scientific Name or TaxonID.\n" "${species}"
+	else
+		# split result into variables
+		IFS=$'\t' read -r display_name gprof_id scientific_name taxon <<< "$result"
+		printf "[MAIN] Match Found!\n"
+		printf "   --------------------------------------\n"
+		printf "   Common Name: %s\n" "${display_name}"
+		printf "   g:Prof curl ID:   %s\n" "${gprof_id}"
+		printf "   Scientific:  %s\n" "${scientific_name}"
+		printf "   Taxon ID:    %s\n" "${taxon}"
+		printf "   --------------------------------------\n"
+	fi
+fi
+
+# species ids map file
+scientific_name=$(echo "$scientific_name" | tr ' ' '_')	# tr '[:upper:]' '[:lower:]'
+species_ids_map="/data/$annotations_dir/${scientific_name}_ids_map"
 
 IFS=',' read -ra selected_modules <<< "$modules"
 for module in "${selected_modules[@]}"; do
@@ -68,108 +110,48 @@ for module in "${selected_modules[@]}"; do
 			printf "[MODULE 1] Initializing: Preparing gene lists using input expression matrix...\n"
 			./1_prepare_lists/run.sh "$config"
 			if [ $? -eq 0 ]; then
-				printf "✅ [MODULE 1] Success: Gene lists generated! Saved in %s.\n" "$prepared_lists_dir"
+				printf "✅ [MODULE 1] Success: Gene lists generated! Saved in %s.\n" "/data/$prepared_lists_dir"
 				prepare_lists_ran=true
 			elif [ $? -eq 2 ]; then	# no results found
 				printf "⚠️ [MODULE 1] No genes left after set calculations and thresholds."
 			else
-				printf "❌ [MODULE 1] Critical Error: Failed to process expression matrix. Check logs for details.\n"
+				printf "❌ [MODULE 1] Critical Error: Failed to process expression matrix. Check logs for details.\n" >&2
 				exit 1
 			fi
 			;;
 
 		2)	# Module 2 (map_ids_info) - /prepared_gene_lists directory must be present()
-			printf "\nRunning tool 2 (ids-mapping): Mapping gene IDs.\n"
+			printf "[MODULE 2] Initializing: Mapping GeneIDs information (Uniprot, Symbol and Full name)...\n"
 			mkdir -p "/data/$maps_dir"
-			maps=()
 
-			# handle map file load and unload from /annotations do /data
-			handle_ids_map_file() {
-				local action=$1  # "load" or "unload"
-				local suffix=$2
-				local file_name="${species_short}_${suffix}"
-				local source_file="${annotations_dir}/${file_name}"
-				local working_file="/data/${file_name}"
-
-				if [[ "$action" == "load" ]]; then
-					if [[ -f "$source_file" ]]; then
-						printf "Using IDs map file: %s\n" "$file_name"
-						mv "$source_file" "$working_file"
-					fi
-				elif [[ "$action" == "unload" ]]; then
-					if [[ -f "$working_file" ]]; then
-						mv "$working_file" "$annotations_dir/"
-					fi
-				fi
-			}
-
-			# ensure unload even if script exits early
-			cleanup_ids_mapping() {
-				for suffix in "ids_map"; do
-					handle_ids_map_file unload "$suffix"
-				done
-			}
-			trap cleanup_ids_mapping EXIT
-
-			# detect gene lists to map
-			map_gene_lists() {
-				if [[ "$prepare_lists_ran" == true ]]; then
-					gene_lists=("/data/$prepared_lists_dir"/*_genes_*)
-				else
-					gene_lists=("/data/$prepared_lists_dir"/*)
-				fi
-
-				if [[ ${#gene_lists[@]} -eq 0 ]]; then
-					printf "❌ No genes lists files found in %s.\n" "$prepared_lists_dir"
-					exit 1
-				fi
-
-				printf "Multiple gene condition lists found in %s:\n" "$prepared_lists_dir"
-					for plist in "${gene_lists[@]}"; do
-						run_ids_mapping "$plist"
-					done
-			}
-
-			run_ids_mapping() {
-				local input_path=$1
-				local ids_path="${input_path#/data/}"
-				local base_name
-				base_name=$(basename "$input_path")
-				local map_name="${base_name%.*}_map"	# strip exts for name
-
-				printf "Mapping %s to %s...\n" "$base_name" "$map_name"
-				sed -i 's/\r$//' "${ids_path}"
-				./2_mapping_info/run.sh "$ids_path" "$species_short" "$map_name"
-				if [ $? -eq 0 ]; then
-					printf "✅ IDs_mapping_info run completed successfully.\n"
-					mv "/data/$map_name" "/data/$maps_dir"
-					maps+=("/data/$maps_dir/$map_name")
-				else
-					printf "❌ Error: IDs_mapping_info run failed for input: %s\n" "$input_path" >&2
-					exit 1
-				fi
-			}
-
-			if [[ "$annotations_directory" == true ]]; then
-				for suffix in "ids_map"; do
-					handle_ids_map_file load "$suffix"
-				done
-			fi
-
+			shopt -s nullglob
 			if [[ "$prepare_lists_ran" == true ]]; then
-				printf "Detected output from Tool 1. Mapping all generated gene lists.\n"
-				map_gene_lists
-
-			elif [[ -d "/data/$prepared_lists_dir" ]]; then
-				map_gene_lists
-
+				gene_lists=("/data/$prepared_lists_dir"/*_genes_list)
 			else
-				printf "❌ Error: No expression data, gene list, or prepared gene lists found.\n"
+				gene_lists=("/data/$prepared_lists_dir"/*)
+			fi
+			shopt -u nullglob
+
+			if [[ ${#gene_lists[@]} -eq 0 ]]; then
+				printf "❌ [MODULE 2] Error: No GeneIDs list found in %s.\n" "$prepared_lists_dir" >&2
 				exit 1
 			fi
-			
-			for suffix in "ids_map"; do
-				handle_ids_map_file unload "$suffix"
+
+			for glist in "${gene_lists[@]}"; do
+				basename=$(basename "$glist")
+				output="/data/$maps_dir/${basename%.*}_mapped.tsv"
+				
+				printf "Processing: %s\n" "$basename"
+				sed -i 's/\r$//' "$glist"
+
+				./2_mapping_info/run.sh "$glist" "${species_ids_map}" "$taxon"  "$output"
+
+				if [[ $? -eq 0 ]]; then
+					printf "✅ [MODULE 2] Success: GeneIDs list mapped! Saved in %s.\n" "$maps_dir"
+				else
+					printf "❌ [MODULE 2] Critical Error: Failed to map GeneIDs lists. Check logs for details.\n" >&2
+					exit 1
+				fi
 			done
 			;;
 
@@ -184,7 +166,7 @@ for module in "${selected_modules[@]}"; do
 			if [[ "$annotations_directory" == true ]]; then
 				annot_file=$(find "$annotations_dir" -type f -name "$gprof_annot_file")
 				if [[ -n "$annot_file" && -f "$annot_file" ]]; then
-					printf "gProfiler annotations file for %s found: %s.\n" "$species" "$annot_file"
+					printf "gProfiler annotations file for %s found: %s.\n" "${species}" "$annot_file"
 					mv "$annot_file" "$working_annot_file"
 				fi
 			fi
@@ -205,7 +187,7 @@ for module in "${selected_modules[@]}"; do
 				local save_dir="/data/${gprof_dir}/${save_name}"
 
 				printf "\nRunning gProfiler for: %s\n" "$base_name"
-				./3_gprofiler_plus/run.sh "$maps_dir/$base_name" "$species_short" "$dbs"
+				./3_gprofiler_plus/run.sh "$maps_dir/$base_name" "${species}_short" "$dbs"
 
 				local status=$?
 
@@ -280,7 +262,7 @@ for module in "${selected_modules[@]}"; do
 				fi
 				
 				printf "\nRunning PANTHER for: %s\n" "$base_name"
-				./4_panther_plus/run.sh "$maps_dir/$base_name" "$species_short" "$dbs"
+				./4_panther_plus/run.sh "$maps_dir/$base_name" "${species}_short" "$dbs"
 
 				local status=$?
 
@@ -654,9 +636,9 @@ if [[ "$reac_hierarchy" == "y" ]]; then
 		method_dir="/data/$method"
 		if [[ -d "$method_dir" ]]; then
 			printf "Generating REACTOME hierarchy trees for %s.\n" "$method"
-			source ./4_panther_plus/normalize_name.sh "$species"
+			source ./4_panther_plus/normalize_name.sh "${species}"
 			if [[ -z "$long_name" ]]; then
-				printf "Input species '%s' not found.\n" "$species"
+				printf "Input species '%s' not found.\n" "${species}"
 				exit 1
 			fi
 			./flags/reactome_tree/run.sh "$method_dir" "$long_name"
