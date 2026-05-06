@@ -1,18 +1,19 @@
 #!/bin/bash
 
 if [ $# -lt 2 ]; then
-	printf "Usage: %s <input_ids_map> <species> [gprofiler_dbs]\n" "$0"
+	printf "Usage: %s <input_map_file> <species> [gprofiler_dbs]\n" "$0"
 	exit 1
 fi
 
-input_file="$1"
+input="$1"
 species="$2"
 gprofiler_dbs="${3:-}"
 
-query_ids=$(awk -F'\t' 'NF && $1 != "" { print $1 }' "$input_file")
+# use entrez gene ids as default for gprofiler queries, if not present in input map file, use uniprot or symbol ids (in that order)
+query_ids=$(awk -F'\t' 'NF && $1 != "" { print $1 }' "$input")
 
 gprofiler_dbs=$(printf '%s' "$gprofiler_dbs" | tr -d '[:space:]')
-
+# if gprofiler_dbs is empty, use all datasets, otherwise use the selected ones (after validating them)
 if [[ -z $gprofiler_dbs ]]; then
 	printf "Requesting to all available datasets\n"
 	datasets=("GO:MF" "GO:CC" "GO:BP" "KEGG" "REAC" "WP" "TF" "MIRNA" "HPA" "CORUM" "HP")
@@ -41,11 +42,11 @@ else
 fi
 
 if [ ${#datasets[@]} -eq 0 ]; then
-	printf "Error: No valid datasets selected declared in 'gprofiler_dbs'.\n"
+	printf "❌ [MODULE 3] Configuration Error: Variable invalid values in 'gprofiler_dbs'.\n" >&2
 	exit 1
 fi
 
-# convert to json
+# convert datasets to json and query to array
 datasets_json=$(printf '"%s",' "${datasets[@]}" | sed 's/,$//')
 query_array=$(printf "%s\n" "$query_ids" | awk '{printf "\"%s\",", $0}' | sed 's/,$//')
 json_data="{\"organism\": \"$species\", \"query\":[$query_array], \"sources\":[$datasets_json], \"significance_threshold_method\": \"fdr\", \"user_threshold\": \"0.05\", \"numeric_ns\": \"ENTREZGENE_ACC\" }"

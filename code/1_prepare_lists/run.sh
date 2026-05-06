@@ -14,7 +14,7 @@ results_dir="/data/prepared_gene_lists"
 
 if [[ -d "$results_dir" ]]; then
 	if [[ -n "$(ls -A "$results_dir" 2>/dev/null)" ]]; then
-		printf "⚠️ [MODULE 1] Error: Directory '%s' exists and is NOT empty. Please clear it first.\n" "$results_dir" >&2
+		printf "❌ [MODULE 1] Error: Directory '%s' exists and is NOT empty. Please clear it first.\n" "$results_dir" >&2
 		exit 1
 	fi
 else
@@ -30,7 +30,7 @@ else
 fi
 
 if [[ -z "$gene" ]]; then
-	printf "❌ [MODULE 1] Configuration Error: Variable '%s' is undefined or empty.\n" "$gene" >&2
+	printf "❌ [MODULE 1] Configuration Error: Variable 'gene' is undefined or empty.\n" >&2
 	exit 1
 else
 	if ! [[ "$gene" =~ ^[0-9]+$ ]]; then
@@ -126,6 +126,6 @@ if ls *_genes_list >/dev/null 2>&1; then
 		fi
 	done
 else
-	printf "⚠️ No gene list files found.\n"
+	printf "⚠️ No gene lists files found.\n"
 	exit 2
 fi

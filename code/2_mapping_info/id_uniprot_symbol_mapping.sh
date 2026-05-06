@@ -14,7 +14,7 @@ curl -o "$tmp_file" \
 	"https://rest.uniprot.org/uniprotkb/stream?query=organism_id:${taxon}&format=tsv&fields=xref_geneid,accession,gene_primary,protein_name,organism_name"
 
 if [[ ! -s "$tmp_file" ]]; then
-	echo "❌ [MODULE 2] Error: Gene mapping file download failed or file is empty."
+	echo "❌ [MODULE 2] Error: Gene mapping file download failed or file is empty." >&2
 	exit 1
 fi
 
@@ -41,8 +41,8 @@ NR > 1 {
 	head -n 1 "unsorted"
 
 	# keep all rows, including empty geneIDs rows
-	#awk -F'\t' 'NR>1 && $1 != ""' "unsorted" | sort -t$'\t' -k1,1n
-	#awk -F'\t' 'NR>1 && $1 == ""' "unsorted"
+	# awk -F'\t' 'NR>1 && $1 != ""' "unsorted" | sort -t$'\t' -k1,1n
+	# awk -F'\t' 'NR>1 && $1 == ""' "unsorted"
 
 	# exclude empty geneIDs rows (not references, simplify mapping)
 	awk -F'\t' 'NR > 1 && $1 != "" && $1 != "NA" && $1 != "-"' "unsorted" | sort -t$'\t' -k1,1n

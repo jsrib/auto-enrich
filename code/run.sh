@@ -92,7 +92,7 @@ else
 		printf "[MAIN] Match Found!\n"
 		printf "   --------------------------------------\n"
 		printf "   Common Name: %s\n" "${display_name}"
-		printf "   gProf curl ID:   %s\n" "${gprof_id}"
+		printf "   gProf curl ID:   %s\n" "${gprof_curl_id}"
 		printf "   Scientific Name:  %s\n" "${scientific_name}"
 		printf "   Taxon ID:    %s\n" "${taxon}"
 		printf "   --------------------------------------\n"
@@ -101,7 +101,7 @@ fi
 
 # species ids map file
 scientific_name=$(echo "$scientific_name" | tr ' ' '_')	# tr '[:upper:]' '[:lower:]'
-species_ids_map="/data/$annotations_dir/${scientific_name}_ids_map"
+species_map="/data/$annotations_dir/${scientific_name}_ids_map"
 
 IFS=',' read -ra selected_modules <<< "$modules"
 for module in "${selected_modules[@]}"; do
@@ -121,7 +121,7 @@ for module in "${selected_modules[@]}"; do
 			;;
 
 		2)	# Module 2 (map_ids_info) - /prepared_gene_lists directory must be present()
-			printf "[MODULE 2] Initializing: Mapping GeneIDs information (Uniprot, Symbol and Full name)...\n"
+			printf "[MODULE 2] Initializing: Mapping genes information (GeneID, Uniprot and Symbol)...\n"
 			mkdir -p "/data/$maps_dir"
 
 			shopt -s nullglob
@@ -139,92 +139,65 @@ for module in "${selected_modules[@]}"; do
 
 			for glist in "${gene_lists[@]}"; do
 				basename=$(basename "$glist")
-				output="/data/$maps_dir/${basename%.*}_mapped"
+				output="/data/$maps_dir/${basename%.*}_map"
 				
 				printf "Processing: %s\n" "$basename"
 				sed -i 's/\r$//' "$glist"
 
-				./2_mapping_info/run.sh "$glist" "${species_ids_map}" "$taxon"  "$output"
+				./2_mapping_info/run.sh "$glist" "${species_map}" "$taxon"  "$output"
 
-				if [[ ! $? -eq 0 ]]; then
+				status=$?
+				if [[ $status -ne 0 && $status -ne 2 ]]; then
 					printf "❌ [MODULE 2] Critical Error: Failed to map GeneIDs lists. Check logs for details.\n" >&2
 					exit 1
+				elif [[ $status -eq 2 ]]; then
+					printf "⚠️ [MODULE 2] Warning: Mapped list file '%s' already exists. Skipping...\n" "$output"
+					continue
 				else
-					printf "Generate output genes list map in file: %s\n" "$output"
-
+					printf "✅ [MODULE 2] Success: Gene list '%s' mapped ! Saved in %s.\n" "$basename" "$output"
 				fi
 			done
-			printf "✅ [MODULE 2] Success: GeneIDs list mapped! Saved in %s.\n" "$maps_dir"
+			printf "[MODULE 2] Mapping complete. Check '%s'.!\n" "$maps_dir"
 			;;
 
 		3) # Module 3 (gProfiler plus) - species and gprofiler dbs variables in config0()
-			printf "\nRunning Tool 3 (gProfiler_Plus) - Running Enrichment Analysis with g:Profiler g:GOSt tool\n"
-			gprof_annot_file="${species_short}_gProfiler_annotations.gmt"
-			working_annot_file="/data/$gprof_annot_file"
-			final_annot_path="$annotations_dir/$gprof_annot_file"
+			printf "[MODULE 3] Initializing: Running Enrichment Analysis with g:Profiler g:GOSt tool...\n"
+			gprof_gene_sets="/data/$annotations_dir/${scientific_name}_gProfiler_gene_sets.gmt"
 
-			# move annotation file to /data before runs
-			if [[ "$annotations_directory" == true ]]; then
-				annot_file=$(find "$annotations_dir" -type f -name "$gprof_annot_file")
-				if [[ -n "$annot_file" && -f "$annot_file" ]]; then
-					printf "gProfiler annotations file for %s found: %s.\n" "${species}" "$annot_file"
-					mv "$annot_file" "$working_annot_file"
-				fi
+			shopt -s nullglob
+			files=(/data/"$maps_dir"/*_map)
+			shopt -u nullglob
+
+			if [[ ${#files[@]} -eq 0 || ! -e "${files[0]}" ]]; then
+				printf "❌ [MODULE 3] Error: No mapped files found to process in 'mapped_gene_lists'. Make sure to add the '_map' suffix to filenames.\n"
+				exit 1
 			fi
 
-			cleanup_gprof_annotation() {
-				if [[ -f "$working_annot_file" ]]; then
-					mv "$working_annot_file" "$final_annot_path"
-				fi
-			}
-			trap cleanup_gprof_annotation EXIT
+			printf "Processing %d file(s)...\n" "${#files[@]}"
 
-			run_gprofiler() {
-				local input_file=$1
-				local base_name
-				local dbs=$2
-				base_name=$(basename "$input_file")
-				local save_name="${base_name%_map}"
-				local save_dir="/data/${gprof_dir}/${save_name}"
+			for gene_map in "${files[@]}"; do
+				basename=$(basename "$gene_map")
+				save_dir="/data/${gprof_dir}/${basename%_map}"
+				
+				printf "Running gProfiler for: %s\n" "$basename"
+				./3_gprofiler_plus/run.sh "$gene_map" "$gprof_curl_id" "${gprof_gene_sets}" "$save_dir" "$gprofiler_dbs"
 
-				printf "\nRunning gProfiler for: %s\n" "$base_name"
-				./3_gprofiler_plus/run.sh "$maps_dir/$base_name" "${species}_short" "$dbs"
-
-				local status=$?
-
-				if [ $status -eq 2 ]; then	#nNo significant results found
-					printf "⚠️ gProfiler run completed with no significant results (exit code 2).\n"
-				elif [ $status -eq 1 ]; then	# actual error
-					printf "❌ Error: gProfiler run failed (exit code 1). Check logs.\n"
-					exit 1
-				else
-					printf "✅ gProfiler run completed successfully.\n"
-					mkdir -p "$save_dir"
-					mv /data/results "$save_dir"
-					cp "$input_file" "$save_dir/"
-					printf "Saved results in: %s\n" "$save_dir/results"
-				fi
-			}
-
-			# input prepared gene lists by module 1
-			if [[ "$prepare_lists_ran" == true ]]; then
-				printf "Running g:Profiler g:GOSt on all prepared gene lists...\n"
-				for gene_map in "${maps[@]}"; do
-					run_gprofiler "$gene_map" "$gprofiler_dbs"
-				done
-			# input pre-generated mapped gene lists
-			else
-				map_files=(/data/"$maps_dir"/*_map)
-				if [[ -d "/data/$maps_dir" && ${#map_files[@]} -gt 0 ]]; then
-					printf "Running gProfiler g:GOSt on mapped files in %s...\n" "/data/$maps_dir"
-					for map_file in "${map_files[@]}"; do
-						run_gprofiler "$map_file" "$gprofiler_dbs"
-					done
-				else
-					printf "❌ No mapped_gene_lists directory found or no *_map files present, and no input provided.\n"
-					exit 1
-				fi
-			fi
+				status=$?
+				case $status in
+					0)
+						printf "✅ [MODULE 3] Run successful: Significant results found for '%s'.\n" "$save_dir"
+						printf "Results stored in: %s" "$save_dir"
+						;;
+					2)
+						printf "⚠️ [MODULE 3] Run Completed: No significant results found for '%s' list.\n" "$basename"
+						;;
+					*)
+						printf "❌ [MODULE 3] Critical Error: gProfiler run failed. Check logs for details.\n" >&2
+						exit 1
+						;;
+				esac
+			done
+			printf "[MODULE 3] Complete: Gene lists analyzed with gProfiler. Check 'gprofiler/results' for results!\n"
 			;;
 
 		4) # Module 4 (PANTHER plus) - species and gprofiler dbs variables in config0()
