@@ -36,11 +36,16 @@ NR > 1 {
 		}
 }' "$tmp_file" > "unsorted"
 
-# sort file
+# sort file (send empty geneids lines to bottom)
 {
 	head -n 1 "unsorted"
-	awk -F'\t' 'NR>1 && $1 != ""' "unsorted" | sort -t$'\t' -k1,1n
-	awk -F'\t' 'NR>1 && $1 == ""' "unsorted"
+
+	# keep all rows, including empty geneIDs rows
+	#awk -F'\t' 'NR>1 && $1 != ""' "unsorted" | sort -t$'\t' -k1,1n
+	#awk -F'\t' 'NR>1 && $1 == ""' "unsorted"
+
+	# exclude empty geneIDs rows (not references, simplify mapping)
+	awk -F'\t' 'NR > 1 && $1 != "" && $1 != "NA" && $1 != "-"' "unsorted" | sort -t$'\t' -k1,1n
 	
 } > "$output_file"
 

@@ -92,8 +92,8 @@ else
 		printf "[MAIN] Match Found!\n"
 		printf "   --------------------------------------\n"
 		printf "   Common Name: %s\n" "${display_name}"
-		printf "   g:Prof curl ID:   %s\n" "${gprof_id}"
-		printf "   Scientific:  %s\n" "${scientific_name}"
+		printf "   gProf curl ID:   %s\n" "${gprof_id}"
+		printf "   Scientific Name:  %s\n" "${scientific_name}"
 		printf "   Taxon ID:    %s\n" "${taxon}"
 		printf "   --------------------------------------\n"
 	fi
@@ -139,23 +139,24 @@ for module in "${selected_modules[@]}"; do
 
 			for glist in "${gene_lists[@]}"; do
 				basename=$(basename "$glist")
-				output="/data/$maps_dir/${basename%.*}_mapped.tsv"
+				output="/data/$maps_dir/${basename%.*}_mapped"
 				
 				printf "Processing: %s\n" "$basename"
 				sed -i 's/\r$//' "$glist"
 
 				./2_mapping_info/run.sh "$glist" "${species_ids_map}" "$taxon"  "$output"
 
-				if [[ $? -eq 0 ]]; then
-					printf "✅ [MODULE 2] Success: GeneIDs list mapped! Saved in %s.\n" "$maps_dir"
-				else
+				if [[ ! $? -eq 0 ]]; then
 					printf "❌ [MODULE 2] Critical Error: Failed to map GeneIDs lists. Check logs for details.\n" >&2
 					exit 1
+				else
+					printf "Generate output genes list map in file: %s\n" "$output"
+
 				fi
 			done
+			printf "✅ [MODULE 2] Success: GeneIDs list mapped! Saved in %s.\n" "$maps_dir"
 			;;
 
-		
 		3) # Module 3 (gProfiler plus) - species and gprofiler dbs variables in config0()
 			printf "\nRunning Tool 3 (gProfiler_Plus) - Running Enrichment Analysis with g:Profiler g:GOSt tool\n"
 			gprof_annot_file="${species_short}_gProfiler_annotations.gmt"

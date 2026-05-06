@@ -14,59 +14,61 @@ taxon="$3"
 output_file="$4"
 
 if [[ ! -s "${input_file}" ]]; then
-	printf "❌ [MODULE 2] Input File Missing: Input GeneIDs file '%s' NOT FOUND or EMPTY in 'mapped_gene_lists'.\n" "${input_file}" >&2
+	printf "❌ [MODULE 2] Input File Missing: Input genes file '%s' NOT FOUND or EMPTY in 'prepared_gene_lists'.\n" "${input_file}" >&2
+	exit 1
+fi
+
+# remove empty rows
+sed -i 's/\r//g; /^[[:space:]]*$/d' "${input_file}"
+
+if [[ ! -s "${input_file}" ]]; then
+	printf "❌ [MODULE 2] Input File Empty: '%s' has no valid genes after cleaning.\n" "${input_file}" >&2
 	exit 1
 fi
 
 # species ids map file
 basename=$(basename "$species_map")
-if [ -s "$species_map" ]; then
-	printf "Species map file found: %s.\n" "$basename"
-	printf "Checking for IDs already mapped...\n"
-	# awk -F'\t' 'NR==FNR{a[$1];next} !($1 in a)' "$species_map" "${input_file}" > todo_ids
-else
+if [ ! -s "$species_map" ]; then
 	printf "File '%s' not found, creating new one...\n" "$basename"
 	./id_uniprot_symbol_mapping.sh "$taxon" "${species_map}"
 	printf "Species ids map file saved under '%s'...\n" "$species_map"
 fi
 
+# generate output map file
+if [[ ! -f "$output_file" ]]; then
+	awk -F'\t' '
+		NR==FNR {
+			if (FNR > 1) {
+				gid=$1; uni=$2; sym=$3
 
+				# anchor reference
+				key = gid
 
-## CONTINUE HERE TO HANDLE GENE MAPPING (download file and get corresponding input map files)
+				# concatenate uniprots (1 or more) for anchor
+				if (!seen[key, uni]++) {
+					uni_list[key] = (uni_list[key] == "" ? "" : uni_list[key] ",") uni
+				}
 
+				final_sym[key] = sym
 
-# if [[ ! -s todo_ids ]]; then
-# 	printf "All IDs already mapped in master file. Skipping API calls.\n"
-# else
-# 	# 50 ids map at a time (safe gaurd)
-# 	mkdir -p chunks
-# 	split -l 50 todo_ids chunks/chunk_
+				# map identifiers to anchor (geneid)
+				ref[gid] = key
+				ref[uni] = key
+				ref[sym] = key
+			}
+			next
+		}
 
-# 	total_chunks=$(ls chunks/chunk_* | wc -l)
-# 	current=0
-
-# 	for chunk in chunks/chunk_*; do
-# 		current=$((current + 1))
-# 		printf "[Batch %d/%d] Mapping GeneIDs...\n" "$current" "$total_chunks"
-
-# 		./gene-id-to-symbol.sh "$chunk" tmp_symbols
-# 		python3 gene-id-to-uniprotkb "$chunk" tmp_uniprots
-# 		# join in master file
-# 		awk -F '\t' 'NR==FNR { if (FNR > 1) uniprot[$1] = $2; next }
-# 					FNR > 1 && ($1 in uniprot) {
-# 						printf "%s\t%s\t%s\t%s\n", $1, uniprot[$1], $2, $3
-# 					}' tmp_uniprots tmp_symbols >> "$species_map"
-
-# 		rm tmp_symbols tmp_uniprots "$chunk"
-# 	done
-# 	rm -rf chunks todo_ids
-# fi
-
-# # generate output map file
-# printf "Generating specific output file: %s\n" "$output_file"
-
-# if [[ ! -f "$output_file" ]]; then
-# 	awk -F'\t' 'NR==FNR{map[$1]=$0; next} ($1 in map){print map[$1]}' "$species_map" "$input_file" > "$output_file"
-# else
-# 	printf "⚠️ Skipping: Mapped list file '%s' already exists in 'mapped_gene_lists'.\n" "$output_file"
-# fi
+		{
+			val = $1
+			if (val in ref) {
+				k = ref[val]
+				print k "\t" uni_list[k] "\t" final_sym[k]
+			} else {
+				print val "\tNA\tNA"
+			}
+		}
+	' "$species_map" "$input_file" > "$output_file"
+else
+	printf "⚠️ Skipping: Mapped list file '%s' already exists in 'mapped_gene_lists'.\n" "$output_file"
+fi
