@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 if [ $# -ne 2 ]; then
 	printf "Usage: %s <gprofiler_raw_output> <results_file>\n" "$0"

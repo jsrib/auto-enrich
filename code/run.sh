@@ -60,7 +60,6 @@ if [[ ! -f "$organism_idx" || ! -s "$organism_idx" ]]; then
 
 	if [ $? -eq 0 ]; then
 		echo "Success! Data saved to $organism_idx"
-		column -t -s $'\t' "$organism_idx" | head -n 5
 	else
 		echo "Error: Failed to process the data."
 		exit 1
@@ -87,8 +86,7 @@ else
 	if [[ -z "$result" ]]; then
 		printf "⚠️ [MAIN] No match found for '%s'. Try the exact Scientific Name or TaxonID.\n" "${species}"
 	else
-		# split result into variables
-		IFS=$'\t' read -r display_name gprof_id scientific_name taxon <<< "$result"
+		IFS=$'\t' read -r display_name gprof_curl_id scientific_name taxon <<< "$result"
 		printf "[MAIN] Match Found!\n"
 		printf "   --------------------------------------\n"
 		printf "   Common Name: %s\n" "${display_name}"
@@ -107,7 +105,7 @@ IFS=',' read -ra selected_modules <<< "$modules"
 for module in "${selected_modules[@]}"; do
 	case "$module" in
 		1)	# Module 1 (prepare_lists)
-			printf "[MODULE 1] Initializing: Preparing gene lists using input expression matrix...\n"
+			printf "🚀 [MODULE 1] Initializing: Preparing gene lists using input expression matrix...\n"
 			./1_prepare_lists/run.sh "$config"
 			if [ $? -eq 0 ]; then
 				printf "✅ [MODULE 1] Success: Gene lists generated! Saved in %s.\n" "/data/$prepared_lists_dir"
@@ -121,7 +119,7 @@ for module in "${selected_modules[@]}"; do
 			;;
 
 		2)	# Module 2 (map_ids_info) - /prepared_gene_lists directory must be present()
-			printf "[MODULE 2] Initializing: Mapping genes information (GeneID, Uniprot and Symbol)...\n"
+			printf "🚀 [MODULE 2] Initializing: Mapping genes information (GeneID, Uniprot and Symbol)...\n"
 			mkdir -p "/data/$maps_dir"
 
 			shopt -s nullglob
@@ -157,11 +155,11 @@ for module in "${selected_modules[@]}"; do
 					printf "✅ [MODULE 2] Success: Gene list '%s' mapped ! Saved in %s.\n" "$basename" "$output"
 				fi
 			done
-			printf "[MODULE 2] Mapping complete. Check '%s'.!\n" "$maps_dir"
+			printf "[MODULE 2] Mapping complete. Check '%s'.!\n\n" "$maps_dir"
 			;;
 
 		3) # Module 3 (gProfiler plus) - species and gprofiler dbs variables in config0()
-			printf "[MODULE 3] Initializing: Running Enrichment Analysis with g:Profiler g:GOSt tool...\n"
+			printf "🚀 [MODULE 3] Initializing: Running Enrichment Analysis with g:Profiler g:GOSt tool...\n"
 			gprof_gene_sets="/data/$annotations_dir/${scientific_name}_gProfiler_gene_sets.gmt"
 
 			shopt -s nullglob
@@ -197,11 +195,11 @@ for module in "${selected_modules[@]}"; do
 						;;
 				esac
 			done
-			printf "[MODULE 3] Complete: Gene lists analyzed with gProfiler. Check 'gprofiler/results' for results!\n"
+			printf "[MODULE 3] Complete: Gene lists analyzed with gProfiler. Check 'gprofiler/results' for results!\n\n"
 			;;
 
 		4) # Module 4 (PANTHER plus) - species and gprofiler dbs variables in config0()
-			printf "\nRunning Tool 4 (PANTHER plus) - Running enrichment analysis using PANTHER Over-Representation test\n"
+			printf "🚀 [MODULE 4] Initializing: Running PANTHER enrichment analysis...\n"
 			# load and unload annotations files
 			handle_annotation_file() {
 				local action=$1  # "load" or "unload"
@@ -282,7 +280,7 @@ for module in "${selected_modules[@]}"; do
 			;;
 
 		5) # Module 5 (Prep GSEA inputs) - mandatory config5 ()
-			printf "\nRunning tool 5 (Preparing GSEA inputs)\n"
+			printf "🚀 [MODULE 5] Initializing: Preparing GSEA inputs\n"
 			config_file="/data/config5"
 			if [[ ! -f "$config_file" ]]; then
 				printf "❌ Error: config5 file not found in assigned /data. Exiting...\n"
@@ -304,7 +302,7 @@ for module in "${selected_modules[@]}"; do
 			;;
 
 		6) # GSEA plus - mandatory gsea_parameters file()
-			printf "\nRunning tool 6 (GSEA plus)\n"
+			printf "🚀 [MODULE 6] Initializing: Running GSEA plus\n"
 			gsea_parameters="/data/gsea_parameters"
 			if [[ ! -f "$gsea_parameters" ]]; then
 				printf "❌ Error: gsea_parameters file not found in assigned /data. Exiting...\n"
@@ -441,7 +439,7 @@ for module in "${selected_modules[@]}"; do
 			;;
 
 		7) # Module 7 (Filter EA results) - mandatory filtering parametes in config0()
-			printf "\nRunning tool 7 (Filtering Enrichment Analysis Annotations results)\n"
+			printf "🚀 [MODULE 7] Initializing: Filtering Enrichment Analysis Annotations results\n"
 
 			# set tools directory and structure
 			declare -A TOOL_DIRS=(

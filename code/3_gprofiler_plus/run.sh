@@ -1,14 +1,15 @@
 #!/bin/bash
 # gProfiler module 3
 cd /opt/3_gprofiler_plus
+set -euo pipefail
 
 if [ $# -lt 4 ]; then
-	printf "Usage: %s <input_map_file> <species> <gene_sets_file> <save_dir> [gprofiler_dbs]\n" "$0"
+	printf "Usage: %s <input_map_file> <gprof_curl_id> <gene_sets_file> <save_dir> [gprofiler_dbs]\n" "$0"
 	exit 1
 fi
 
 input="$1"
-species="$2"	# gprofiler curl id
+gprof_curl_id="$2"	# gprofiler curl id (from organism index file [id])
 gmt_file="$3"
 save_dir="$4"
 gprofiler_dbs="${5:-}"
@@ -29,26 +30,25 @@ fi
 
 # download (if not present) the gprofiler gene sets file *species specific 
 if [ ! -s "${gmt_file}" ]; then
-	url="https://biit.cs.ut.ee/gprofiler//static/gprofiler_full_${species}.name.gmt"
-	wget -O "$gmt_file" "$url"
+	./genes_sets_species.sh "${gprof_curl_id}" "${gmt_file}"
 	if [[ ! -s "$gmt_file" ]]; then
-		printf "❌ [MODULE 2] Error: gProfiler Gene Sets file download failed or file is empty."
+		printf "❌ [MODULE 3] Error: gProfiler Gene Sets file download failed or file is empty."
 		exit 1
 	fi
 else
 	printf "g:Profiler annotations file found for %s.\n" "$gmt_file"
 fi
 
-./request_curl.sh "${input}" "${species}" "${gprofiler_dbs}"
+./request_curl.sh "${input}" "${gprof_curl_id}" "${gprofiler_dbs}"
 raw_out="raw_output"
 
 # process raw into enriched fields output file
-output_fields="enrichment_fields.tsv"
-cp "$output_fields" "${save_dir}/"
-./process_raw.sh "${raw_out}" "${output_fields}"
+fields_results="enrichment_fields.tsv"
+./process_raw.sh "${raw_out}" "${fields_results}"
+cp "$fields_results" "${save_dir}/"
 
-#output_annotations="enriched_terms_annotations.tsv"
-./get_term_genes.sh "${input}" "${gmt_file}" "${output_fields}" "${save_dir}"
+./get_term_genes.sh "${input}" "${gmt_file}" "${fields_results}" "${save_dir}"
+#annots_results="enriched_terms_annotations.tsv"
 
 # split results by source
 # for file in *_results.csv; do
