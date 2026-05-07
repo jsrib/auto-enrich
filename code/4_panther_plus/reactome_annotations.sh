@@ -8,10 +8,10 @@ fi
 scientific_name="$1"
 output_file="$2"
 
-echo "Downloading all Reactome Levels file 'https://reactome.org/download/current/UniProt2Reactome_All_Levels.txt'"
+printf "Downloading all Reactome Levels file ('https://reactome.org/download/current/UniProt2Reactome_All_Levels.txt')\n"
 curl -o uniprot2reactome https://reactome.org/download/current/UniProt2Reactome_All_Levels.txt
 
-echo "Filtering Reactome pathways of '%s'." "$scientific_name" 
+printf "Filtering Reactome pathways of '%s'.\n" "$scientific_name"
 tmp_reactome="${scientific_name}_tmp"
 awk -F'\t' -v sp="$scientific_name" '$6 == sp' uniprot2reactome > "$tmp_reactome"
 rm -r uniprot2reactome

@@ -40,7 +40,7 @@ fi
 if [[ ! -f "/data/$panther_gene_sets" ]]; then 
 	./panther_annotations.sh "$common_name" "$panther_gene_sets" 2>/dev/null
 	if [[ ! -s "$panther_gene_sets" ]]; then
-		printf "❌ [MODULE 3] Error: PANTHER Gene Sets file download failed or file is empty."
+		printf "❌ [MODULE 4] Error: PANTHER Gene Sets file download failed or file is empty."
 		exit 1
 	fi
 else
@@ -50,7 +50,7 @@ fi
 if [[ ! -f "/data/$reactome_gene_sets" ]]; then
 	./reactome_annotations.sh "$scientific_name" "$reactome_gene_sets" 2>/dev/null
 	if [[ ! -s "$reactome_gene_sets" ]]; then
-		printf "❌ [MODULE 3] Error: REACTOME Gene Sets file download failed or file is empty."
+		printf "❌ [MODULE 4] Error: REACTOME Gene Sets file download failed or file is empty."
 		exit 1
 	fi
 else
