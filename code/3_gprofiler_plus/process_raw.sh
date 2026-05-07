@@ -14,6 +14,8 @@ if [ ! -f "$input_file" ]; then
 	exit 1
 fi
 
+printf "Processing enrichment fields...\n"
+
 # process the raw gprofiler output, extracting relevant fields and reformatting them into a tab-separated file with a header 
 printf "TermID\tName\tDescription\tSource\tpValue_FDR\tPrecision\tRecall\tQuerySize\tCoverage\tIntersectionSize\tTermSize\tSource_order\tEffective_domain_size\tParents\tGroup_ID\tSignificant\n" > "$output_file"
 
@@ -37,7 +39,7 @@ jq -r '.result[] | [
 ] | @tsv' "$input_file" >> "$output_file"
 
 if [ $? -eq 0 ]; then
-	printf "Processing successful. Output saved to %s.\n" "$output_file"
+	printf "Processing successful. Output saved to '%s'.\n" "$output_file"
 else
 	printf "❌ [MODULE 3] Error: Processing raw results failed.\n"
 	exit 1

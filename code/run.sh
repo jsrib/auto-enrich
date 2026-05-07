@@ -173,18 +173,17 @@ for module in "${selected_modules[@]}"; do
 
 			printf "Processing %d file(s)...\n" "${#files[@]}"
 
-			for gene_map in "${files[@]}"; do
-				basename=$(basename "$gene_map")
+			for input_map in "${files[@]}"; do
+				basename=$(basename "$input_map")
 				save_dir="/data/${gprof_dir}/${basename%_map}"
 				
 				printf "Running gProfiler for: %s\n" "$basename"
-				./3_gprofiler_plus/run.sh "$gene_map" "$gprof_curl_id" "${gprof_gene_sets}" "$save_dir" "$gprofiler_dbs"
+				./3_gprofiler_plus/run.sh "$input_map" "$gprof_curl_id" "${gprof_gene_sets}" "${save_dir}" "$gprofiler_dbs"
 
 				status=$?
 				case $status in
 					0)
-						printf "✅ [MODULE 3] Run successful: Significant results found for '%s'.\n" "$save_dir"
-						printf "Results stored in: %s" "$save_dir"
+						printf "✅ [MODULE 3] Run successful: Significant results stored in '%s'.\n" "$save_dir"
 						;;
 					2)
 						printf "⚠️ [MODULE 3] Run Completed: No significant results found for '%s' list.\n" "$basename"
@@ -195,7 +194,7 @@ for module in "${selected_modules[@]}"; do
 						;;
 				esac
 			done
-			printf "[MODULE 3] Complete: Gene lists analyzed with gProfiler. Check 'gprofiler/results' for results!\n\n"
+			printf "✅ [MODULE 3] Complete: Gene lists analyzed with gProfiler. Check 'gprofiler/results' for results!\n\n"
 			;;
 
 		4) # Module 4 (PANTHER plus) - species and gprofiler dbs variables in config0()

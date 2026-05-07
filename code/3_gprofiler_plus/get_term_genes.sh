@@ -8,165 +8,115 @@ fi
 
 map_file="$1" # input file with gene id mapping (geneid, uniprot, symbol)
 gmt_file="$2"
-fields_file="$3"
+enriched_fields_file="$3"
 save_dir="$4"
 
-output_file="$save_dir/enriched_terms_annotations.tsv"
+output_file="enriched_terms_annotations.tsv"
 
 if [ ! -f "$gmt_file" ]; then
 	printf "❌ [MODULE 3] Error: gProfiler gene sets file not found.\n"
 	exit 1
 fi
 
-if [ ! -f "$fields_file" ]; then
-	printf "❌ [MODULE 3] Error: Enriched fields file '%s' not found.\n" "$fields_file"
+if [ ! -f "$enriched_fields_file" ]; then
+	printf "❌ [MODULE 3] Error: Enriched fields file '%s' not found.\n" "$enriched_fields_file"
 	exit 1
 fi
 
+printf "Processing enriched terms annotations...\n"
+
 printf "TermID\tName\tSource\tCoverage\tIntersectionSize\tGenes_in_intersection\tTermSize\tGenes_in_term\n" > "$output_file"
 
-declare -A GMT_MAP
-printf "Indexing GMT file for fast lookup...\n"
-while IFS=$'\t' read -r term_id desc genes; do
-	GMT_MAP["$term_id"]="${genes//"$IFS"/ }" # Store genes space-separated
-done < <(cut -f1,2,3- "$gmt_file")
+awk -F'\t' -v save_dir="$save_dir" -v out_file="$output_file" '
+	# load the Map File (GeneID -> Symbol and Uniprots)
+	NR==FNR {
+		if (FNR > 1 && $1 != "") {
+			gene_ids[$1] = $1
+			id_to_sym[$1] = $3
+			id_to_uni[$1] = $2
+			# keep a list of input of unique symbols
+			input_symbols[$3] = $1
+		}
+		next
+	}
 
-# loop over enriched terms and get genes in term and intersection
-tail -n +2 "$fields_file" | while IFS=$'\t' read -r term_id name _ source _ _ _ queryS coverage interS termS _ _ _ _ _; do
-	((term_index++))
-	
-	# simple check to skip sources
-	if [[ "$source" == "KEGG" || "$source" == "TF" ]]; then
-		printf "WARNING: Skipping %s — source %s omitted.\n" "$term_id" "$source"
-		continue
-	fi
+	# load the enriched terms
+	FILENAME == ARGV[2] {
+		if (FNR > 1) {
+			term_id = $1
+			source = $4
+			# skip restricted sources
+			if (source == "KEGG" || source == "TF") next
 
-	# instant lookup from memory
-	genes_in_term_str="${GMT_MAP[$term_id]}"
-	[[ -z "$genes_in_term_str" ]] && continue
+			# store name and source
+			active_terms[term_id] = $2  # Name
+			term_source[term_id] = source
+		}
+		next
+	}
 
-	# FAST SANITIZATION: Use Bash parameter expansion instead of 'sed'
-	# s/[,/]/ /g equivalent:
-	temp_name="${name//,/ }"
-	sanitized_name="${temp_name//\// }"
-	sanitized_termid="${term_id//:/_}"
-	
-	term_dir="${save_dir}/${source}/annotations/${sanitized_termid}_${sanitized_name}"
-	mkdir -p "$term_dir"
+	# process the GMT File
+	FILENAME == ARGV[3] {
+		term_id = $1
+		if (term_id in active_terms) {
+			name = active_terms[term_id]
+			src = term_source[term_id]
+			
+			# sanitize paths
+			s_term = term_id; gsub(/:/, "_", s_term)
+			s_name = name
 
-	# GENERATE GENES_IN_TERM FILE - Convert space-separated string back to newline-separated file
-	printf "%b" "${genes_in_term_str// /\n}" > "${term_dir}/genes_in_term"
-	term_size=$(echo "$genes_in_term_str" | wc -w)
+			# replace EVERYTHING except letters, numbers, underscores, and dashes
+			gsub(/[^a-zA-Z0-9_-]/, "_", s_name) 
+			gsub(/__+/, "_", s_name)			# Collapse multiple underscores
+			gsub(/^_|_$/, "", s_name)			# Trim underscores from edges
+			
+			term_path = save_dir "/" src "/annotations/" s_term "_" s_name
+			
+			# create directory for this term (use \047 as single quotes in system call)
+			system("mkdir -p \047" term_path "\047")
+			
+			# intersection and term size counters, and gene lists
+			inter_size = 0; term_size = 0; inter_str = ""; term_str = ""
+			inter_file = term_path "/genes_in_intersection"
+			term_file = term_path "/genes_in_term"
+			
+			print "GeneID\tGeneSymbol\tUniprots" > inter_file
+			
+			# columns 3 to end are genes in the gprofiler gmt file
+			for (i=3; i<=NF; i++) {
+				gene = $i
+				if (gene == "") continue
+				term_size++
+				term_str = (term_str == "" ? "" : term_str " ") gene
+				print gene > term_file
+				
+				# check if gene symbol is in input symbols (intersection)
+				if (gene in input_symbols) {
+					gid = input_symbols[gene]
+					inter_size++
+					inter_str = (inter_str == "" ? "" : inter_str " ") gene
+					print gid "\t" id_to_sym[gid] "\t" id_to_uni[gid] >> inter_file
+				}
+			}
+			
+			# calculate coverage
+			coverage = (term_size > 0 ? inter_size / term_size : 0)
+			
+			# append to final file
+			printf "%s\t%s\t%s\t%.4f\t%d\t%s\t%d\t%s\n", 
+				term_id, name, src, coverage, inter_size, inter_str, term_size, term_str >> out_file
+			
+			# close per-term files to avoid "too many open files" error
+			close(inter_file)
+			close(term_file)
+		}
+	}
+' "$map_file" "$enriched_fields_file" "$gmt_file"
 
-	# calculate Intersection
-	intersection_file="${term_dir}/genes_in_intersection"
-	printf "GeneID\tUniprots\tGeneSymbol\n" > "$intersection_file"
-	
-	# load term genes into a local associative array for O(1) lookup
-	declare -A term_lookup=()
-	for g in $genes_in_term_str; do term_lookup["$g"]=1; done
-
-	genes_in_intersection=()
-	for gene_id in "${input_gene_ids[@]}"; do
-		symbol="${ID_TO_SYMBOL[$gene_id]}"
-		if [[ -n "$symbol" && ${term_lookup["$symbol"]+_} ]]; then
-			printf "%s\t%s\t%s\n" "$gene_id" "${ID_TO_UNIPROT[$gene_id]:-NA}" "$symbol" >> "$intersection_file"
-			genes_in_intersection+=("$symbol")
-		fi
-	done
-
-	# final metrics
-	inter_size=${#genes_in_intersection[@]}
-	calc_coverage=$(awk -v m="$inter_size" -v t="$term_size" 'BEGIN { printf "%.4f", (t>0 ? m/t : 0) }')
-	inter_str="${genes_in_intersection[*]}"
-
-	printf "%s\t%s\t%s\t%s\t%d\t%s\t%d\t%s\n" \
-		"$term_id" "$name" "$source" "$calc_coverage" "$inter_size" \
-		"$inter_str" "$term_size" "$genes_in_term_str" >> "$output_file"
-
-	unset term_lookup
-done
-
-
-# # read the input gene id mapping into associative arrays for quick lookup
-# declare -A ID_TO_SYMBOL
-# declare -A ID_TO_UNIPROT
-
-# while IFS=$'\t' read -r gene_id uniprot symbol || [[ -n "$gene_id" ]]; do
-# 	[[ "$gene_id" == "GeneID" ]] && continue
-# 	[[ -z "$gene_id" ]] && continue
-
-# 	ID_TO_SYMBOL["$gene_id"]="${symbol:-NA}"
-# 	ID_TO_UNIPROT["$gene_id"]="${uniprot:-NA}"
-# done < "${map_file}"
-
-# total_terms=$(($(wc -l < "${fields_file}") - 1))
-# term_index=0
-
-# # Pre-calculate the input gene list for the intersection check
-# # This avoids running printf/process substitution inside the loop
-# input_gene_ids=("${!ID_TO_SYMBOL[@]}")
-
-# tail -n +2 "$fields_file" | while IFS=$'\t' read -r term_id name _ source _ _ _ queryS coverage interS termS _ _ _ _ _; do
-# 	((term_index++))
-# 	printf "Processing enriched term %s/%s: %s %s (%s)\n" "$term_index" "$total_terms" "$term_id" "$name" "$source"
-	
-# 	if [[ "$source" == "KEGG" || "$source" == "TF" ]]; then
-# 		printf "WARNING: Skipping %s — source %s omitted.\n" "$term_id" "$source"
-# 		continue
-# 	fi
-
-# 	# extract GMT line
-# 	term_line=$(grep -P "^$term_id\t" "$gmt_file" | head -n 1)
-# 	[[ -z "$term_line" ]] && continue
-
-# 	#organize directories
-# 	sanitized_name=$(echo "$name" | sed 's/[,/]/ /g')
-# 	sanitized_termid=$(echo "$term_id" | sed 's/:/_/g')
-# 	term_dir="${save_dir}/${source}/annotations/${sanitized_termid}_${sanitized_name}"
-# 	mkdir -p "$term_dir"
-
-# 	# 1. Get genes from GMT and store in an associative array for instant lookup
-# 	# Skip first two columns (ID and Description)
-# 	declare -A current_term_genes=()
-# 	genes_in_term_str=""
-	
-# 	# Process GMT line into array and formatted string
-# 	IFS=$'\t' read -r -a elements <<< "$term_line"
-# 	for ((i=2; i<${#elements[@]}; i++)); do
-# 		gene="${elements[$i]}"
-# 		[[ -z "$gene" ]] && continue
-# 		current_term_genes["$gene"]=1
-# 		genes_in_term_str+="$gene "
-# 	done
-# 	term_size=${#current_term_genes[@]}
-
-# 	# 2. Calculate Intersection
-# 	intersection_file="${term_dir}/genes_in_intersection"
-# 	printf "GeneID\tUniprots\tGeneSymbol\n" > "$intersection_file"
-
-# 	genes_in_intersection=()
-# 	for gene_id in "${input_gene_ids[@]}"; do
-# 		symbol="${ID_TO_SYMBOL[$gene_id]}"
-# 		uniprots="${ID_TO_UNIPROT[$gene_id]:-NA}" # Use the correct array here
-		
-# 		# Check if the SYMBOL exists in the GMT term array
-# 		if [[ -n "$symbol" && ${current_term_genes[$symbol]+_} ]]; then
-# 			printf "%s\t%s\t%s\n" "$gene_id" "$uniprots" "$symbol" >> "$intersection_file"
-# 			genes_in_intersection+=("$symbol")
-# 		fi
-# 	done
-
-# 	# 3. Final metrics
-# 	intersection_size=${#genes_in_intersection[@]}
-# 	coverage=$(awk -v m="$intersection_size" -v t="$term_size" 'BEGIN { printf "%.4f", (t>0 ? m/t : 0) }')
-# 	genes_in_intersection_str="${genes_in_intersection[*]}"
-
-# 	# Save summary using Tabs to prevent CSV corruption
-# 	printf "%s\t%s\t%s\t%s\t%d\t%s\t%d\t%s\n" \
-# 		"$term_id" "$name" "$source" "$coverage" "$intersection_size" \
-# 		"$genes_in_intersection_str" "$term_size" "$genes_in_term_str" >> "$output_file"
-	
-# 	# Clean up array for next iteration
-# 	unset current_term_genes
-# done
+if [ $? -eq 0 ]; then
+	printf "Processing successful. Output saved to '%s'.\n" "$output_file"
+else
+	printf "❌ [MODULE 3] Error: Processing raw results failed.\n"
+	exit 1
+fi

@@ -48,36 +48,45 @@ fields_results="enrichment_fields.tsv"
 cp "$fields_results" "${save_dir}/"
 
 ./get_term_genes.sh "${input}" "${gmt_file}" "${fields_results}" "${save_dir}"
-#annots_results="enriched_terms_annotations.tsv"
+annots_results="enriched_terms_annotations.tsv"
+cp "$annots_results" "${save_dir}/"
 
 # split results by source
-# for file in *_results.csv; do
-# 	[[ ! -f "$file" ]] && continue
+for file in "$fields_results" "$annots_results"; do
+	[[ ! -f "$file" ]] && continue
 
-# 	line_count=$(wc -l < "$file")
-# 	if (( line_count <= 1 )); then
-# 		printf "No statistically significant results in %s\n" "$file"
-# 		exit 2
-# 	fi
-# 	cp "$file" "$results_dir/"
-# 	case "$file" in
-# 		short_results.csv) src_col=4 ;;
-# 		long_results.csv)  src_col=10 ;;
-# 		terms_annotations_results.csv) src_col=3 ;;
-# 		*) continue ;;
-# 	esac
+	# check if file empty
+	line_count=$(wc -l < "$file")
+	if (( line_count <= 1 )); then
+		printf "No statistically significant results in %s\n" "$file"
+		exit 1
+	fi
 
-# 	header=$(head -n 1 "$file")
-# 	mapfile -t sources < <(tail -n +2 "$file" | awk -F',' -v col="$src_col" '{print $col}' | sort -u)
-# 	for src in "${sources[@]}"; do
-# 		[[ -z "$src" ]] && continue
-# 		mkdir -p "$results_dir/$src"
-# 		{
-# 			echo "$header"
-# 			awk -F',' -v col="$src_col" -v val="$src" '$col == val' "$file"
-# 		} > "$results_dir/$src/${src}_$file"
-# 	done
-# done
+	# determine the Source column based on the filename (3 in fields_results, 4 in annots_results)
+	if [[ "$file" == "$fields_results" ]]; then
+		src_col=4
+	else
+		src_col=3
+	fi
 
-# mv "${results_dir}" /data
-# rm *_results.csv
+	header=$(head -n 1 "$file")
+	
+	# get unique sources from the file
+	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
+
+	for src in "${sources[@]}"; do
+		[[ -z "$src" ]] && continue
+		
+		# create source-specific directory
+		src_dir="$save_dir/$src"
+		if [[ ! -d "$src_dir" ]]; then
+			mkdir -p "$src_dir"
+		fi
+
+		# filter the file for this source and save as TSV
+		{
+			echo "$header"
+			awk -F'\t' -v col="$src_col" -v val="$src" '$col == val' "$file"
+		} > "$src_dir/${src}_$file"
+	done
+done
