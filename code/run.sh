@@ -142,7 +142,7 @@ for module in "${selected_modules[@]}"; do
 				printf "Processing: %s\n" "$basename"
 				sed -i 's/\r$//' "$glist"
 
-				./2_mapping_info/run.sh "$glist" "${species_map}" "$taxon"  "$output"
+				./2_mapping_info/run.sh "${glist}" "${species_map}" "${taxon}"  "${output}"
 
 				status=$?
 				if [[ $status -ne 0 && $status -ne 2 ]]; then
@@ -178,7 +178,7 @@ for module in "${selected_modules[@]}"; do
 				save_dir="/data/${gprof_dir}/${basename%_map}"
 				
 				printf "Running gProfiler for: %s\n" "$basename"
-				./3_gprofiler_plus/run.sh "$input_map" "$gprof_curl_id" "${gprof_gene_sets}" "${save_dir}" "$gprofiler_dbs"
+				./3_gprofiler_plus/run.sh "${input_map}" "${gprof_curl_id}" "${gprof_gene_sets}" "${save_dir}" "${gprofiler_dbs}"
 
 				status=$?
 				case $status in
@@ -194,88 +194,48 @@ for module in "${selected_modules[@]}"; do
 						;;
 				esac
 			done
-			printf "✅ [MODULE 3] Complete: Gene lists analyzed with gProfiler. Check 'gprofiler/results' for results!\n\n"
+			printf "✅ [MODULE 3] Complete: gProfiler analysis finished. Check 'gprofiler/results' for results!\n\n"
 			;;
 
 		4) # Module 4 (PANTHER plus) - species and gprofiler dbs variables in config0()
 			printf "🚀 [MODULE 4] Initializing: Running PANTHER enrichment analysis...\n"
-			# load and unload annotations files
-			handle_annotation_file() {
-				local action=$1  # "load" or "unload"
-				local suffix=$2
-				local file_name="${species_short}_${suffix}"
-				local source_file="${annotations_dir}/${file_name}"
-				local working_file="/data/${file_name}"
+			panther_gene_sets="/data/$annotations_dir/${scientific_name}_PTHR19.0_gene_sets.gmt"
+			reactome_gene_sets="/data/$annotations_dir/${scientific_name}_REAC_pathways.gmt"
+			#gos_gene_sets="/data/$annotations_dir/${scientific_name}_go_terms.gmt"
 
-				if [[ "$action" == "load" ]]; then
-					if [[ -f "$source_file" ]]; then
-						printf "Using annotation: %s\n" "$file_name"
-						mv "$source_file" "$working_file"
-					fi
-				elif [[ "$action" == "unload" ]]; then
-					if [[ -f "$working_file" ]]; then
-						mv "$working_file" "$annotations_dir/"
-					fi
-				fi
-			}
+			shopt -s nullglob
+			files=(/data/"$maps_dir"/*_map)
+			shopt -u nullglob
 
-			run_panther() {
-				local input_file=$1
-				local base_name=$(basename "$input_file")
-				local save_name="${base_name%_map}"
-				local save_dir="/data/${panther_dir}/${save_name}"
-				local dbs=$2
-				
-				if [[ "$annotations_directory" == true ]]; then
-					for suffix in "PTHR19.0_annotations" "REAC_annotations" "gene_uniprot"; do
-						handle_annotation_file load "$suffix"
-					done
-				fi
-				
-				printf "\nRunning PANTHER for: %s\n" "$base_name"
-				./4_panther_plus/run.sh "$maps_dir/$base_name" "${species}_short" "$dbs"
-
-				local status=$?
-
-				if [[ "$annotations_directory" == true ]]; then
-					for suffix in "PTHR19.0_annotations" "REAC_annotations" "gene_uniprot"; do
-						handle_annotation_file unload "$suffix"
-					done
-				fi
-
-				if [ $status -eq 2 ]; then	# no results found
-					printf "⚠️  PANTHER run completed with no significant results (exit code 2).\n"
-				elif [ $status -eq 1 ]; then	# actual error
-					printf "❌ Error: PANTHER run failed (exit code 1). Check logs.\n"
-					exit 1
-				else
-					printf "✅ PANTHER run completed successfully (exit code $status).\n"
-					mkdir -p "$save_dir"
-					mv /data/results "$save_dir"
-					cp "$input_file" "$save_dir/"
-					printf "Saved results in: %s\n" "$save_dir/results"
-				fi
-			}
-
-			# input prepared gene lists by module 1
-			if [[ "$prepare_lists_ran" == true ]]; then
-				printf "Running PANTHER analysis on all prepared gene lists...\n"
-				for gene_map in "${maps[@]}"; do
-					run_panther "$gene_map" "$panther_dbs"
-				done
-			# input pre-generated mapped gene lists
-			else
-				map_files=(/data/"$maps_dir"/*_map)
-				if [[ -d "/data/$maps_dir" && ${#map_files[@]} -gt 0 ]]; then
-					printf "Running PANTHER analysis on mapped files in %s...\n" "/data/$maps_dir"
-					for map_file in "${map_files[@]}"; do
-						run_panther "$map_file" "$panther_dbs"
-					done
-				else
-					printf "❌ No mapped_gene_lists directory found or no *_map files present, and no input provided.\n"
-					exit 1
-				fi
+			if [[ ${#files[@]} -eq 0 || ! -e "${files[0]}" ]]; then
+				printf "❌ [MODULE 4] Error: No mapped files found to process in '%s'.\n" "$maps_dir"
+				exit 1
 			fi
+
+			printf "Processing %d file(s)...\n" "${#files[@]}"
+
+			for input_map in "${files[@]}"; do
+				basename=$(basename "$input_map")
+				save_dir="/data/${panther_dir}/${basename%_map}"
+
+				printf "\nRunning PANTHER for: %s\n" "$basename"
+				./4_panther_plus/run.sh "${input_map}" "${taxon}" "${panther_gene_sets}" "${reactome_gene_sets}" "${save_dir}" "${panther_dbs}"
+
+				status=$?
+				case $status in
+					0)
+						printf "✅ [MODULE 4] Run successful: Significant results stored in '%s'.\n" "$save_dir"
+						;;
+					2)
+						printf "⚠️ [MODULE 4] Run Completed: No significant results found for '%s'.\n" "$basename"
+						;;
+					*)
+						printf "❌ [MODULE 4] Critical Error: PANTHER run failed for '%s'. Check logs.\n" "$basename" >&2
+						exit 1
+						;;
+				esac
+			done
+			printf "✅ [MODULE 4] Complete: PANTHER analysis finished. Check 'panther/results' for results!\n\n"
 			;;
 
 		5) # Module 5 (Prep GSEA inputs) - mandatory config5 ()

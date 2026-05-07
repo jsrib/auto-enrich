@@ -3,41 +3,62 @@
 cd /opt/4_panther_plus
 #set -eo pipefail
 
-if [ $# -lt 2 ]; then
-	printf "Usage: %s <ids_map_file> <species> [panther_dbs]\n" "$0"
+if [ $# -lt 6 ]; then
+	printf "Usage: %s <ids_map_file> <species> <panther_gene_sets> <reactome_gene_sets> <save_dir> [panther_dbs]\n" "$0"
 	exit 1
 fi
 
-input_file="/data/$1"
-species="$2"
-panther_dbs="${3:-}"
+input_file="$1"
+species_taxon="$2"
+panther_gene_sets="$3"
+reactome_gene_sets="$4"
+save_dir="$5"
+panther_dbs="${6:-}"
 
 if [ ! -f "${input_file}" ]; then
-	printf "Error: Input file '%s' not found.\n" "$input_file"
+	printf "[MODULE 4] Error: Input file '%s' not found.\n" "$input_file"
 	exit 1
 fi
 
-results_dir="results"
-# get species taxon, name, long and short from PANTHER supported_genomes
-source ./normalize_name.sh "$species"
+if [[ -d "$save_dir" ]]; then
+	if [[ -n "$(ls -A "$save_dir" 2>/dev/null)" ]]; then
+		printf "❌ [MODULE 4] Error: Directory '%s' already exists and is NOT empty. Please clear it first.\n" "$save_dir" >&2
+		exit 1
+	fi
+else
+	mkdir -p "$save_dir"
+fi
 
-if [[ -z "$taxon_id" || -z "$name" || -z "$long_name" || -z "$short_name" ]]; then
-	printf "Input species '%s' not found.\n" "$species"
+# with taxon get species scientific and common names from PANTHER supported_genomes
+source ./normalize_name.sh "$species_taxon"
+
+if [[ -z "$taxon_id" || -z "$scientific_name" || -z "$common_name" ]]; then
+	printf "[MODULE 4] Error: Input species '%s' not found.\n" "$species_taxon"
 	exit 1
 fi
 
-printf "Taxon ID, common and species name of '%s': %s, %s, %s and %s.\n" \
-	"$species" "$taxon_id" "$name" "$long_name" "$short_name"
+if [[ ! -f "/data/$panther_gene_sets" ]]; then 
+	./panther_annotations.sh "$common_name" "$panther_gene_sets" 2>/dev/null
+	if [[ ! -s "$panther_gene_sets" ]]; then
+		printf "❌ [MODULE 3] Error: PANTHER Gene Sets file download failed or file is empty."
+		exit 1
+	fi
+else
+	printf "PANTHER annotations file found for %s.\n" "$panther_gene_sets"
+fi
 
-panther_annot="${short_name}_PTHR19.0_annotations"
-reac_annot="${short_name}_REAC_annotations"
-uniprots_map="${short_name}_gene_uniprot"
-[[ ! -f "/data/$panther_annot" ]] && ./panther_annotations.sh "$name" "$short_name" && cp "$panther_annot" /data 2>/dev/null
-[[ ! -f "/data/$reac_annot" ]] && ./reactome_annotations.sh "$long_name" "$short_name" && cp "$reac_annot" /data 2>/dev/null
-[[ ! -f "/data/$uniprots_map" ]] && ./uniprot_map_symbol.sh "$short_name" "$taxon_id" && cp "$uniprots_map" /data 2>/dev/null
+if [[ ! -f "/data/$reactome_gene_sets" ]]; then
+	./reactome_annotations.sh "$scientific_name" "$reactome_gene_sets" 2>/dev/null
+	if [[ ! -s "$reactome_gene_sets" ]]; then
+		printf "❌ [MODULE 3] Error: REACTOME Gene Sets file download failed or file is empty."
+		exit 1
+	fi
+else
+	printf "REACTOME annotations file found for %s.\n" "$reactome_gene_sets"
+fi
 
-rm -rf "$results_dir"
-mkdir -p "$results_dir"
+exit 0
+
 
 ./panther_curl.sh "${input_file}" "${taxon_id}" "${panther_dbs}"
 raw_out=($(ls output_* 2>/dev/null || true))
@@ -61,7 +82,7 @@ for file in results_*; do
 done
 
 ./join_results.sh
-./get_terms_annotations.sh "${input_file}" "${long_name}" "/data/${panther_annot}" "/data/${reac_annot}" "/data/${uniprots_map}"
+./get_terms_annotations.sh "${input_file}" "${scientific_name}" "/data/${panther_annot}" "/data/${reac_annot}" "/data/${uniprots_map}"
 
 for file in *_results.csv; do
 	[[ ! -f "$file" ]] && continue
