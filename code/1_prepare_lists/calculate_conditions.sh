@@ -65,10 +65,11 @@ NR == 1 {
 		}
 
 		# wrap expression into log2
-		command = "echo \"scale=10; val=(" expr "); if (val > 0) l(val)/l(2) else -999\" | bc -l 2>/dev/null"
+		command = "echo \"scale=10; " expr "\" | bc -l 2>/dev/null"
 		
 		if ((command | getline result) > 0) {
-			if (result ~ /^-999/ || result == "") {
+			# Check if bc returned an empty string or error
+			if (result == "") {
 				printf "\tNaN";
 			} else {
 				printf "\t%.4f", result;
