@@ -240,31 +240,22 @@ for module in "${selected_modules[@]}"; do
 
 		5) # Module 5 (Prep GSEA inputs) - mandatory config5 ()
 			printf "🚀 [MODULE 5] Initializing: Preparing GSEA inputs\n"
-			config_file="/data/config5"
-			if [[ ! -f "$config_file" ]]; then
-				printf "❌ Error: config5 file not found in assigned /data. Exiting...\n"
-				exit 1
-			else
-				sed -i 's/\r$//' "$config_file"
-				source "$config_file"
-			fi
-
-			mkdir -p "/data/${gsea_dir}/inputs"
-			./5_prep_gsea_inputs/run.sh "$config_file"
+			save_dir="/data/${gsea_dir}"
+			./5_prep_gsea_inputs/run.sh "$config" "$save_dir"
 			if [[ $? -ne 0 ]]; then
-				printf "❌ Error: Prepare GSEA inputs failed.\n"
+				printf "❌ [MODULE 5] Critical Error: GSEA input preparation failed. Check logs for details.\n" >&2
 				exit 1
 			fi
 
 			prep_gsea_inputs_ran=true
-			printf "✅ GSEA inputs prepared successfully. Saved under /gsea/inputs\n"
+			printf "✅ [MODULE 5] GSEA inputs prepared successfully. Saved under %s\n" "$save_dir"
 			;;
 
 		6) # GSEA plus - mandatory gsea_parameters file()
 			printf "🚀 [MODULE 6] Initializing: Running GSEA plus\n"
 			gsea_parameters="/data/gsea_parameters"
 			if [[ ! -f "$gsea_parameters" ]]; then
-				printf "❌ Error: gsea_parameters file not found in assigned /data. Exiting...\n"
+				printf "❌ [MODULE 6] Critical Error: gsea_parameters file not found in assigned /data. Exiting...\n" >&2
 				exit 1
 			fi
 
