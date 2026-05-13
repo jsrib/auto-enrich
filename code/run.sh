@@ -142,7 +142,7 @@ for module in "${selected_modules[@]}"; do
 				printf "Processing: %s\n" "$basename"
 				sed -i 's/\r$//' "$glist"
 
-				./2_mapping_info/run.sh "${glist}" "${species_map}" "${taxon}"  "${output}"
+				./2_gene_mapping/run.sh "${glist}" "${species_map}" "${taxon}"  "${output}"
 
 				status=$?
 				if [[ $status -ne 0 && $status -ne 2 ]]; then
@@ -201,7 +201,7 @@ for module in "${selected_modules[@]}"; do
 			printf "🚀 [MODULE 4] Initializing: Running PANTHER enrichment analysis...\n"
 			panther_gene_sets="/data/$annotations_dir/${scientific_name}_PTHR19.0_gene_sets.gmt"
 			reactome_gene_sets="/data/$annotations_dir/${scientific_name}_REAC_pathways.gmt"
-			#gos_gene_sets="/data/$annotations_dir/${scientific_name}_go_terms.gmt"
+			gos_gene_sets="/data/$annotations_dir/${scientific_name}_go_terms.gmt"
 
 			shopt -s nullglob
 			files=(/data/"$maps_dir"/*_map)
@@ -218,8 +218,8 @@ for module in "${selected_modules[@]}"; do
 				basename=$(basename "$input_map")
 				save_dir="/data/${panther_dir}/${basename%_map}"
 
-				printf "\nRunning PANTHER for: %s\n" "$basename"
-				./4_panther_plus/run.sh "${input_map}" "${taxon}" "${panther_gene_sets}" "${reactome_gene_sets}" "${save_dir}" "${panther_dbs}"
+				printf "Running PANTHER for: %s\n" "$basename"
+				./4_panther_plus/run.sh "${input_map}" "${taxon}" "${save_dir}" "${panther_gene_sets}" "${reactome_gene_sets}" "${gos_gene_sets}" "${species_map}" "${panther_dbs}"
 
 				status=$?
 				case $status in

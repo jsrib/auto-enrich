@@ -36,7 +36,7 @@ jq -r '.result[] | [
 	("[" + (.parents | map(gsub(","; "_")) | join("_")) + "]"),
 	.group_id,
 	.significant
-] | @tsv' "$input_file" >> "$output_file"
+	] | @tsv' "$input_file" >> "$output_file"
 
 if [ $? -eq 0 ]; then
 	printf "Processing successful. Output saved to '%s'.\n" "$output_file"

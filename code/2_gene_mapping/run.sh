@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mapping info module 2
-cd /opt/2_mapping_info
+cd /opt/2_gene_mapping
 set -euo pipefail
 
 if [ $# -ne 4 ]; then

@@ -16,15 +16,13 @@ curl -s -X GET "https://pantherdb.org/services/oai/pantherdb/supportedgenomes" \
 if [ ! -s "$sup_genomes" ]; then
 	printf "❌ [MODULE 4] Error: Failed to fetch supported genomes from PANTHER API.\n"
 	exit 1
-else
-	cp $sup_genomes /data
 fi
 
 # extract long_name and name from official PANTHER name
 read_data=$(jq -r --arg tid "$taxon_id" '
-    .search.output.genomes.genome[] 
-    | select((.taxon_id | tonumber) == ($tid | tonumber)) 
-    | "\(.long_name)\t\(.name)"
+	.search.output.genomes.genome[] 
+	| select((.taxon_id | tonumber) == ($tid | tonumber)) 
+	| "\(.long_name)\t\(.name)"
 ' "$sup_genomes")
 
 if [ -z "$read_data" ]; then
@@ -35,6 +33,6 @@ fi
 scientific_name=$(echo "$read_data" | cut -f1)
 common_name=$(echo "$read_data" | cut -f2)
 
-printf "Taxon ID:   %s\n" "$taxon_id"
-printf "Scientific Name:  %s\n" "$scientific_name"
-printf "Common Name: %s\n" "$common_name"
+#printf "Taxon ID:   %s\n" "$taxon_id"
+#printf "Scientific Name:  %s\n" "$scientific_name"
+#printf "Common Name: %s\n" "$common_name"
