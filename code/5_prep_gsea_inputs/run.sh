@@ -13,7 +13,7 @@ source "$config"
 save_dir="$2"
 
 if [[ -z "$method" ]]; then
-	printf "❌ [MODULE 5] Configuration Error: Variable 'method' is undefined or empty.\n" >&2
+	printf "❌ [MODULE 5] Configuration Error: Variable 'method' is undefined or empty. Please specify 'classic' or 'preranked'\n" >&2
 	exit 1
 else
 	case "$method" in
