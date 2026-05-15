@@ -17,10 +17,10 @@ fi
 
 required_vars=("gene" "number_groups" "number_samples" "samples" "groups")
 for var in "${required_vars[@]}"; do
-    if [[ -z "${!var}" ]]; then
-        printf "❌ [MODULE 5] Configuration Error: Variable '%s' is undefined or empty.\n" "$var"
-        exit 1
-    fi
+	if [[ -z "${!var}" ]]; then
+		printf "❌ [MODULE 5] Configuration Error: Variable '%s' is undefined or empty.\n" "$var"
+		exit 1
+	fi
 done
 
 # num data rows, -header -empty lines
@@ -28,7 +28,6 @@ num_data_rows=$(( $(grep -cve '^\s*$' "$input_file") - 1))
 
 header=$(head -n 1 "$input_file" | sed $'s/\r//;s/^\xEF\xBB\xBF//')
 IFS=$'\t' read -ra cols <<< "$header"
-num_cols=${#cols[@]}
 
 #col idxs array
 declare -A col_indices
@@ -37,10 +36,7 @@ for i in "${!cols[@]}"; do
 	col_indices["$col"]=$((i + 1))
 done
 
-if ! [[ "$gene" =~ ^[0-9]+$ ]] || [ "$gene" -le 0 ] || [ "$gene" -gt "$num_cols" ]; then
-	printf "❌ [MODULE 5] Configuration Error: Gene column index '%s' is invalid.\n" "$gene"
-	exit 1
-fi
+IFS=',' read -ra sample_indices <<< "$samples"
 
 # .gct output format spec: https://docs.gsea-msigdb.org/#GSEA/GSEA_User_Guide/#preparing-data-files-for-gsea
 {
@@ -49,7 +45,7 @@ fi
 
 	# third row header: name, description, and sample names
 	printf "NAME\tDescription"
-	for idx in "${sample_cols[@]}"; do
+	for idx in "${sample_indices[@]}"; do
 		col_name="${cols[idx-1]}"
 		clean_name=$(echo "$col_name" | sed 's/[^[:alnum:]_]/_/g')
 		printf "\t%s" "$clean_name"

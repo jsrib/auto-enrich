@@ -10,6 +10,9 @@ fi
 
 param_file="$1"
 save_dir="$2"
+cp $param_file .
+
+head -50 $param_file
 
 if [ ! -f "${param_file}" ]; then
 	printf "❌ [MODULE 6] Configuration Error: Parameter file '${param_file}' not found.\n"
@@ -45,7 +48,7 @@ done < "${param_file}"
 
 # gmx provided?
 if [[ -z "$gmx_file" ]]; then
-	printf "\nError: 'gmx' parameter is required.\n"
+	printf "❌ [MODULE 6] Configuration Error: 'gmx' parameter is required.\n"
 	exit 1
 else
 	# prefix for output dir name
@@ -53,25 +56,24 @@ else
 	gmx_prefix=$(echo "$gmx_base" | sed -E 's/\.v[0-9]+\.[0-9]+.*//')
 fi
 
-if [[ ! -d "/$save_dir/$out_dir" ]]; then
-	mkdir -p "/$save_dir/$out_dir"
-fi
+# if [[ ! -d "/$save_dir/$out_dir" ]]; then
+# 	mkdir -p "/$save_dir/$out_dir"
+# fi
 
 # handle chip file, only necessary if collapse ON
 if [[ "$collapse_mode" == "Collapse" || "$collapse_mode" == "Remap_Only" ]]; then
-	if [[ -n "$chip_file" && -f "$chip_file" ]]; then
-		cp "$chip_file" .
-	else
+	if [[ ! -f "$chip_file" ]]; then
 		printf "❌ [MODULE 6] File Missing: chip '%s' file not found.\n" "${chip_file}"
+		exit 1
 	fi
 fi
 
 # unpack and run gsea cli
 zip_file="GSEA_LinuxIntel_4.4.0-WithJava.zip"
-if [[ ! -f "GSEA_Linux_4.4.0/gsea-cli.sh" ]]; then
-	echo "Unzipping $zip_file..."
-	unzip "$zip_file"
-fi
+	if [[ ! -f "GSEA_Linux_4.4.0/gsea-cli.sh" ]]; then
+		echo "Unzipping $zip_file..."
+		unzip -q "$zip_file"
+	fi
 
 # GSEApreranked
 if [[ -n "$rnk_file" ]]; then
@@ -83,49 +85,45 @@ if [[ -n "$rnk_file" ]]; then
 	# copy required files
 	for file in "$rnk_file" "$gmx_file"; do
 		if [[ ! -f "$file" ]]; then
-			printf "❌ [MODULE 6] File Missing: File '%s' not found.\n" "$file"
+			printf "File not found: '%s'.\n" "$file"
 			exit 1
 		fi
-		# copy from /gsea after module 5 run, or copy from /data running module 6 alone
-		[[ -f "$file" ]] && cp "$file" .
 	done
 
-	printf "\nRunning GSEAPreranked...\n"
+	printf "➡ Running GSEAPreranked...\n"
 	./GSEA_Linux_4.4.0/gsea-cli.sh GSEAPreranked -param_file "${param_file}"
 	
 	# rename new directory to include rnk filename
 	gsea_result_dir=$(find "${out_dir}" -maxdepth 1 -type d -name "my_analysis.GseaPreranked.*" 2>/dev/null)
 	if [[ -n "$gsea_result_dir" ]]; then
 		rnk_base=$(basename "$rnk_file" | sed 's/\.[^.]*$//')
-		new_dir="${out_dir}/${gmx_prefix}.${rnk_base}.GseaPreranked"
+		#new_dir="${out_dir}/${gmx_prefix}.${rnk_base}.GseaPreranked"
+		new_dir="GseaPreranked"
 		mv "$gsea_result_dir" "$new_dir"
 		echo "Renamed GSEA Preranked result directory to: $new_dir"
 	fi
 # GSEA classic
 elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 	if [[ -n "$rnk_file" ]]; then
-		printf "\nError: For GSEA Classic, 'rnk' must NOT be set.\n"
+		printf "❌ [MODULE 6] Configuration Error: For GSEA Classic, 'rnk' must NOT be set.\n"
 		exit 1
 	fi
 
 	# copy required files
 	for file in "$res_file" "$cls_file" "$gmx_file"; do
-		if [[ ! -f "/data/$file" && ! -f "/data/gsea/inputs/$file" ]]; then
-			printf "\nError: File %s not found in /data or /data/gsea/inputs.\n" "$file"
+		if [[ ! -f "$file" ]]; then
+			printf "File not found: '%s'.\n" "$file"
 			exit 1
 		fi
-
-		# copy from /gsea after module 5 run, or copy from /data running module 6 alone
-		[[ -f "/data/$file" ]] && cp "/data/$file" .
-		[[ -f "/data/gsea/inputs/$file" ]] && cp "/data/gsea/inputs/$file" .
 	done
 
 	label_line=$(sed -n '2p' "$cls_file")
 	label_names=$(echo "$label_line" | cut -c3-)
 	#label_name=$(echo "$label_names" | sed 's/ \+/_vs_/g')
-	new_dir="${out_dir}/${gmx_prefix}.${label_name}.GseaClassic"
+	#new_dir="${out_dir}/${gmx_prefix}.${label_name}.GseaClassic"
+	new_dir="${out_dir}/GseaClassic"
 
-	printf "\n➡ Running GSEA Classic...\n"
+	printf "➡ Running GSEA Classic...\n"
 	./GSEA_Linux_4.4.0/gsea-cli.sh GSEA -param_file "${param_file}"
 
 	# rename new directory to include phenotypes
@@ -147,6 +145,9 @@ printf "Organizing results directory...\n"
 ./organize_directory.sh "${new_dir}"
 printf "Processing report files...\n"
 ./process_reports.sh "${new_dir}"
+
+# rm "$new_dir"/*report*
+mv "$new_dir" "/data/$out_dir"
 
 # printf "Getting terms annotations...\n"
 #./get_terms_annotations.sh "${out_dir}" "$gmx_file"	#output=terms_results_file
@@ -184,5 +185,4 @@ printf "Processing report files...\n"
 # 	done
 # done
 
-rm "$new_dir"/*report*
-mv "$new_dir" "/data/$out_dir"
+

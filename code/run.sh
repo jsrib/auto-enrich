@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -eo pipefail
+set -eo pipefail
 
 config="/data/config"
 
@@ -97,10 +97,17 @@ else
 	fi
 fi
 
-# species ids map file
+# species ids map file (required in various modules, best to always have it)
 scientific_name=$(echo "$scientific_name" | tr ' ' '_')	# tr '[:upper:]' '[:lower:]'
 species_map="/data/$annotations_dir/${scientific_name}_ids_map"
+basename=$(basename "$species_map")
+if [ ! -s "$species_map" ]; then
+	printf "File '%s' not found, creating new one...\n" "$basename"
+	./2_gene_mapping/id_uniprot_symbol_mapping.sh "$taxon" "${species_map}"
+	printf "Species ids map file saved under '%s'...\n" "$species_map"
+fi
 
+# selected modules interation
 IFS=',' read -ra selected_modules <<< "$modules"
 for module in "${selected_modules[@]}"; do
 	case "$module" in
@@ -158,7 +165,7 @@ for module in "${selected_modules[@]}"; do
 			printf "[MODULE 2] Mapping complete. Check '%s'.!\n\n" "$maps_dir"
 			;;
 
-		3) # Module 3 (gProfiler plus) - species and gprofiler dbs variables in config0()
+		3) # Module 3 (gProfiler plus) - mapped_gene_lists directory in /data, species and gprofiler dbs variables in config()
 			printf "🚀 [MODULE 3] Initializing: Running Enrichment Analysis with g:Profiler g:GOSt tool...\n"
 			gprof_gene_sets="/data/$annotations_dir/${scientific_name}_gProfiler_gene_sets.gmt"
 
@@ -194,7 +201,7 @@ for module in "${selected_modules[@]}"; do
 						;;
 				esac
 			done
-			printf "✅ [MODULE 3] Complete: gProfiler analysis finished. Check 'gprofiler/results' for results!\n\n"
+			printf "[MODULE 3] Complete: gProfiler analysis finished. Check 'gprofiler/results' for results!\n\n"
 			;;
 
 		4) # Module 4 (PANTHER plus) - species and gprofiler dbs variables in config0()
@@ -235,7 +242,7 @@ for module in "${selected_modules[@]}"; do
 						;;
 				esac
 			done
-			printf "✅ [MODULE 4] Complete: PANTHER analysis finished. Check 'panther/results' for results!\n\n"
+			printf "[MODULE 4] Complete: PANTHER analysis finished. Check 'panther/results' for results!\n\n"
 			;;
 
 		5) # Module 5 (Prep GSEA inputs) - mandatory config5 ()
@@ -248,16 +255,18 @@ for module in "${selected_modules[@]}"; do
 			fi
 
 			prep_gsea_inputs_ran=true
-			printf "✅ [MODULE 5] GSEA inputs prepared successfully. Saved under %s\n" "$save_dir"
+			printf "[MODULE 5] GSEA inputs prepared successfully. Saved under %s\n" "$save_dir"
 			;;
 
 		6) # GSEA plus - mandatory gsea_parameters file()
 			printf "🚀 [MODULE 6] Initializing: Running Gene Set Enrichment Analysis (GSEA)...\n"
-			input_dir="/data"
+			inputs_dir="/data"
 			gene_sets_dir="/data/gene_sets"
 			save_dir="/data/${gsea_dir}/results"
+			# gsea run directory, where files must be for the run, in config should only be declared filenames (not paths)
+			run_dir="/opt/6_gsea_plus"
 
-			declare -A parameters(
+			declare -A parameters=(
 				# essencial
 				[res]=""					# classic
 				[cls]=""					# classic
@@ -266,7 +275,7 @@ for module in "${selected_modules[@]}"; do
 				[out]="results"				# pipeline default: results
 				[rpt_label]=""
 				# analysis parameters
-				[perm]=""					# classic = phenotype, preranked = gene_set
+				[permute]=""					# classic = phenotype, preranked = gene_set
 				[nperm]=""				# number of permutations (default: 1000)
 				[scoring_scheme]=""			# enrichment statistic (classic, default: weighted, weighted_p2, signal2noise)
 				[norm]=""					# normalization method
@@ -276,96 +285,115 @@ for module in "${selected_modules[@]}"; do
 				[chip]=""					# chip file
 				[collapse]=""				# collapse method (default: collapse, no_collapse, remap_only)
 				# visualization and report
-				[plot_top_x]=1000			# number of top gene sets to plot in results (gsea default: 20)
+				[plot_top_x]=1000			# number of top gene sets to plot in results (this also generates top genes in the enriched term <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
 				[make_sets]=""
-				[gui]="false"
-				[save_details]="false"
+				#[gui]="false"
+				#[save_details]="false"
 				# anymore parameters? see GSEA documentation
 			)
 
-			if [[ "$scientific_name" != "Homo sapiens" ]] && [[ "$scientific_name" != "Mus musculus" ]]; then
-				printf "❌ [MODULE 6] Invalid Species: For GSEA only 'Homo sapiens' and 'Mus musculus' are supported. Please specify a valid species.\n" >&2
+			if [[ "${scientific_name}" != "Homo_sapiens" ]] && [[ "${scientific_name}" != "Mus_musculus" ]]; then
+				printf "❌ [MAIN] Invalid Species: For GSEA only 'Homo sapiens' and 'Mus musculus' are supported (%s). Please specify a valid species.\n" >&2 "${scientific_name}"
 				exit 1
 			fi
 
 			if [[ -z "$method" ]]; then
-				printf "❌ [MODULE 6] Configuration Error: Variable 'method' is undefined or empty. Please specify 'classic' or 'preranked'.\n" >&2
+				printf "❌ [MAIN] Configuration Error: Variable 'method' is undefined or empty. Please specify 'classic' or 'preranked'.\n" >&2
 				exit 1
 			fi
 
 			# create gsea directory if doesnt exist
-			if [[ -d "/data/$gsea_dir" ]]; then
+			if [[ ! -d "/data/$gsea_dir" ]]; then
 				mkdir -p "/data/$gsea_dir"
 			fi
 
 			# handle gmx file generation or take as input set in gmx var
 			if [[ -n "$gmx" ]]; then
-				parameters["gmx"]="${gene_sets_dir}/$(basename "$gmx")"
+				cp "${gene_sets_dir}/$(basename "${gmx}")" "${run_dir}/"
+				parameters["gmx"]="$(basename "${gmx}")"
 			else
 				# Error if the directory doesn't exist OR if it exists but is empty
 				if [[ ! -d "$gene_sets_dir" || -z "$(ls -A "$gene_sets_dir" 2>/dev/null)" ]]; then
-					printf "❌ [MODULE 6] Error: Gene sets directory '%s' is missing or empty, and 'gmx' is not specified.\n" "$gene_sets_dir" >&2
+					printf "❌ [MAIN] Error: Gene sets directory '%s' is missing or empty, and 'gmx' is not specified.\n" "$gene_sets_dir" >&2
 					printf "Please define the 'gmx' variable or provide gene set files in the directory.\n" >&2
 					exit 1
 				else
+# ------ only join Mus gene sets (start with M) or Human (start with H), else everything
 					combined_genesets="/data/${gsea_dir}/combined_gene_sets.gmx"
 					cat "$gene_sets_dir/*" >> "$combined_genesets"
-					parameters["gmx"]="$combined_genesets"
+					cp "$combined_genesets" "${run_dir}/"
+					parameters["gmx"]="$(basename "${gmx}")"
 				fi
 			fi
 
-			# handle chip file generation by default or take as input if collapse method specified in config
-			if [[ -n "$collapse" && -z "$chip" ]]; then
-				if [[ $collapse == "Collapse" ]] || [[ $collapse == "Remap_Only" ]]; then
-					printf "❌ [MODULE 6] Configuration Error: 'collapse' method specified without a 'chip' file. Please provide a chip file to use collapse.\n" >&2
+			# Handle chip file generation or user-provided input
+			if [[ -n "$collapse" && "$collapse" != "No_Collapse" ]]; then
+				# Case: User wants to collapse/remap but forgot the chip file
+				if [[ -z "$chip" ]]; then
+					printf "❌ [MAIN] Configuration Error: 'collapse' method (%s) specified without a 'chip' file.\n" "$collapse" >&2
 					exit 1
-				else
-					if [[ ! -f ${chip} ]]; then
-						printf "❌ [MODULE 6] Configuration Error: Specified chip file '%s' not found.\n" "$chip" >&2
-						exit 1
-					fi
-					parameters["collapse"]="$collapse"
-					parameters["chip"]="${chip}"
 				fi
+				# Case: Both collapse and chip are provided
+				parameters["collapse"]="$collapse"
+				# Resolve and copy the chip file safely
+				if [[ -f "/data/$chip" ]]; then
+					cp "/data/$chip" "${run_dir}/"
+					parameters["chip"]="$(basename "$chip")"
+				else
+					printf "❌ [MAIN] Error: Provided chip file '/data/%s' not found.\n" "$chip" >&2
+					exit 1
+				fi
+			elif [[ "$collapse" == "No_Collapse" ]]; then
+				parameters["collapse"]="No_Collapse"
+				# No chip needed for No_Collapse
+			else
+				# Default pipeline behavior: Use self-generated chip file
+				parameters["collapse"]="Collapse"
+				# awk script generates chip file for every run (below)
 			fi
-			# else
-				# default pipeline behavior is to use collapse with self-generated chip file to map geneIDS into gene symbols
-				# parameters["collapse"]="Collapse"
-				# ---------- build script to generate chip file from species map file ----------
-				# ./6_gsea_plus/generate_chip_file.sh
-				# chip_file="/data/${gsea_dir}/chip_set_file.chip"
-				# parameters["chip"]="${chip_file}"
-			# fi
 
 			case "$method" in
 				classic)
 					run_file="/data/${gsea_dir}/gsea_classic_parameters"
-					parameters["perm"]="phenotype"
+					parameters["permute"]="phenotype"
 					if [[ "$prep_gsea_inputs_ran" == true ]]; then
 						printf "Using prepared inputs (method = '%s')\n" "$method"
 						printf "Running GSEA Classic with prepared inputs...\n"
 						inputs_dir="/data/${gsea_dir}/classic_inputs"
+						cp "${inputs_dir}/expression_dataset.gct" "${run_dir}"
+						cp "${inputs_dir}/phenotype_labels.cls" "${run_dir}"
 						# cp $run_file "${inputs_dir}/run_parameters"
-						parameters["res"]="${inputs_dir}/expression_dataset.gct"
-						parameters["cls"]="${inputs_dir}/phenotype_labels.cls"
+						parameters["res"]="expression_dataset.gct"
+						parameters["cls"]="phenotype_labels.cls"
 					else
 						if [[ -n "$res" && -n "$cls" ]]; then
-							parameters["res"]="/data/${res}"
-							parameters["cls"]="/data/${cls}"
+							cp "${inputs_dir}/${res}" "${run_dir}"
+							cp "${inputs_dir}/${cls}" "${run_dir}"
+							parameters["res"]="$(basename "${res}")"
+							parameters["cls"]="$(basename "${cls}")"
 							printf "Running GSEA Classic with provided .gct and .cls files...\n"
-							#cp "/data/${res}" /data/${gsea_dir}/
-							#cp "/data/${cls}" /data/${gsea_dir}/
 						else
-							printf "❌ [MODULE 6] Configuration Error: For 'classic' method, if not running module 5 (prepare gsea inputs), you must configure and provide both 'res' and 'cls' files.\n" >&2
+							printf "❌ [MAIN] Configuration Error: For 'classic' method, if not running module 5 (prepare gsea inputs), you must configure and provide both 'res' and 'cls' files.\n" >&2
 							exit 1
 						fi
 					fi
+
 					# fill any left over empty parameters set in the config by the user
 					for key in "${!parameters[@]}"; do
 						if [[ -z "${parameters[$key]}" && -n "${!key}" ]]; then
 							parameters["$key"]="${!key}"
 						fi
 					done
+
+					# if chip not provided then build one
+					if [[ -z "$chip" ]]; then
+						# chip set file build (pass dataset set in the config [res])
+						chip_file="/data/${gsea_dir}/chip_file_classic.chip"
+						./6_gsea_plus/generate_chip_file.sh "${parameters["res"]}" "${chip_file}" "${species_map}"
+						parameters["chip"]="$(basename "${chip_file}")"
+						cp "${chip_file}" "${run_dir}/"
+					fi
+
 					# set up the config file for this run
 					> $run_file
 					for key in "${!parameters[@]}"; do
@@ -376,15 +404,16 @@ for module in "${selected_modules[@]}"; do
 						fi
 					done
 					printf "Parameter file written to: %s\n" "$run_file"
+					# gsea run
 					./6_gsea_plus/run.sh "$run_file" "${save_dir}"
 					if [[ $? -ne 0 ]]; then
 						printf "❌ [MAIN - MODULE 6] Critical Error: GSEA Preranked run failed. Check logs for details.\n" >&2
 						exit 1
 					fi
-				;;
+					;;
 				preranked)
 					shopt -s nullglob
-					parameters["perm"]="gene_set"
+					parameters["permute"]="gene_set"
 					rnk_files=()
 					if [[ "$prep_gsea_inputs_ran" == true ]]; then
 						printf "Using prepared inputs (method = '%s')\n" "$method"
@@ -408,23 +437,33 @@ for module in "${selected_modules[@]}"; do
 						rnk_files=("$inputs_dir"/*)
 					fi
 					shopt -u nullglob
-
 					# run GSEApreranked for each rnk file found
 					if [[ ${#rnk_files[@]} -gt 0 ]]; then
 						for rnk in "${rnk_files[@]}"; do
 							[[ ! -f "$rnk" ]] && continue
-							parameters["rnk"]="$rnk"
-							base_name=$(basename "$rnk" .rnk)
-							# ------ needs testing
+							cp "${rnk}" "${run_dir}"
+							parameters["rnk"]="$(basename "${rnk}")"
+							base_name=$(basename "$rnk" .rnk | tr ' ' '_')
+# ------ needs testing
 							# parameters["rpt_label"]="GSEA_${base_name}"
 							printf "Processing: %s\n" "$base_name"
-							run_file="/data/${gsea_dir}/gsea_${base_name}_preranked_parameters"
+							run_file="/data/${gsea_dir}/parameters_${base_name}"
+
 							# fill any left over empty parameters set in the config by the user
 							for key in "${!parameters[@]}"; do
 								if [[ -z "${parameters[$key]}" && -n "${!key}" ]]; then
 									parameters["$key"]="${!key}"
 								fi
 							done
+
+							if [[ -z "$chip" ]]; then
+								# chip set file build (pass dataset set in the config [rnk])
+								chip_file="/data/${gsea_dir}/chip_set_${base_name}.chip"
+								./6_gsea_plus/generate_chip_file.sh "${parameters["rnk"]}" "${chip_file}" "${species_map}"
+								parameters["chip"]="$(basename "${chip_file}")"
+								cp "${chip_file}" "${run_dir}/"
+							fi
+
 							# set up the config file for this run
 							> $run_file
 							for key in "${!parameters[@]}"; do
@@ -435,6 +474,8 @@ for module in "${selected_modules[@]}"; do
 								fi
 							done
 							printf "Parameter file written to: %s\n" "$run_file"
+
+							# gsea run
 							./6_gsea_plus/run.sh "$run_file" "${save_dir}"
 							if [[ $? -ne 0 ]]; then
 								printf "❌ [MAIN - MODULE 6] Critical Error: GSEA Preranked run failed. Check logs for details.\n" >&2
@@ -442,15 +483,16 @@ for module in "${selected_modules[@]}"; do
 							fi
 						done
 					else
-						printf "❌ [MODULE 6] Configuration Error: No preranked (.rnk) files found to process.\n" "${inputs_dir}" >&2
+						printf "❌ [MAIN] Configuration Error: No preranked (.rnk) files found to process.\n" "${inputs_dir}" >&2
 						exit 1
 					fi
+					;;
 				*)
-					printf "❌ [MODULE 6] Configuration Error: Invalid method '%s'. Please specify 'classic' or 'preranked'.\n" "$method" >&2
+					printf "❌ [MAIN] Configuration Error: Invalid method '%s'. Please specify 'classic' or 'preranked'.\n" "$method" >&2
 					exit 1
-				;;
+					;;
 			esac
-			printf "✅ [MODULE 6] GSEA Preranked run completed successfully with significant results.\n"
+			printf "[MODULE 6] GSEA run completed successfully with significant results.\n"
 
 			# else
 			# 	printf "➡️ Running GSEA using manually provided gsea_parameters file...\n"
