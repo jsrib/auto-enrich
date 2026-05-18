@@ -35,6 +35,11 @@ else
 	mkdir -p "$save_dir"
 fi
 
+if [[ -z "$input" ]]; then
+	printf "❌ [MODULE 5] Configuration Error: Variable 'input' is undefined or empty. Please specify input file name in the 'config' file.\n" >&2
+	exit 1
+fi
+
 if [ ! -f "/data/${input}" ]; then
 	printf "❌ [MODULE 5] Configuration Error: Input expression matrix file '%s' not found in set working directory (/data).\n" "${input}" >&2
 	exit 1

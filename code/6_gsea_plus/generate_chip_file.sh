@@ -1,5 +1,7 @@
 #!/bin/bash
 set -euo pipefail
+# force fix, else always in opt and files not found
+cd /opt/6_gsea_plus
 
 if [ $# -ne 3 ]; then
     printf "Usage: %s <input_file> <output_file> <species_map>\n" "$0"
@@ -10,19 +12,20 @@ input_file="$1"
 output_file="$2"
 species_map="$3"
 
-if [ ! -f "$input_file" ]; then
-    printf "❌ [MODULE 6] File Missing: Input file '%s' not found.\n" "$input_file"
+ls
+
+if [ ! -s "$input_file" ]; then
+    printf "❌ [MODULE 6] File Missing: Input file '%s' not found (chip file generation).\n" "$input_file"
     exit 1
 fi
 
 if [ ! -s "$species_map" ]; then
-    printf "❌ [MODULE 6] File Missing: Species map file '%s' not found.\n" "$species_map"
+    printf "❌ [MODULE 6] File Missing: Species map file '%s' not found (chip file generation).\n" "$species_map"
     exit 1
 fi
 
 col_type="symbol"
 test_entry=$(awk -F'\t' 'NR==5 {print $1; exit}' "$input_file")
-echo $test_entry
 if [[ "$test_entry" =~ ^[0-9]+$ ]]; then
     col_type="geneid"
 elif [[ "$test_entry" =~ ^[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}$ ]]; then
@@ -31,7 +34,7 @@ fi
 
 if [[ "${col_type}" != "symbol" ]] && [[ "${col_type}" != "geneid" ]] && [[ "${col_type}" != "uniprot" ]]; then
     printf "❌ [MODULE 6] Error: Unknow gene identifier found in '%s'.\n" "$input_file"
-    printf "[MODULE 6] Valid identifiers: Entrez GeneIDs, Gene Symbols or UniprotKB IDs.\n"
+    printf "Valid identifiers (first column): Entrez GeneIDs, Gene Symbols or UniprotKB IDs.\n"
 fi
 
 printf "Detected input gene identifier type: %s\n" "$col_type"

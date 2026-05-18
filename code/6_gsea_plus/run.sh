@@ -56,14 +56,15 @@ else
 	gmx_prefix=$(echo "$gmx_base" | sed -E 's/\.v[0-9]+\.[0-9]+.*//')
 fi
 
-# if [[ ! -d "/$save_dir/$out_dir" ]]; then
-# 	mkdir -p "/$save_dir/$out_dir"
-# fi
+# create save dir if doesnt exist
+if [[ ! -d "/$save_dir" ]]; then
+	mkdir -p "/$save_dir"
+fi
 
 # handle chip file, only necessary if collapse ON
 if [[ "$collapse_mode" == "Collapse" || "$collapse_mode" == "Remap_Only" ]]; then
 	if [[ ! -f "$chip_file" ]]; then
-		printf "❌ [MODULE 6] File Missing: chip '%s' file not found.\n" "${chip_file}"
+		printf "❌ [MODULE 6] File Missing: chip file '%s' not found.\n" "${chip_file}"
 		exit 1
 	fi
 fi
@@ -82,7 +83,7 @@ if [[ -n "$rnk_file" ]]; then
 		exit 1
 	fi
 
-	# copy required files
+	# check required files in ./
 	for file in "$rnk_file" "$gmx_file"; do
 		if [[ ! -f "$file" ]]; then
 			printf "File not found: '%s'.\n" "$file"
@@ -91,16 +92,14 @@ if [[ -n "$rnk_file" ]]; then
 	done
 
 	printf "➡ Running GSEAPreranked...\n"
-	./GSEA_Linux_4.4.0/gsea-cli.sh GSEAPreranked -param_file "${param_file}"
+	./GSEA_Linux_4.4.0/gsea-cli.sh GSEAPreranked -param_file "${param_file}" -collapse "${collapse_mode}" -chip "${chip_file}"
 	
 	# rename new directory to include rnk filename
 	gsea_result_dir=$(find "${out_dir}" -maxdepth 1 -type d -name "my_analysis.GseaPreranked.*" 2>/dev/null)
 	if [[ -n "$gsea_result_dir" ]]; then
-		rnk_base=$(basename "$rnk_file" | sed 's/\.[^.]*$//')
-		#new_dir="${out_dir}/${gmx_prefix}.${rnk_base}.GseaPreranked"
-		new_dir="GseaPreranked"
-		mv "$gsea_result_dir" "$new_dir"
-		echo "Renamed GSEA Preranked result directory to: $new_dir"
+		rnk_base=$(basename "${rnk_file%.*}") # remove file extension for name
+		results_dir="${rnk_base}.${gmx_prefix}.GseaPreranked"
+		echo "Renamed GSEA Preranked result directory to: $results_dir"
 	fi
 # GSEA classic
 elif [[ -n "$res_file" && -n "$cls_file" ]]; then
@@ -109,7 +108,7 @@ elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 		exit 1
 	fi
 
-	# copy required files
+	# check required files in ./
 	for file in "$res_file" "$cls_file" "$gmx_file"; do
 		if [[ ! -f "$file" ]]; then
 			printf "File not found: '%s'.\n" "$file"
@@ -117,20 +116,17 @@ elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 		fi
 	done
 
-	label_line=$(sed -n '2p' "$cls_file")
-	label_names=$(echo "$label_line" | cut -c3-)
-	#label_name=$(echo "$label_names" | sed 's/ \+/_vs_/g')
-	#new_dir="${out_dir}/${gmx_prefix}.${label_name}.GseaClassic"
-	new_dir="${out_dir}/GseaClassic"
-
 	printf "➡ Running GSEA Classic...\n"
-	./GSEA_Linux_4.4.0/gsea-cli.sh GSEA -param_file "${param_file}"
+	./GSEA_Linux_4.4.0/gsea-cli.sh GSEA -param_file "${param_file}" -collapse "${collapse_mode}" -chip "${chip_file}"
 
 	# rename new directory to include phenotypes
 	gsea_result_dir=$(find "${out_dir}" -maxdepth 1 -type d -name "my_analysis.Gsea.*" 2>/dev/null)
 	if [[ -n "$gsea_result_dir" ]]; then
-		mv "$gsea_result_dir" "$new_dir"
-		printf "Renamed GSEA Classic result directory to: %s\n" "$new_dir"
+		label_line=$(sed -n '2p' "$cls_file")
+		label_names=$(echo "$label_line" | cut -c3-)
+		label_name=$(echo "$label_names" | sed 's/ \+/_vs_/g')
+		results_dir="${label_name}.${gmx_prefix}.GseaClassic"
+		printf "Renamed GSEA Classic result directory to: %s\n" "$results_dir"
 	fi
 # wrong config
 else
@@ -141,48 +137,54 @@ else
 	exit 1
 fi
 
+mkdir -p "$results_dir"
+# change gsea results directory
+mv "$gsea_result_dir" "raw_GSEA_output"
+mv "raw_GSEA_output" "$results_dir"
+# get reports file for results
+report_files=$(find "$results_dir/raw_GSEA_output" -type f -name "gsea_report_*.tsv")
+for file in $report_files; do
+	cp "$file" "$results_dir/"
+done
+
 printf "Organizing results directory...\n"
-./organize_directory.sh "${new_dir}"
+mv "$results_dir" "$save_dir"
+
 printf "Processing report files...\n"
-./process_reports.sh "${new_dir}"
+fields_results="${results_dir}/enrichment_fields.tsv"
+./process_reports.sh "${results_dir}" "${fields_results}"
 
-# rm "$new_dir"/*report*
-mv "$new_dir" "/data/$out_dir"
+printf "Getting enriched terms annotations...\n"
+./get_terms_annotations.sh "${results_dir}" "$fields_results" "$gmx_file"
+annots_results="${results_dir}/enriched_terms_annotations.tsv"
 
-# printf "Getting terms annotations...\n"
-#./get_terms_annotations.sh "${out_dir}" "$gmx_file"	#output=terms_results_file
-
-#terms_results_file="$new_dir/terms_annotations_results.csv"
-# results_files=("$new_dir/short_results.csv" "$new_dir/long_results.csv")
-
-# add source column from termos results file to short and long
-# for file in "${results_files[@]}"; do
-# 	tmp_name="$new_dir/tmp_name"
-# 	tmp_source="$new_dir/tmp_source"
-# 	tmp_rest="$new_dir/tmp_rest"
-
-# 	cut -d',' -f1 "$file" > "$tmp_name"
-# 	#cut -d',' -f2 "$terms_results_file" > "$tmp_source"
-# 	cut -d',' -f2- "$file" > "$tmp_rest"
-# 	paste -d',' "$tmp_name" "$tmp_source" "$tmp_rest" > "$file.tmp"
-# 	mv "$file.tmp" "$file"
-# 	rm "$tmp_name" "$tmp_source" "$tmp_rest"
-# done
-
-# # organize sources directory
-# for file in "$new_dir"/*_results.csv; do
-# 	[[ ! -f "$file" ]] && continue
-# 	base_file=$(basename "$file")
-# 	header=$(head -n 1 "$file")
-# 	# unique sources
-# 	mapfile -t sources < <(tail -n +2 "$file" | cut -d',' -f2 | sort -u)
-# 	for source in "${sources[@]}"; do
-# 		[[ -z "$source" ]] && continue
-# 		{
-# 			echo "$header"
-# 			awk -F',' -v col=2 -v val="$source" '$col == val' "$file"
-# 		} > "$new_dir/$source/${source}_$base_file"
-# 	done
-# done
-
+# split results by source
+for file in "$fields_results" "$annots_results"; do
+	[[ ! -f "$file" ]] && continue
+	# check if file empty
+	line_count=$(wc -l < "$file")
+	if (( line_count <= 1 )); then
+		printf "No statistically significant results in %s\n" "$file"
+		exit 1
+	fi
+	# copy files to results directory (already in save_dir)
+	cp "${file}" "${save_dir}/${results_dir}/"
+	src_col=2 #source column in files
+	header=$(head -n 1 "$file")
+	# get unique sources from the file
+	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
+	for src in "${sources[@]}"; do
+		[[ -z "$src" ]] && continue
+		# create source-specific directory
+		src_dir="${save_dir}/${results_dir}/$src"
+		if [[ ! -d "$src_dir" ]]; then
+			mkdir -p "$src_dir"
+		fi
+		# filter the file for this source and save as TSV
+		{
+			echo "$header"
+			awk -F'\t' -v col="$src_col" -v val="$src" '$col == val' "$file"
+		} > "$src_dir/${src}_$file"
+	done
+done
 

@@ -29,9 +29,11 @@ if [[ "$test_entry" =~ ^[0-9]+$ ]]; then
 	col_type="geneid"
 elif [[ "$test_entry" =~ ^[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}$ ]]; then
 	col_type="uniprot"
-else
+fi
+
+if [[ "${col_type}" != "symbol" ]] && [[ "${col_type}" != "geneid" ]] && [[ "${col_type}" != "uniprot" ]]; then
     printf "❌ [MODULE 2] Error: Unknow gene identifier found in '%s'." "$input_file"
-	printf "[MODULE 2] Valid identifiers: Entrez GeneIDs, Gene Symbols or UniprotKB IDs."
+	printf "Valid identifiers: Entrez GeneIDs, Gene Symbols or UniprotKB IDs."
 	exit 1
 fi
 

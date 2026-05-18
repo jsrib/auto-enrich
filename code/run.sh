@@ -255,7 +255,7 @@ for module in "${selected_modules[@]}"; do
 			fi
 
 			prep_gsea_inputs_ran=true
-			printf "[MODULE 5] GSEA inputs prepared successfully. Saved under %s\n" "$save_dir"
+			printf "✅ [MODULE 5] GSEA inputs prepared successfully. Saved under %s\n" "$save_dir"
 			;;
 
 		6) # GSEA plus - mandatory gsea_parameters file()
@@ -285,7 +285,7 @@ for module in "${selected_modules[@]}"; do
 				[chip]=""					# chip file
 				[collapse]=""				# collapse method (default: collapse, no_collapse, remap_only)
 				# visualization and report
-				[plot_top_x]=1000			# number of top gene sets to plot in results (this also generates top genes in the enriched term <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
+				[plot_top_x]=5000			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 5000; gsea default: 20
 				[make_sets]=""
 				#[gui]="false"
 				#[save_details]="false"
@@ -318,38 +318,60 @@ for module in "${selected_modules[@]}"; do
 					printf "Please define the 'gmx' variable or provide gene set files in the directory.\n" >&2
 					exit 1
 				else
-# ------ only join Mus gene sets (start with M) or Human (start with H), else everything
-					combined_genesets="/data/${gsea_dir}/combined_gene_sets.gmx"
-					cat "$gene_sets_dir/*" >> "$combined_genesets"
-					cp "$combined_genesets" "${run_dir}/"
-					parameters["gmx"]="$(basename "${gmx}")"
+					if [[ "${scientific_name}" == "Mus_musculus" ]]; then
+						species_label="Mm"
+					else
+						species_label="Hs"
+					fi
+					combined_gmx="combined_${species_label}_genesets.gmt"
+					combined_gmx_path="${run_dir}/${combined_gmx}"
+					> "$combined_gmx_path"
+					for gene_set in "${gene_sets_dir}"/*.gmt; do
+						[[ -f "$gene_set" ]] || continue
+						filename=$(basename "$gene_set")
+						# handle MSigDB files (always has year version on name, e.g. ...v2026...)
+						if [[ "$filename" =~ \.v20[0-9]{2} ]]; then
+							# if its mouse and file doesnt start with M skip it
+							if [[ "$species_label" == "Mm" && ! "$filename" =~ ^m ]]; then
+								continue
+							fi
+							# if its human and file starts with M skip it
+							if [[ "$species_label" == "Hs" && "$filename" =~ ^m ]]; then
+								continue
+							fi
+						fi
+						#  everything else passing the criterias is combined
+						cat "$gene_set" >> "$combined_gmx_path"
+					done
+					cp "$combined_gmx_path" "/data/${gsea_dir}"
+					parameters["gmx"]="$combined_gmx_path"
 				fi
 			fi
 
-			# Handle chip file generation or user-provided input
-			if [[ -n "$collapse" && "$collapse" != "No_Collapse" ]]; then
-				# Case: User wants to collapse/remap but forgot the chip file
-				if [[ -z "$chip" ]]; then
-					printf "❌ [MAIN] Configuration Error: 'collapse' method (%s) specified without a 'chip' file.\n" "$collapse" >&2
-					exit 1
-				fi
-				# Case: Both collapse and chip are provided
-				parameters["collapse"]="$collapse"
-				# Resolve and copy the chip file safely
-				if [[ -f "/data/$chip" ]]; then
-					cp "/data/$chip" "${run_dir}/"
-					parameters["chip"]="$(basename "$chip")"
+			# collapse mode and provided chip set file checks
+			if [[ -n "$collapse" ]]; then
+				if [[ "$collapse" != "Collapse" ]] && [[ "$collapse" != "Remap_only" ]]; then
+					# Case: User wants to collapse/remap but forgot the chip file
+					if [[ -z "$chip" ]]; then
+						printf "❌ [MODULE 6] Configuration Error: 'collapse' method (%s) specified without a 'chip' file (set in the config).\n" "$collapse" >&2
+						exit 1
+					fi
+					# Case: Both collapse and chip are provided
+					parameters["collapse"]="$collapse"
+					# Resolve and copy the chip file safely
+					if [[ -f "/data/$chip" ]]; then
+						cp "/data/$chip" "${run_dir}/"
+						parameters["chip"]="$(basename "$chip")"
+					else
+						printf "❌ [MODULE 6] Error: Provided chip file '/data/%s' not found.\n" "$chip" >&2
+						exit 1
+					fi
+				elif [[ "$collapse" == "No_Collapse" ]]; then
+					parameters["collapse"]="No_Collapse"
+					# No chip needed for No_Collapse
 				else
-					printf "❌ [MAIN] Error: Provided chip file '/data/%s' not found.\n" "$chip" >&2
-					exit 1
+					printf "❌ [MAIN] Configuration Error: Invalid collapse '%s'. Options are: 'Collapse', 'Remap_only' or 'No_collpase'.\n" "$method" >&2
 				fi
-			elif [[ "$collapse" == "No_Collapse" ]]; then
-				parameters["collapse"]="No_Collapse"
-				# No chip needed for No_Collapse
-			else
-				# Default pipeline behavior: Use self-generated chip file
-				parameters["collapse"]="Collapse"
-				# awk script generates chip file for every run (below)
 			fi
 
 			case "$method" in
@@ -390,8 +412,18 @@ for module in "${selected_modules[@]}"; do
 						# chip set file build (pass dataset set in the config [res])
 						chip_file="/data/${gsea_dir}/chip_file_classic.chip"
 						./6_gsea_plus/generate_chip_file.sh "${parameters["res"]}" "${chip_file}" "${species_map}"
-						parameters["chip"]="$(basename "${chip_file}")"
-						cp "${chip_file}" "${run_dir}/"
+						# if expression expression_dataset.gct already as gene symbols, no chip needed (and no collapse)
+						if [[ -f "${chip_file}" ]]; then
+							# File exists: Copy it and set parameters to Collapse
+							cp "${chip_file}" "${run_dir}/"
+							parameters["chip"]="$(basename "${chip_file}")"
+							parameters["collapse"]="Collapse"
+						else
+							# File does not exist: Handle No_Collapse
+							parameters["collapse"]="No_Collapse"
+							# Optional: Unset the chip key so GSEA doesn't look for a missing file
+							unset 'parameters["chip"]' 
+						fi
 					fi
 
 					# set up the config file for this run
@@ -460,8 +492,18 @@ for module in "${selected_modules[@]}"; do
 								# chip set file build (pass dataset set in the config [rnk])
 								chip_file="/data/${gsea_dir}/chip_set_${base_name}.chip"
 								./6_gsea_plus/generate_chip_file.sh "${parameters["rnk"]}" "${chip_file}" "${species_map}"
-								parameters["chip"]="$(basename "${chip_file}")"
-								cp "${chip_file}" "${run_dir}/"
+								# if expression RNK already as gene symbols, no chip needed (and no collapse)
+								if [[ -f "${chip_file}" ]]; then
+									# File exists: Copy it and set parameters to Collapse
+									cp "${chip_file}" "${run_dir}/"
+									parameters["chip"]="$(basename "${chip_file}")"
+									parameters["collapse"]="Collapse"
+								else
+									# File does not exist: Handle No_Collapse
+									parameters["collapse"]="No_Collapse"
+									# Optional: Unset the chip key so GSEA doesn't look for a missing file
+									unset 'parameters["chip"]' 
+								fi
 							fi
 
 							# set up the config file for this run
@@ -492,41 +534,7 @@ for module in "${selected_modules[@]}"; do
 					exit 1
 					;;
 			esac
-			printf "[MODULE 6] GSEA run completed successfully with significant results.\n"
-
-			# else
-			# 	printf "➡️ Running GSEA using manually provided gsea_parameters file...\n"
-			# 	param_file="/data/${gsea_dir}/$(basename "$gsea_parameters")"
-			# 	for key in res cls rnk gmx; do
-			# 		val=$(awk -F'\t' -v k="$key" '$1 == k { print $2 }' "$param_file")
-			# 		if [[ -n "$val" && -f "/data/$val" ]]; then
-			# 			cp "/data/$val" "/data/${gsea_dir}/"
-			# 		else
-			# 			printf "Error: No %s file found in /data to run GSEA\n" "$val"
-			# 		fi
-			# 	done
-
-			# 	./6_gsea_plus/run.sh "$param_file"
-			# 	if [[ $? -ne 0 ]]; then
-			# 		printf "❌ GSEA run failed.\n"
-			# 		exit 1
-			# 	else
-			# 		printf "✅ GSEA Plus completed.\n"
-			# 		results_dir=$(awk -F'\t' '$1 == "out" { print $2 }' "$param_file")
-			# 		save_dir="/data/$gsea_dir/$results_dir"
-			# 		if [[ ! -d "$save_dir" ]]; then
-			# 			mkdir -p "$save_dir"
-			# 		fi
-			# 		# organize results
-			# 		if [[ -n "$results_dir" && -d "/data/$results_dir" ]]; then
-			# 			mv /data/"$results_dir"/* "$save_dir"
-			# 			printf "Moved results directory '%s' into GSEA directory.\n" "$results_dir"
-			# 			rm -r /data/"$results_dir"
-			# 		else
-			# 			printf "Warning: results directory not found or not specified.\n"
-			# 		fi
-			# 	fi
-			# fi
+			printf "✅ [MODULE 6] GSEA run completed successfully with significant results.\n"
 			;;
 
 		7) # Module 7 (Filter EA results) - mandatory filtering parametes in config0()

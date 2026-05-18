@@ -1,84 +1,86 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]; then
-	printf "Usage: %s <results_dir> <gmx_file>\n" "$0"
+if [ $# -ne 3 ]; then
+	printf "Usage: %s <results_dir> <enrichment_fields_file> <gmx_file>\n" "$0"
 	exit 1
 fi
 
-input_dir="$1"
-gmx_file="$2"
+results_dir="$1"
+enriched_fields_file="$2"
+gmx_file="$3"
+output_file="${results_dir}/enriched_terms_annotations.tsv"
 
-if [[ ! -d "$input_dir" ]]; then
-	printf "Error: '$input_dir' is not a valid directory."
+if [[ ! -d "$results_dir" ]]; then
+	printf "Error: Results directory '%s' is not valid.\n" "$results_dir"
 	exit 1
 fi
-
+if [[ ! -f "$enriched_fields_file" ]]; then
+	printf "Error: Enrichment fields file '%s' not found.\n" "$enriched_fields_file"
+	exit 1
+fi
 if [[ ! -f "$gmx_file" ]]; then
-	printf "\nError: Gene Set file '%s' does not exist.\n" "$gmx_file"
+	printf "Error: Gene set file (GMX/GMT) '%s' not found.\n" "$gmx_file"
 	exit 1
 fi
 
-analysis_dir=$(find "${input_dir}" -mindepth 1 -maxdepth 1 -type d)
-results_file="${analysis_dir}/short_results.csv"
-genes_list="${analysis_dir}/raw_GSEA_output/edb/gene_sets.gmt"
-terms_dir="${analysis_dir}/terms_annotations"
-output_file="${analysis_dir}/terms_annotations_results.csv"
-printf "Name,Source,Phenotype,Ratio(%%),ListCount,Genes_in_list,TermCount,Genes_in_term\n" > "$output_file"
+# coverage coreenrichmentsize/termsize
+printf "Name\tSource\tPhenotype\tCoverage\tCoreEnrichmentSize\tTermSize\tGenes_in_CoreEnrichment\tGenes_in_term\n" > "$output_file"
 
 # read results
-tail -n +2 "$results_file" | while IFS=',' read -r name phenotype nes fdr ; do
-	# get term row from gmx file (contains name url and genes in term)
-	line_term=$(grep -P "^${name}\t" "$gmx_file")
-	# get source directly from GSEA term page
-	if [[ -n "$line_term" ]]; then
-		genes=$(printf "%s\n" "$line_term" | cut -f3-)
-		url=$(printf "%s\n" "$line_term" | cut -f2)
-		# get page only once
-		page=$(curl -s "$url")
-		# PubMed first then other source
-		source=$(printf "%s\n" "$page" | grep -A1 "Source publication" | tail -n1 | sed 's/<[^>]*>//g' | awk -F'&' '{print $1}' | xargs)
-		if [[ -z "$source" ]]; then
-			source=$(printf "%s\n" "$page" | grep -A1 "Contributed by" | tail -n1 | sed 's/<[^>]*>//g' | awk -F'&' '{print $1}' | xargs)
+tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name source phenotype es nes nom_p fdr_q fwer_p rank_at_max size leading_edge; do
+	target_file="${results_dir}/${name}.tsv"
+	if [[ ! -f "$target_file" && -d "${results_dir}/raw_GSEA_output" ]]; then
+		target_file="${results_dir}/raw_GSEA_output/${name}.tsv"
+	else
+		printf "Detailed results file not found for '%s'" "$name" 
+	fi
+
+	# get core enrichment genes from detailed report file of the term
+	core_genes=""
+	core_size=0
+
+	if [[ -f "$target_file" ]]; then
+		# Capture clean comma-separated list of core enrichment genes from Column 2
+		core_genes=$(awk -F '\t' '
+			NR == 1 {
+				for (i = 1; i <= NF; i++) {
+					if ($i ~ /CORE/ && $i ~ /ENRICHMENT/) { col_idx = i }
+				}
+				next
+			}
+			col_idx && ($col_idx == "Yes" || $col_idx == "yes") { 
+				print $2 
+			}
+		' "$target_file" | paste -sd "," -)
+		
+		if [[ -n "$core_genes" ]]; then
+			core_size=$(echo "$core_genes" | tr ',' '\n' | wc -l | xargs)
 		fi
-
-		# clean sources of Pubmed like Pubmed 16611997
-		if [[ $source == Pubmed* ]]; then
-			source="Pubmed"
-		fi
-		term_dir="${analysis_dir}/${source}/terms_annotations/${name}"
-		mkdir -p "$term_dir"
-
-		# Write term gene file
-		printf "%s\n" "$genes" | tr '\t' '\n' > "${term_dir}/genes_in_term"
 	fi
 
-	# get genes in list
-	line_list=$(grep -P "^${name}\t" "$genes_list")
-	if [[ -n "$line_list" ]]; then
-		genes=$(printf "%s\n" "$line_list" | cut -f3-)
-		printf "%s\n" "$genes" | tr '\t' '\n' > "${term_dir}/genes_in_list"
+	# get term genes from used GMX file in analysis
+	gmx_genes=""
+	gmx_size=0
+
+	gmx_line=$(grep -P "^${name}\t" "$gmx_file")
+	if [[ -n "$gmx_line" ]]; then
+		# get genes block
+		gmx_genes_raw=$(printf "%s\n" "$gmx_line" | cut -f3-)
+		# parse into a comma-separated list
+		gmx_genes=$(printf "%s\n" "$gmx_genes_raw" | tr '\t' '\n' | grep -v '^$' | paste -sd "," -)
+		gmx_size=$(printf "%s\n" "$gmx_genes_raw" | tr '\t' '\n' | grep -v -c '^$')
 	fi
 
-	# build outpt file
-	genes_in_list=""
-	[[ -f "${term_dir}/genes_in_list" ]] && genes_in_list=$(< "${term_dir}/genes_in_list")
-
-	genes_in_term=""
-	[[ -f "${term_dir}/genes_in_term" ]] && genes_in_term=$(< "${term_dir}/genes_in_term")
-
-	count_list=$(printf "%s\n" "$genes_in_list" | grep -c . || echo 0)
-	count_term=$(printf "%s\n" "$genes_in_term" | grep -c . || echo 0)
-
-	ratio=0
-	if [[ $count_term -ne 0 ]]; then
-		ratio=$(awk "BEGIN { printf \"%.4f\", ($count_list / $count_term)*100 }")
+	# calculate coverage
+	coverage="0.0000"
+	if [[ $gmx_size -gt 0 ]]; then
+		coverage=$(awk "BEGIN { printf \"%.4f\", ($core_size / $gmx_size) }")
 	fi
 
-	genes_list_str=$(printf "%s" "$genes_in_list" | paste -sd " " -)
-	genes_term_str=$(printf "%s" "$genes_in_term" | paste -sd " " -)
-
-	printf "%s,%s,%s,%s,%s,%s,%s,%s\n" \
-		"$name" "$source" "$phenotype" "$ratio" \
-		"$count_list" "$genes_list_str" \
-		"$count_term" "$genes_term_str" >> "$output_file"
+	# write final output
+	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+		"$name" "$source" "$phenotype" "$coverage" "$core_size" "$gmx_size" \
+		"$core_genes" "$gmx_genes" >> "$output_file"
 done
+
+echo "Coverage profile successfully generated at: $output_file"
