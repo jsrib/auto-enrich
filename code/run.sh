@@ -263,7 +263,7 @@ for module in "${selected_modules[@]}"; do
 			inputs_dir="/data"
 			gene_sets_dir="/data/gene_sets"
 			save_dir="/data/${gsea_dir}/results"
-			# gsea run directory, where files must be for the run, in config should only be declared filenames (not paths)
+			# gsea run directory, where files must be for the run, in config only declared filenames (not paths)
 			run_dir="/opt/6_gsea_plus"
 
 			declare -A parameters=(
@@ -285,7 +285,7 @@ for module in "${selected_modules[@]}"; do
 				[chip]=""					# chip file
 				[collapse]=""				# collapse method (default: collapse, no_collapse, remap_only)
 				# visualization and report
-				[plot_top_x]=5000			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 5000; gsea default: 20
+				[plot_top_x]=1000			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 5000; gsea default: 20
 				[make_sets]=""
 				#[gui]="false"
 				#[save_details]="false"
@@ -384,7 +384,6 @@ for module in "${selected_modules[@]}"; do
 						inputs_dir="/data/${gsea_dir}/classic_inputs"
 						cp "${inputs_dir}/expression_dataset.gct" "${run_dir}"
 						cp "${inputs_dir}/phenotype_labels.cls" "${run_dir}"
-						# cp $run_file "${inputs_dir}/run_parameters"
 						parameters["res"]="expression_dataset.gct"
 						parameters["cls"]="phenotype_labels.cls"
 					else
@@ -476,8 +475,6 @@ for module in "${selected_modules[@]}"; do
 							cp "${rnk}" "${run_dir}"
 							parameters["rnk"]="$(basename "${rnk}")"
 							base_name=$(basename "$rnk" .rnk | tr ' ' '_')
-# ------ needs testing
-							# parameters["rpt_label"]="GSEA_${base_name}"
 							printf "Processing: %s\n" "$base_name"
 							run_file="/data/${gsea_dir}/parameters_${base_name}"
 
@@ -537,146 +534,138 @@ for module in "${selected_modules[@]}"; do
 			printf "✅ [MODULE 6] GSEA run completed successfully with significant results.\n"
 			;;
 
-		7) # Module 7 (Filter EA results) - mandatory filtering parametes in config0()
+		7) # Module 7 (Filter EA results) - mandatory filtering parametes in config()
 			printf "🚀 [MODULE 7] Initializing: Filtering Enrichment Analysis Annotations results\n"
 
-			# set tools directory and structure
-			declare -A TOOL_DIRS=(
-				["gProfiler"]="$gprof_dir"
-				["PANTHER"]="$panther_dir"
-				["GSEA"]="$gsea_dir"
-			)
-			declare -A TOOL_TYPES=(
-				["gProfiler"]="per-map"
-				["PANTHER"]="per-map"
-				["GSEA"]="flat"
+			# add new future tols to the associative array
+			declare -A TOOLS_DIR=(
+				["gprofiler"]="/data/gprofiler"
+				["panther"]="/data/panther"
+				# ["my_new_tool"]="/data/$new_tool_dir"
 			)
 
-			# find subdirectory lists resutls
-			find_gene_maps() {
-				local dir=$1
-				local found=()
-				if [[ -d "$dir" ]]; then
-					for path in "$dir"/*/results; do
-						[[ -d "$path" ]] && found+=("$(basename "$(dirname "$path")")")
-					done
-				fi
-				echo "${found[@]}"
-			}
+			gsea_results="/data/$gsea_dir/results"
+			common_results_dir="/data/common_results"
 
-			# find gsea results subdirs
-			find_gsea_subdirs() {
-				local dir=$1
-				local found=()
-				if [[ -d "$dir/results" ]]; then
-					for sub in "$dir/results"/*/; do
-						[[ -d "$sub" ]] && found+=("$(basename "$sub")")
-					done
-				fi
-				echo "${found[@]}"
-			}
+			# create directory if doesnt exist
+			[[ ! -d "$common_results_dir" ]] && mkdir -p "$common_results_dir"
 
-			#look for results csv
-			has_results_csv() {
-				local dir=$1
-				find "$dir" -type f -name "terms_annotations_results.csv" | grep -q .
-			}
+			# funciton to run comparison agaisnt GSEA
+			run_intersection() {
+				local primary_args=("$@")
+			
+				# no results, no intersect
+				[[ ${#primary_args[@]} -eq 0 ]] && return
 
-			# process all tools
-			process_tool() {
-				local name=$1
-				local base_dir=$2
-				local mode=$3
-
-				printf "\nFiltering %s results...\n" "$name"
-
-				if [[ "$mode" == "flat" ]]; then
-					local subdirs=()
-					read -ra subdirs <<< "$(find_gsea_subdirs "$base_dir")"
-					if [[ ${#subdirs[@]} -eq 0 ]]; then
-						printf "⚠️  No subdirectories found inside %s/results\n" "$base_dir"
-						return
-					fi
-					for sub in "${subdirs[@]}"; do
-						local results_dir="${base_dir}/results/${sub}"
-						if [[ -f "$results_dir/terms_annotations_results.csv" ]]; then
-							run_filter "$results_dir" "$name" "$sub"
-						else
-							printf "⚠️  No results CSV found in %s\n" "$results_dir"
+				# run gprofiler and panther, or gprofiler/panther onyl agaisnt gsea
+				if [[ -d "$gsea_results" ]]; then
+					for gsea_subdir in "$gsea_results"/*; do
+						if [[ -d "$gsea_subdir" && -f "$gsea_subdir/enrichment_fields.tsv" ]]; then
+							./7_filter_ea_results/intersect_methods.sh "${primary_args[@]}" "$gsea_subdir"
 						fi
 					done
 				else
-					local maps=()
-					read -ra maps <<< "$(find_gene_maps "$base_dir")"
-					if [[ ${#maps[@]} -eq 0 ]]; then
-						printf "⚠️ No gene maps found in %s\n" "$base_dir"
-						return
+					./7_filter_ea_results/intersect_methods.sh "${primary_args[@]}"
+				fi
+			}
+
+			# intersect the same results of the same input (same results directory name) of panther and gprofiler
+			if [[ "$intersection" == true ]]; then
+
+				# find all unique run directories across configured tools (gprofiler and panther)
+				declare -A UNIQUE_RUNS
+				for tool in "${!TOOLS_DIR[@]}"; do
+					base_dir="${TOOLS_DIR[$tool]}"
+					echo "$base_dir"
+					if [[ -d "$base_dir" ]]; then
+						for subdir in "$base_dir"/*; do
+							[[ -d "$subdir" ]] && UNIQUE_RUNS["$(basename "$subdir")"]=1
+						done
 					fi
-					for map in "${maps[@]}"; do
-						local base_name="${map%_map}"  # strip _map suff
-						local results_dir="${base_dir}/${map}/results"
-						if [[ -f "$results_dir/terms_annotations_results.csv" ]]; then
-							run_filter "$results_dir" "$name" "$base_name"
+				done
+
+				printf "Found %d run directories across tools.\n" "${#UNIQUE_RUNS[@]}"
+
+				# loop through every unique run name
+				for run in "${!UNIQUE_RUNS[@]}"; do
+					# This array will dynamically hold the paths that actually exist for this sample
+					intersect_args=()
+					# dynamically poll every tool to see if it has data for this specific sample
+					for tool in "${!TOOLS_DIR[@]}"; do
+						run_path="${TOOLS_DIR[$tool]}/$run"
+						if [[ -d "$run_path" && -f "$run_path/enrichment_fields.tsv" ]]; then
+							printf "Processing run: %s\n" "$run_path"
+							intersect_args+=("$run_path")
 						else
-							printf "⚠️ No results CSV found in %s\n" "$results_dir"
+							printf "Intersection: no results file 'enrichment_fields.tsv' found in %s" "$run_path"
 						fi
 					done
-				fi
-			}
-
-			run_filter() {
-				local results_dir=$1
-				local tool=$2
-				local target=$3
-
-				if [[ ! -f "$results_dir/terms_annotations_results.csv" ]]; then
-					printf "⚠️  No 'terms_annotations_results.csv' found in %s\n" "$results_dir"
-					return
-				fi
-
-				local rel_path="${results_dir#/data/}"
-				local tool_args="${rel_path}"
-				[[ -n "$max_occur" ]] && tool_args+=" --max-occurrence $max_occur"
-				[[ -n "$max_annot" ]] && tool_args+=" --max-annotations $max_annot"
-				[[ -n "$min_ratio" ]] && tool_args+=" --min-ratio $min_ratio"
-
-				./7_filter_ea_results/run.sh $tool_args
-				if [[ $? -eq 0 ]]; then
-					printf "✅ %s results filtered successfully (%s).\n" "$tool" "$target"
-				else
-					printf "❌ Error: Filtering %s results failed (%s).\n" "$tool" "$target"
-					exit 1
-				fi
-			}
-
-			# run or pre-run enrichment results process
-			any_processed=false
-			for tool in "${!TOOL_DIRS[@]}"; do
-				tool_dir="/data/${TOOL_DIRS[$tool]}"
-				tool_mode="${TOOL_TYPES[$tool]}"
-				if [[ -d "$tool_dir" ]] && has_results_csv "$tool_dir"; then
-					process_tool "$tool" "$tool_dir" "$tool_mode"
-					any_processed=true
-				fi
-			done
-
-			if [[ "$any_processed" == false ]]; then
-				printf "❌ No enrichment analysis results found to filter.\n"
-				exit 1
+					# run intersection of collected runs
+					run_intersection "${intersect_args[@]}"
+				done
 			fi
-			;;
 
-		# 8) # Module 8 (build plots) - necessary variables on config0 file()
-		# 	printf "\nRunning tool 8 (Build Plots) - Building enriched terms counts plots and presence matrices\n"
-		# 	config="/data/config0"
-		# 	./8_build_plots/run.sh "$config"
-		# 	target="/plots_and_gene_matrices/$method"
-		# 	if [[ $? -eq 0 ]]; then
-		# 		printf "✅ Plots and gene matrices built successfully (%s).\n" "$target"
-		# 	else
-		# 		printf "❌ Error: Plotting results failed (%s).\n" "$target"
-		# 		exit 1
-		# 	fi
+			# filter_args=""
+			# [[ -n "$max_occur" ]] && filter_args+=" --max-occurrence $max_occur"
+			# [[ -n "$max_annot" ]] && filter_args+=" --max-annotations $max_annot"
+			# [[ -n "$min_ratio" ]] && filter_args+=" --min-ratio $min_ratio"
+
+			# for tool_name in "gProfiler" "PANTHER"; do
+			# 	# Select the appropriate base directory
+			# 	if [[ "$tool_name" == "gProfiler" ]]; then
+			# 		base_dir="/data/$gprof_dir"
+			# 	else
+			# 		base_dir="/data/$panther_dir"
+			# 	fi
+
+			# 	if [[ -d "$base_dir" ]]; then
+			# 		printf "\nFiltering %s results...\n" "$tool_name"
+			# 		# Loop through every map directory's results folder
+			# 		for results_dir in "$base_dir"/*/results; do
+			# 			if [[ -d "$results_dir" && -f "$results_dir/enriched_terms_annotations.csv" ]]; then
+			# 				# Extract map name and strip '_map' suffix for logging
+			# 				map_dir=$(basename "$(dirname "$results_dir")")
+			# 				target="${map_dir%_map}"
+			# 				./7_filter_ea_results/run.sh "${results_dir}" $filter_args
+			# 				if [[ $? -eq 0 ]]; then
+			# 					printf "✅ %s results filtered successfully (%s).\n" "$tool_name" "$target"
+			# 					any_processed=true
+			# 				else
+			# 					printf "❌ Error: Filtering %s results failed (%s).\n" "$tool_name" "$target"
+			# 					exit 1
+			# 				fi
+			# 			fi
+			# 		done
+			# 	fi
+			# done
+
+			# # process GSEA (different results directory structure)
+			# base_dir="/data/$gsea_dir/results"
+			# if [[ -d "$base_dir" ]]; then
+			# 	printf "\nFiltering GSEA results...\n"
+			# 	# Loop through every subdirectory inside results/
+			# 	for subdir in "$base_dir"/*/; do
+			# 		if [[ -d "$subdir" && -f "$subdir/enriched_terms_annotations.tsv" ]]; then
+			# 			target=$(basename "$subdir")
+			# 			results_dir="${subdir%/}"
+			# 			# Run the filter script
+			# 			./7_filter_ea_results/run.sh "${rel_path}" $filter_args
+			# 			if [[ $? -eq 0 ]]; then
+			# 				printf "✅ GSEA results filtered successfully (%s).\n" "$target"
+			# 				any_processed=true
+			# 			else
+			# 				printf "❌ Error: Filtering GSEA results failed (%s).\n" "$target"
+			# 				exit 1
+			# 			fi
+			# 		fi
+			# 	done
+			# fi
+
+			# if [[ "$any_processed" == false ]]; then
+			# 	printf "❌ No enrichment analysis results found to filter.\n"
+			# 	exit 1
+			# fi
+			;;
 	esac
 done
 

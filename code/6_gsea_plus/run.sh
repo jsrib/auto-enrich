@@ -100,6 +100,9 @@ if [[ -n "$rnk_file" ]]; then
 		rnk_base=$(basename "${rnk_file%.*}") # remove file extension for name
 		results_dir="${rnk_base}.${gmx_prefix}.GseaPreranked"
 		echo "Renamed GSEA Preranked result directory to: $results_dir"
+	else
+		mv "$out_dir" "$save_dir"
+		exit 1
 	fi
 # GSEA classic
 elif [[ -n "$res_file" && -n "$cls_file" ]]; then
@@ -127,6 +130,9 @@ elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 		label_name=$(echo "$label_names" | sed 's/ \+/_vs_/g')
 		results_dir="${label_name}.${gmx_prefix}.GseaClassic"
 		printf "Renamed GSEA Classic result directory to: %s\n" "$results_dir"
+	else
+		mv "$out_dir" "$save_dir"
+		exit 1
 	fi
 # wrong config
 else
@@ -147,16 +153,15 @@ for file in $report_files; do
 	cp "$file" "$results_dir/"
 done
 
-printf "Organizing results directory...\n"
-mv "$results_dir" "$save_dir"
-
 printf "Processing report files...\n"
-fields_results="${results_dir}/enrichment_fields.tsv"
+fields_results="enrichment_fields.tsv"
 ./process_reports.sh "${results_dir}" "${fields_results}"
 
 printf "Getting enriched terms annotations...\n"
 ./get_terms_annotations.sh "${results_dir}" "$fields_results" "$gmx_file"
-annots_results="${results_dir}/enriched_terms_annotations.tsv"
+annots_results="enriched_terms_annotations.tsv"
+
+mv "$results_dir" "$save_dir"
 
 # split results by source
 for file in "$fields_results" "$annots_results"; do

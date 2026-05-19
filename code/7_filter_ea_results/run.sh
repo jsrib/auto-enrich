@@ -11,7 +11,7 @@ fi
 input_dir="$1"
 shift
 
-if [[ ! -d "/data/$input_dir" ]]; then
+if [[ ! -d "$input_dir" ]]; then
 	printf "Error: '%s' is not a valid directory.\n" "$input_dir"
 	exit 1
 fi

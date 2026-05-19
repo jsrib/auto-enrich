@@ -63,7 +63,7 @@ term_index=0
 		elif [[ "$source" == *REAC* ]]; then
 			awk -F'\t' -v term="$term" '$1 == term { n = split($3, arr, ","); for (i = 1; i <= n; i++) print arr[i] }' "$reac_annot" | sort -u > "$uniprots_in_term"
 		elif [[ "$source" == GO_* && "$source" != *PANTHER* ]]; then
-			./go_annots.sh "$species_taxon" "$term" "$term_dir" "$go_annot"
+			./gos_annots.sh "$species_taxon" "$term" "$term_dir" "$go_annot"
 		fi
 
 		# convert uniprots to symbols for non-GO sources

@@ -1,23 +1,18 @@
 #!/bin/bash
 
 if [ $# -ne 2 ]; then
-	printf "Usage: %s <results_dir> <output_file>\n" "$0"
+	printf "Usage: %s <{results_dir}> <output_file>\n" "$0"
 	exit 1
 fi
 
 results_dir="$1"
 output_file="$2"
 
-if [[ ! -d "$results_dir" ]]; then
-	printf "\nError: '%s' is not a valid directory.\n" "$results_dir"
-	exit 1
-fi
-
 # Write out the exact header order requested
 printf "Name\tSource\tPhenotype\tES\tNES\tNOM_p-val\tFDR_q-val\tFWER_p-val\tRANK-AT-MAX\tIntersectionSize\tLeading_Edge\n" > "$output_file"
 
 # Use a safe 'while read' loop to handle paths cleanly
-find "$results_dir" -maxdepth 1 -type f -name "gsea_report_for_*.tsv" | while read -r file; do
+find "${results_dir}" -maxdepth 1 -type f -name "gsea_report_for_*.tsv" | while read -r file; do
 	report_filename=$(basename "$file")
 	
 	# get phenotype name
