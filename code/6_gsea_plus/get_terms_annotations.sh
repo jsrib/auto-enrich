@@ -24,7 +24,7 @@ if [[ ! -f "$gmx_file" ]]; then
 fi
 
 # coverage coreenrichmentsize/termsize
-printf "Name\tSource\tPhenotype\tCoverage\tCoreEnrichmentSize\tTermSize\tGenes_in_CoreEnrichment\tGenes_in_term\n" > "$output_file"
+printf "Name\tSource\tPhenotype\tCoverage\tCoreEnrichmentSize\tGenes_in_CoreEnrichment\tTermSize\tGenes_in_term\n" > "$output_file"
 
 # read results
 tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name source phenotype es nes nom_p fdr_q fwer_p rank_at_max size leading_edge; do
@@ -79,8 +79,7 @@ tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name
 
 	# write final output
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-		"$name" "$source" "$phenotype" "$coverage" "$core_size" "$gmx_size" \
-		"$core_genes" "$gmx_genes" >> "$output_file"
+		"$name" "$source" "$phenotype" "$coverage" "$core_size" "$core_genes" "$gmx_size" "$gmx_genes" >> "$output_file"
 done
 
 echo "Coverage profile successfully generated at: $output_file"

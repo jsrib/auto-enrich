@@ -26,7 +26,7 @@ fi
 # 6 = gsea
 # 7 = filter_ea_results
 
-# paths
+# paths (in /data)
 annotations_dir="annotations"
 prepared_lists_dir="prepared_gene_lists"
 maps_dir="mapped_gene_lists"
@@ -35,13 +35,11 @@ panther_dir="panther"
 gsea_dir="gsea"
 
 # modules run flags
-annotations_directory=false
 prepare_lists_ran=false
 prep_gsea_inputs_ran=false
 
 if [[ -d "/data/$annotations_dir" ]]; then
 	printf "[MAIN] Using provided annotations files inside annotations directory...\n"
-	annotations_directory=true
 else
 	printf "[MAIN] Annotations directory NOT found, creating new directory and generating new files.\n"
 	mkdir -p "/data/$annotations_dir"
@@ -90,9 +88,9 @@ else
 		printf "[MAIN] Match Found!\n"
 		printf "   --------------------------------------\n"
 		printf "   Common Name: %s\n" "${display_name}"
-		printf "   gProf curl ID:   %s\n" "${gprof_curl_id}"
-		printf "   Scientific Name:  %s\n" "${scientific_name}"
-		printf "   Taxon ID:    %s\n" "${taxon}"
+		printf "   gProf curl ID: %s\n" "${gprof_curl_id}"
+		printf "   Scientific Name: %s\n" "${scientific_name}"
+		printf "   Taxon ID: %s\n" "${taxon}"
 		printf "   --------------------------------------\n"
 	fi
 fi
@@ -413,14 +411,14 @@ for module in "${selected_modules[@]}"; do
 						./6_gsea_plus/generate_chip_file.sh "${parameters["res"]}" "${chip_file}" "${species_map}"
 						# if expression expression_dataset.gct already as gene symbols, no chip needed (and no collapse)
 						if [[ -f "${chip_file}" ]]; then
-							# File exists: Copy it and set parameters to Collapse
+							# file create. Option: Collapse
 							cp "${chip_file}" "${run_dir}/"
 							parameters["chip"]="$(basename "${chip_file}")"
 							parameters["collapse"]="Collapse"
 						else
-							# File does not exist: Handle No_Collapse
+							# file not create (input already has gene symbols). Option: No_Collapse
 							parameters["collapse"]="No_Collapse"
-							# Optional: Unset the chip key so GSEA doesn't look for a missing file
+							# unset the chip key so GSEA doesn't look for it
 							unset 'parameters["chip"]' 
 						fi
 					fi
@@ -435,6 +433,7 @@ for module in "${selected_modules[@]}"; do
 						fi
 					done
 					printf "Parameter file written to: %s\n" "$run_file"
+
 					# gsea run
 					./6_gsea_plus/run.sh "$run_file" "${save_dir}"
 					if [[ $? -ne 0 ]]; then
@@ -552,56 +551,65 @@ for module in "${selected_modules[@]}"; do
 
 			# funciton to run comparison agaisnt GSEA
 			run_intersection() {
+				local run_name="$1"
 				local primary_args=("$@")
-			
 				# no results, no intersect
 				[[ ${#primary_args[@]} -eq 0 ]] && return
+
+				local save_dir=""
 
 				# run gprofiler and panther, or gprofiler/panther onyl agaisnt gsea
 				if [[ -d "$gsea_results" ]]; then
 					for gsea_subdir in "$gsea_results"/*; do
 						if [[ -d "$gsea_subdir" && -f "$gsea_subdir/enrichment_fields.tsv" ]]; then
+							# save dir name
+							local gsea_name=$(basename "$gsea_subdir")
+							local gsea_file="${gsea_name%%.*}"
+							local gsea_runtype="${gsea_name##*.}"
+							save_dir="$common_results_dir/${run_name}_&&_${gsea_file}.${gsea_runtype}"
+
+							[[ ! -d "$save_dir" ]] && mkdir -p "$save_dir"
+							# run and copy to dir
 							./7_filter_ea_results/intersect_methods.sh "${primary_args[@]}" "$gsea_subdir"
+							cd ./7_filter_ea_results && mv common*.txt report "$save_dir" && cd ..
 						fi
 					done
 				else
+					save_dir="$common_results_dir/${run_name}_ONLY"
+					[[ ! -d "$save_dir" ]] && mkdir -p "$save_dir"
 					./7_filter_ea_results/intersect_methods.sh "${primary_args[@]}"
+					cd ./7_filter_ea_results && mv common_* report "$save_dir" && cd ..
 				fi
 			}
 
 			# intersect the same results of the same input (same results directory name) of panther and gprofiler
 			if [[ "$intersection" == true ]]; then
-
-				# find all unique run directories across configured tools (gprofiler and panther)
-				declare -A UNIQUE_RUNS
+				# find all unique run directories across possible tools (gprofiler and panther)
+				declare -A DETECTED_RUNS
 				for tool in "${!TOOLS_DIR[@]}"; do
 					base_dir="${TOOLS_DIR[$tool]}"
-					echo "$base_dir"
 					if [[ -d "$base_dir" ]]; then
 						for subdir in "$base_dir"/*; do
-							[[ -d "$subdir" ]] && UNIQUE_RUNS["$(basename "$subdir")"]=1
+							[[ -d "$subdir" ]] && DETECTED_RUNS["$(basename "$subdir")"]=1
 						done
 					fi
 				done
 
-				printf "Found %d run directories across tools.\n" "${#UNIQUE_RUNS[@]}"
-
-				# loop through every unique run name
-				for run in "${!UNIQUE_RUNS[@]}"; do
+				printf "Found %d run directories across tools.\n" "${#DETECTED_RUNS[@]}"
+				# loop every run
+				for run in "${!DETECTED_RUNS[@]}"; do
 					# This array will dynamically hold the paths that actually exist for this sample
-					intersect_args=()
+					paths_to_intersect=()
 					# dynamically poll every tool to see if it has data for this specific sample
 					for tool in "${!TOOLS_DIR[@]}"; do
 						run_path="${TOOLS_DIR[$tool]}/$run"
 						if [[ -d "$run_path" && -f "$run_path/enrichment_fields.tsv" ]]; then
 							printf "Processing run: %s\n" "$run_path"
-							intersect_args+=("$run_path")
-						else
-							printf "Intersection: no results file 'enrichment_fields.tsv' found in %s" "$run_path"
+							paths_to_intersect+=("$run_path")
 						fi
 					done
 					# run intersection of collected runs
-					run_intersection "${intersect_args[@]}"
+					run_intersection "$run" "${paths_to_intersect[@]}"
 				done
 			fi
 
