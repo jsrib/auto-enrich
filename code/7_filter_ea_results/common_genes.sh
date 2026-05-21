@@ -13,23 +13,18 @@ if [[ ! -d "$input_dir" ]]; then
 	exit 1
 fi
 
-terms_results_file="${input_dir}/terms_annotations_results.csv"
+base_annots="${input_dir}/enriched_terms_annotations.tsv"
 
-if [[ ! -f "$terms_results_file" ]]; then
-	printf "\nError: '%s' does not exist.\n" "$terms_results_file"
+if [[ ! -f "$base_annots" ]]; then
+	printf "\nError: '%s' does not exist.\n" "$base_annots"
 	exit 1
 fi
 
 # look for genes in list column
-genes_col=$(head -n 1 "$terms_results_file" | tr ',' '\n' | nl -v 1 | awk '$2 == "Genes_in_list" { print $1 }')
+genes_col=$(head -n 1 "$base_annots" | tr '[,; ]' '\n' | nl -v 1 | awk '$2 == "Genes_in_intersection" { print $1 }')
 
 if [[ -z "$genes_col" ]]; then
-	printf "\nError: No 'Genes_in_list' column was found in %s.\n" "$terms_results_file"
-	exit 1
-fi
-
-if [[ -z "$genes_col" ]]; then
-	printf "\nError: Column 'Genes_in_list' not found in %s.\n" "$terms_annotations_results"
+	printf "\nError: No 'Genes_in_intersection' column was found in %s.\n" "$base_annots"
 	exit 1
 fi
 
@@ -37,9 +32,9 @@ output_file="${input_dir}/excluded_genes"
 printf "Gene\tN_Occurences\n" > "$output_file"
 
 # find most common genes according to cutoff
-tail -n +2 "$terms_results_file" | \
-	awk -F',' -v col="$genes_col" '{print $col}' | \
-	tr ' ' '\n' | \
+tail -n +2 "$base_annots" | \
+	awk -F'\t' -v col="$genes_col" '{print $col}' | \
+	tr '[,; ]' '\n' | \
 	sed "s/'//g" | \
 	sed '/^$/d' | \
 	sort | \

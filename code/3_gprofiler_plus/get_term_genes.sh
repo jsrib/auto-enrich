@@ -117,6 +117,6 @@ awk -F'\t' -v save_dir="$save_dir" -v out_file="$output_file" '
 if [ $? -eq 0 ]; then
 	printf "Processing successful. Output saved to '%s'.\n" "$output_file"
 else
-	printf "❌ [MODULE 3] Error: Processing raw results failed.\n"
+	printf "❌ [MODULE 3] Error: Processing terms annotations results failed.\n"
 	exit 1
 fi

@@ -6,44 +6,34 @@ if [ $# -ne 2 ]; then
 fi
 
 common_name="$1"	# same common name as referenced in the field "name" in the panther supported_genomes.json file
-output_file="$2"	# short species name
+output_file="$2"	# output file name
+
+echo "$common_name"
 
 # panther datasets annots file
 printf "Downloading and processing PANTHER annotations file ('https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files')\n"
-curl -O "https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/PTHR19.0_${common_name}"
-annotations_file="PTHR19.0_${common_name}"
-
-if [[ $? -eq 0 && -s "$annotations_file" ]]; then
-	printf "Download successful: %s\n" "$annotations_file"
-else
-	printf "Download failed!\n" >&2
-	exit 1
-fi
+filename="PTHR19.0_${common_name}"
+curl -O "https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/${filename}"
 
 awk -F'\t' '
 {
-	id = $2;
-	gene = $3;
-
-	# join columns >7 into string ; separated
-	terms = "";
+	uniprot = $2;
+	symbol = $3;
+	
+	# Loop through columns 7 to NF
 	for (i = 7; i <= NF; i++) {
-		terms = terms $i ";";
+		n = split($i, parts, ";");
+		for (j = 1; j <= n; j++) {
+			# split it into name and id using the last # as the separator
+			if (match(parts[j], /#([^#]+)$/, arr)) {
+				term_id = arr[1];
+				# term_name = substr(parts[j], 1, RSTART-1); # optional to keep name
+				if (term_id != "") {
+					print term_id "\t" uniprot "\t" symbol
+				}
+			}
+		}
 	}
+}' "$filename" | sort > "${output_file}"
 
-	# normalize
-	gsub(/\t/, ";", terms);
-	gsub(/>/, ";", terms);
-
-	# get substrings between # and next ;
-	matches = "";
-	while (match(terms, /#[^;]+/)) {
-		term = substr(terms, RSTART + 1, RLENGTH - 1);  # Skip the '#' character
-		matches = matches term ";";
-		terms = substr(terms, RSTART + RLENGTH);
-	}
-
-	print id "\t" gene "\t" matches;
-}' "$annotations_file" > "$output_file"
-
-rm -r "$annotations_file"
+rm "$filename"

@@ -1,7 +1,6 @@
 #!/bin/bash
 # PANTHER_plus Module 4
 cd /opt/4_panther_plus
-#set -eo pipefail
 
 if [ $# -lt 8 ]; then
 	printf "Usage: %s <input_map_file> <species> <save_dir> <panther_annotations> <reactome_annotations> <gos_annotations> <gene_map> [panther_dbs]\n" "$0"
@@ -39,7 +38,7 @@ if [[ -z "$scientific_name" || -z "$common_name" ]]; then
 	exit 1
 fi
 
-if [[ ! -f "$panther_annot" ]]; then 
+if [[ ! -s "$panther_annot" ]]; then 
 	./panther_annotations.sh "$common_name" "$panther_annot" 2>/dev/null
 	if [[ ! -s "$panther_annot" ]]; then
 		printf "❌ [MODULE 4] Error: PANTHER Annotations file download failed or file is empty."
@@ -49,7 +48,7 @@ else
 	printf "PANTHER annotations file found: '%s'.\n" "$panther_annot"
 fi
 
-if [[ ! -f "$reactome_annot" ]]; then
+if [[ ! -s "$reactome_annot" ]]; then
 	./reactome_annotations.sh "$scientific_name" "$reactome_annot" 2>/dev/null
 	if [[ ! -s "$reactome_annot" ]]; then
 		printf "❌ [MODULE 4] Error: REACTOME Annotations file download failed or file is empty."
@@ -59,7 +58,7 @@ else
 	printf "REACTOME annotations file found: '%s'.\n" "$reactome_annot"
 fi
 
-if [ ! -f "${gene_map}" ]; then
+if [ ! -s "${gene_map}" ]; then
 	# download gene mapping file for the species (mandatory to gather terms annotations)
 	/opt/2_gene_mapping/id_uniprot_symbol_mapping.sh "$species_taxon" "$gene_map"
 	if [[ ! -s "$gene_map" ]]; then
@@ -96,47 +95,48 @@ for file in "${result_files[@]}"; do
 done
 cp "$fields_results" "${save_dir}/"
 
+printf "Getting terms annotations results...\n"
 # get enriched terms annotations
 ./get_terms_annotations.sh "${input_file}" "${fields_results}" "${species_taxon}" "${save_dir}" "${panther_annot}" "${reactome_annot}" "${gos_annot}" "${gene_map}"
 annots_results="enriched_terms_annotations.tsv"
 cp "$annots_results" "${save_dir}/"
 
-# split results by source
-for file in "$fields_results" "$annots_results"; do
-	[[ ! -f "$file" ]] && continue
+# # split results by source
+# for file in "$fields_results" "$annots_results"; do
+# 	[[ ! -f "$file" ]] && continue
 
-	# check if file empty
-	line_count=$(wc -l < "$file")
-	if (( line_count <= 1 )); then
-		printf "No statistically significant results in %s\n" "$file"
-		exit 1
-	fi
+# 	# check if file empty
+# 	line_count=$(wc -l < "$file")
+# 	if (( line_count <= 1 )); then
+# 		printf "No statistically significant results in %s\n" "$file"
+# 		exit 1
+# 	fi
 
-	# determine the Source column based on the filename (3 in fields_results, 4 in annots_results)
-	if [[ "$file" == "$fields_results" ]]; then
-		src_col=4
-	else
-		src_col=3
-	fi
+# 	# determine the Source column based on the filename (3 in fields_results, 4 in annots_results)
+# 	if [[ "$file" == "$fields_results" ]]; then
+# 		src_col=4
+# 	else
+# 		src_col=3
+# 	fi
 
-	header=$(head -n 1 "$file")
+# 	header=$(head -n 1 "$file")
 	
-	# get unique sources from the file
-	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
+# 	# get unique sources from the file
+# 	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
 
-	for src in "${sources[@]}"; do
-		[[ -z "$src" ]] && continue
+# 	for src in "${sources[@]}"; do
+# 		[[ -z "$src" ]] && continue
 		
-		# create source-specific directory
-		src_dir="$save_dir/$src"
-		if [[ ! -d "$src_dir" ]]; then
-			mkdir -p "$src_dir"
-		fi
+# 		# create source-specific directory
+# 		src_dir="$save_dir/$src"
+# 		if [[ ! -d "$src_dir" ]]; then
+# 			mkdir -p "$src_dir"
+# 		fi
 
-		# filter the file for this source and save as TSV
-		{
-			echo "$header"
-			awk -F'\t' -v col="$src_col" -v val="$src" '$col == val' "$file"
-		} > "$src_dir/${src}_$file"
-	done
-done
+# 		# filter the file for this source and save as TSV
+# 		{
+# 			echo "$header"
+# 			awk -F'\t' -v col="$src_col" -v val="$src" '$col == val' "$file"
+# 		} > "$src_dir/${src}_$file"
+# 	done
+# done

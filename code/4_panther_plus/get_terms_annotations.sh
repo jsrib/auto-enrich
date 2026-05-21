@@ -24,87 +24,72 @@ done
 
 printf "TermID\tName\tSource\tCoverage\tIntersectionSize\tGenes_in_intersection\tTermSize\tGenes_in_term\n" > "$output_file"
 
-declare -A map_uniprot
-while IFS=$'\t' read -r geneid uniprot_col symbol; do
-	# Split the uniprot column by comma
-	IFS=',' read -ra uniprots <<< "$uniprot_col"
-	for unis in "${uniprots[@]}"; do
-		[[ -n "$unis" && -n "$symbol" ]] && map_uniprot["$unis"]="$symbol"
-	done
-done < "$gene_map"
+# temporary uniprot symbol map
+awk -F'\t' '{split($2, u, ","); for(i in u) print u[i] "\t" $3}' "$gene_map" > .gene_map_lookup.tmp
 
 total_terms=$(($(wc -l < "$enriched_fields_file") - 1))
 term_index=0
 
-{
-	read # skip header
-	while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS; do
-		((term_index++))
-		printf "Processing %s/%s: %s\n" "$term_index" "$total_terms" "$term"
+while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS; do
+	[[ -z "$term" || "$term" == "TermID" || "$term" == "*UNCLASSIFIED*" ]] && continue
+	((term_index++))
+	printf "Processing %s/%s: %s %s\n" "$term_index" "$total_terms" "$source" "$term"
 
-		s_term=$(echo "$term" | sed 's/:/_/g')
-		s_name=$(echo "$name" | sed 's/[^a-zA-Z0-9_-]/_/g' | sed 's/__+/_/g')
+	unset term_data
 
-		output_dir="${save_dir}/${source}/terms_annotations"
-		term_dir="${output_dir}/${s_term}_${s_name}"
-		mkdir -p "$term_dir"
+	s_term=$(echo "$term" | sed 's/:/_/g')
+	s_name=$(echo "$name" | sed 's/[^a-zA-Z0-9_-]/_/g' | sed 's/__+/_/g')
+	term_dir="${save_dir}/${source}/terms_annotations/${s_term}_${s_name}"
+	mkdir -p "$term_dir"
 
-		genes_in_term="$term_dir/genes_in_term"
-		uniprots_in_term="$term_dir/uniprots_in_term"
-		genes_in_intersection="$term_dir/genes_in_intersection"
-		unmapped_uniprots="$term_dir/obsolete_or_merged_uniprots"
-		
-		: > "$genes_in_term"
-		: > "$uniprots_in_term"
+	genes_in_term="$term_dir/genes_in_term"
+	uniprots_in_term="$term_dir/uniprots_in_term"
+	genes_in_intersection="$term_dir/genes_in_intersection"
+	
+	: > "$genes_in_term"
+	: > "$uniprots_in_term"
 
-		# get uniprots for PANTHER and Reactome
-		if [[ "$source" == *PANTHER* ]]; then
-			awk -F'\t' -v term="$term" '$3 ~ "(^|;)" term "(;|$)" {print $1}' "$panther_annot" | sort -u > "$uniprots_in_term"
-		elif [[ "$source" == *REAC* ]]; then
-			awk -F'\t' -v term="$term" '$1 == term { n = split($3, arr, ","); for (i = 1; i <= n; i++) print arr[i] }' "$reac_annot" | sort -u > "$uniprots_in_term"
-		elif [[ "$source" == GO_* && "$source" != *PANTHER* ]]; then
-			./gos_annots.sh "$species_taxon" "$term" "$term_dir" "$go_annot"
-		fi
+	unset term_data
 
-		# convert uniprots to symbols for non-GO sources
-		if [[ -s "$uniprots_in_term" ]]; then
-			while read -r uniprot; do
-				if [[ -n "${map_uniprot["$uniprot"]}" ]]; then
-					# Replace internal semicolons with pipes for safety
-					echo "${map_uniprot["$uniprot"]}" >> "$genes_in_term"
-				else
-					echo "$uniprot" >> "$unmapped_uniprots"
-				fi
-			done < "$uniprots_in_term"
-		fi
+	# --- BRANCHING LOGIC ---
+	if [[ "$source" == *PANTHER* ]]; then
+		term_data=$(grep -w "^$term" "$panther_annot")
+	elif [[ "$source" == *REAC* ]]; then
+		term_data=$(awk -F'\t' -v term="$term" '$1 == term { n = split($3, arr, ","); for (i = 1; i <= n; i++) print term "\t" arr[i] }' "$reac_annot" | \
+					awk -F'\t' 'NR==FNR{map[$1]=$2; next} $2 in map {print $1 "\t" $2 "\t" map[$2]}' .gene_map_lookup.tmp -)
+	elif [[ "$source" == GO_* ]]; then
+		./gos_annots.sh "$species_taxon" "$term" "$term_dir" "$go_annot"
+		# We assume gos_annots.sh populated the files, so we just read them back
+		# [[ -f "$term_dir/results.tsv" ]] && term_data=$(awk -v t="$term" '{print t "\t" $1 "\t" $2}' "$term_dir/results.tsv")
+	fi
 
-		# intersection matching
-		if [[ -s "$uniprots_in_term" ]]; then
-			# match against input_list (column 2 is UniProt)
-			awk -F'\t' 'NR==FNR { u[$1]; next } ($2 in u) { print $0 }' "$uniprots_in_term" "$input_list" > "$genes_in_intersection"
-		elif [[ -s "$genes_in_term" ]]; then
-			# Match against input_list (assuming column 3 is Symbol)
-			awk -F'\t' 'NR==FNR { g[$1]; next } ($3 in g) { print $0 }' "$genes_in_term" "$input_list" > "$genes_in_intersection"
-		fi
+	[[ -z "$term_data" ]] && continue
 
-		# final metrics calculations and output
-		if [[ ! -f "$genes_in_term" || ! -s "$genes_in_term" ]]; then continue; fi
+	echo "$term_data" | cut -f2 | sort -u > "$term_dir/uniprots_in_term"
+	echo "$term_data" | cut -f3 | sort -u > "$term_dir/genes_in_term"
 
-		term_size=$(wc -l < "$genes_in_term")
-		intersection_size=0
-		intersection_genes_str=""
-		
-		if [[ -s "$genes_in_intersection" ]]; then
-			intersection_size=$(wc -l < "$genes_in_intersection")
-			intersection_genes_str=$(awk -F'\t' '{ printf "%s ", $3 }' "$genes_in_intersection")
-		fi
-		
-		coverage=$(awk -v m="$intersection_size" -v t="$term_size" 'BEGIN { if (t > 0) printf "%.2f", (m / t)*100; else print 0 }')
-		all_genes_in_term=$(paste -sd' ' "$genes_in_term")
+	# 4. Perform intersection (Memory-based)
+	intersection_data=$(echo "$term_data" | awk -F'\t' -v list="$input_list" '
+		BEGIN { while((getline < list) > 0) seen[$2] }
+		$2 in seen && $3 != "" { print $3 }  # Ensure only non-empty symbols are printed
+	')
+	
+	# Write intersection file
+	echo "$intersection_data" > "$term_dir/genes_in_intersection"
 
-		# final output for this term
-		printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-			"$term" "$name" "$source" "$coverage" "$intersection_size" "${intersection_genes_str% }" "$term_size" "$all_genes_in_term" >> "$output_file"
+	# 5. Calculate final metrics from variables
+	term_size=$(wc -l < "$term_dir/genes_in_term")
+	intersection_size=$(echo "$intersection_data" | wc -l)
+	[[ -z "$intersection_data" ]] && intersection_size=0
+	intersection_genes_str=$(echo "$intersection_data" | tr '\n' ' ' | sed 's/ $//')
+	all_genes_in_term=$(echo "$term_data" | cut -f3 | sort -u | tr '\n' ' ' | sed 's/ $//')
+	
+	coverage=$(awk -v m="$intersection_size" -v t="$term_size" 'BEGIN { printf "%.4f", (t>0 ? (m/t) : 0) }')
 
-	done
-} < "$enriched_fields_file"
+	# Output row
+	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+		"$term" "$name" "$source" "$coverage" "$intersection_size" \
+		"$intersection_genes_str" "$term_size" "$all_genes_in_term" >> "$output_file"
+done < "$enriched_fields_file"
+
+rm .gene_map_lookup.tmp

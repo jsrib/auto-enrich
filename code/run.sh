@@ -613,66 +613,70 @@ for module in "${selected_modules[@]}"; do
 				done
 			fi
 
-			# filter_args=""
-			# [[ -n "$max_occur" ]] && filter_args+=" --max-occurrence $max_occur"
-			# [[ -n "$max_annot" ]] && filter_args+=" --max-annotations $max_annot"
-			# [[ -n "$min_ratio" ]] && filter_args+=" --min-ratio $min_ratio"
+			filter_args=""
+			[[ -n "$max_occur" ]] && filter_args+=" --max-occurrence $max_occur"
+			[[ -n "$max_annot" ]] && filter_args+=" --max-annotations $max_annot"
+			[[ -n "$min_ratio" ]] && filter_args+=" --min-ratio $min_ratio"
 
-			# for tool_name in "gProfiler" "PANTHER"; do
-			# 	# Select the appropriate base directory
-			# 	if [[ "$tool_name" == "gProfiler" ]]; then
-			# 		base_dir="/data/$gprof_dir"
-			# 	else
-			# 		base_dir="/data/$panther_dir"
-			# 	fi
+			if (( ${#filter_args[@]} == 0 )); then
+				printf "Filter arguments is empty, no enrichment analysis filtering done..."
+				exit 1
+			fi
 
-			# 	if [[ -d "$base_dir" ]]; then
-			# 		printf "\nFiltering %s results...\n" "$tool_name"
-			# 		# Loop through every map directory's results folder
-			# 		for results_dir in "$base_dir"/*/results; do
-			# 			if [[ -d "$results_dir" && -f "$results_dir/enriched_terms_annotations.csv" ]]; then
-			# 				# Extract map name and strip '_map' suffix for logging
-			# 				map_dir=$(basename "$(dirname "$results_dir")")
-			# 				target="${map_dir%_map}"
-			# 				./7_filter_ea_results/run.sh "${results_dir}" $filter_args
-			# 				if [[ $? -eq 0 ]]; then
-			# 					printf "✅ %s results filtered successfully (%s).\n" "$tool_name" "$target"
-			# 					any_processed=true
-			# 				else
-			# 					printf "❌ Error: Filtering %s results failed (%s).\n" "$tool_name" "$target"
-			# 					exit 1
-			# 				fi
-			# 			fi
-			# 		done
-			# 	fi
-			# done
+			for tool_name in "gProfiler" "PANTHER"; do
+				# Select the appropriate base directory
+				if [[ "$tool_name" == "gProfiler" ]]; then
+					base_dir="/data/$gprof_dir"
+				else
+					base_dir="/data/$panther_dir"
+				fi
 
-			# # process GSEA (different results directory structure)
-			# base_dir="/data/$gsea_dir/results"
-			# if [[ -d "$base_dir" ]]; then
-			# 	printf "\nFiltering GSEA results...\n"
-			# 	# Loop through every subdirectory inside results/
-			# 	for subdir in "$base_dir"/*/; do
-			# 		if [[ -d "$subdir" && -f "$subdir/enriched_terms_annotations.tsv" ]]; then
-			# 			target=$(basename "$subdir")
-			# 			results_dir="${subdir%/}"
-			# 			# Run the filter script
-			# 			./7_filter_ea_results/run.sh "${rel_path}" $filter_args
-			# 			if [[ $? -eq 0 ]]; then
-			# 				printf "✅ GSEA results filtered successfully (%s).\n" "$target"
-			# 				any_processed=true
-			# 			else
-			# 				printf "❌ Error: Filtering GSEA results failed (%s).\n" "$target"
-			# 				exit 1
-			# 			fi
-			# 		fi
-			# 	done
-			# fi
+				if [[ -d "$base_dir" ]]; then
+					printf "\nFiltering %s results...\n" "$tool_name"
+					# Loop through every map directory's results folder
+					for results_dir in "$base_dir"/*/results; do
+						if [[ -d "$results_dir" && -f "$results_dir/enriched_terms_annotations.tsv" ]]; then
+							echo "$results_dir"
+							# Extract map name and strip '_map' suffix for logging
+							map_dir=$(basename "$(dirname "$results_dir")")
+							target="${map_dir%_map}"
+							./7_filter_ea_results/run.sh "${results_dir}" $filter_args
+							if [[ $? -eq 0 ]]; then
+								printf "✅ %s results filtered successfully (%s).\n" "$tool_name" "$target"
+							elif [[ $? -eq 2 ]]; then
+								printf "⚠️ No enrichment results left after filtering.\n" "$tool_name" "$target"
+							else
+								printf "❌ Error: Filtering %s results failed (%s).\n" "$tool_name" "$target"
+								exit 1
+							fi
+						fi
+					done
+				fi
+			done
 
-			# if [[ "$any_processed" == false ]]; then
-			# 	printf "❌ No enrichment analysis results found to filter.\n"
-			# 	exit 1
-			# fi
+			# process GSEA (different results directory structure)
+			base_dir="/data/$gsea_dir/results"
+			if [[ -d "$base_dir" ]]; then
+				printf "\nFiltering GSEA results...\n"
+				# Loop through every subdirectory inside results/
+				for subdir in "$base_dir"/*/; do
+					if [[ -d "$subdir" && -f "$subdir/enriched_terms_annotations.tsv" ]]; then
+						target=$(basename "$subdir")
+						results_dir="${subdir%/}"
+						# Run the filter script
+						./7_filter_ea_results/run.sh "${results_dir}" $filter_args
+						if [[ $? -eq 0 ]]; then
+							printf "✅ GSEA results filtered successfully (%s).\n" "$target"
+							any_processed=true
+						else
+							printf "❌ Error: Filtering GSEA results failed (%s).\n" "$target"
+							exit 1
+						fi
+					fi
+				done
+			fi
+
+			printf "[MODULE 7] Filtering enrichment results completed.\n"
 			;;
 	esac
 done

@@ -4,7 +4,7 @@ cd /opt/7_filter_ea_results
 set -euo pipefail
 
 if [ $# -lt 2 ]; then
-	printf "Usage: %s <results_directory> [--max-annotations N] [--max-occurrence N] [--min-ratio N]\n" "$0"
+	printf "Usage: %s <results_directory> [--max-annotations N] [--max-occurrence N] [--min-coverage N]\n" "$0"
 	exit 1
 fi
 
@@ -19,14 +19,14 @@ fi
 max_annot=""
 max_occr=""
 # changed to coverage
-min_ratio=""
+min_coverage=""
 
 print_usage() {
-	printf "\nUsage: %s [--max-annotations N] [--max-occurrence N] [--min-ratio N]\n" "$(basename "$0")"
+	printf "\nUsage: %s [--max-annotations N] [--max-occurrence N] [--min-coverage N]\n" "$(basename "$0")"
 	printf "Options:\n"
 	printf "  --max-annotations N   Filter out terms with more than N annotated genes (column: TermCount)\n"
 	printf "  --max-occurrence N    Filter out genes occurring in more than N terms (used in exclusion step)\n"
-	printf "  --min-ratio N         Keep only terms with enrichment ratio >= N (column: Ratio(%%))\n"
+	printf "  --min-coverage N         Keep only terms with enrichment coverage >= N (column: coverage(%%))\n"
 	printf "\n"
 }
 
@@ -42,8 +42,8 @@ while [[ $# -gt 0 ]]; do
 			max_occr="$2"
 			shift 2
 			;;
-		--min-ratio)
-			min_ratio="$2"
+		--min-coverage)
+			min_coverage="$2"
 			shift 2
 			;;
 		--help|-h)
@@ -59,62 +59,62 @@ while [[ $# -gt 0 ]]; do
 done
 
 # at least one filter?
-if [[ -z "$max_annot" && -z "$max_occr" && -z "$min_ratio" ]]; then
-	printf "Error: At least one filter (--max-annotations, --max-occurrence, --min-ratio) must be set.\n"
+if [[ -z "$max_annot" && -z "$max_occr" && -z "$min_coverage" ]]; then
+	printf "Error: At least one filter (--max-annotations, --max-occurrence, --min-coverage) must be set.\n"
 	exit 1
 fi
 
-base_data="/data/${input_dir}/terms_annotations_results.csv"
-data_lines=$(tail -n +2 "$base_data" | wc -l)
-# change "_filtered" to beginning and file to TSV
-final_output="terms_annotations_filtered.csv"
+base_annots="${input_dir}/enriched_terms_annotations.tsv"
+data_lines=$(tail -n +2 "$base_annots" | wc -l)
+final_output="filtered_enriched_terms_annotations.tsv"
 
 # step 1: priority to max-occr (if set)
 if [[ -n "$max_occr" ]]; then
 	printf "Applying --max-occurrence cutoff: %s\n" "$max_occr"
-	./common_genes.sh "/data/${input_dir}" "$max_occr" || exit 1
-	./filter_genes.sh "/data/${input_dir}" || exit 1
+	./common_genes.sh "${input_dir}" "$max_occr" || exit 1
+	./filter_genes.sh "${input_dir}" || exit 1
 	input_file="filtered_genes"
 else
-	input_file="$base_data"
+	input_file="$base_annots"
 fi
 
 # step 2: apply other filters
-if [[ -n "$max_annot" || -n "$min_ratio" ]]; then
+if [[ -n "$max_annot" || -n "$min_coverage" ]]; then
 	[[ -n "$max_annot" ]] && printf "Applying --max-annotations cutoff: %s\n" "$max_annot"
-	[[ -n "$min_ratio" ]] && printf "Applying --min-ratio cutoff: %s\n" "$min_ratio"
+	[[ -n "$min_coverage" ]] && printf "Applying --min-coverage cutoff: %s\n" "$min_coverage"
 
 	header=$(head -n 1 "$input_file")
-	IFS=',' read -ra columns <<< "$header"
+	IFS='\t' read -ra columns <<< "$header"
 
-	# get required cols to filter (termcount and ratio - changed to coverage)
+	# get required cols to filter (termcount and coverage - changed to coverage)
 	termcount_idx=""
-	ratio_idx=""
+	coverage_idx=""
 	for i in "${!columns[@]}"; do
-		if [[ "${columns[$i]}" == "TermCount" ]]; then
+		echo "${columns[$i]}"
+		if [[ "${columns[$i]}" == "TermSize" ]]; then
 			termcount_idx=$((i + 1))
-		elif [[ "${columns[$i]}" == "Ratio(%)" ]]; then
-			ratio_idx=$((i + 1))
+		elif [[ "${columns[$i]}" == "Coverage" ]]; then
+			coverage_idx=$((i + 1))
 		fi
 	done
-	if [[ -z "$termcount_idx" || -z "$ratio_idx" ]]; then
-		echo "Error: Required columns 'TermCount' and/or 'Ratio(%)' not found in header."
+	if [[ -z "$termcount_idx" || -z "$coverage_idx" ]]; then
+		echo "Error: Required columns 'TermSize' and/or 'Coverage' not found in header."
 		exit 1
 	fi
 
 	# Run awk with dynamic column positions
 	awk -F',' \
 		-v max_annot="$max_annot" \
-		-v min_ratio="$min_ratio" \
+		-v min_coverage="$min_coverage" \
 		-v termcount="$termcount_idx" \
-		-v ratio="$ratio_idx" '
+		-v coverage="$coverage_idx" '
 	BEGIN { OFS = FS }	#output separator same as input
 	NR == 1 { print; next }
 	{
 		annot_pass = (max_annot == "" || $termcount <= max_annot)	#filter empty pass, otherwise act
-		ratio_val = $ratio + 0
-		ratio_pass = (min_ratio == "" || ratio_val >= min_ratio) && ratio_val > 0	#filter empty pass, otherwise act
-		if (annot_pass && ratio_pass)
+		coverage_val = $coverage + 0
+		coverage_pass = (min_coverage == "" || coverage_val >= min_coverage) && coverage_val > 0	#filter empty pass, otherwise act
+		if (annot_pass && coverage_pass)
 			print
 	}
 	' "$input_file" > "$final_output"
@@ -125,9 +125,9 @@ fi
 remain_lines=$(tail -n +2 "$final_output" | wc -l)
 
 if [[ "$remain_lines" -eq 0 ]]; then
-	printf "⚠️ No data remains after filtering.\n"
+	printf "No data remains after filtering.\n"
 	rm -f "$final_output"
-	exit 0
+	exit 2
 else
 	printf "Initial %d entries reduced to %d entries. Output saved to /data/%s/%s\n" "$data_lines" "$remain_lines" "$input_dir" "$final_output"
 	mv "$final_output" "/data/${input_dir}/"
