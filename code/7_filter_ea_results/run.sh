@@ -65,8 +65,9 @@ if [[ -z "$max_annot" && -z "$max_occr" && -z "$min_coverage" ]]; then
 fi
 
 base_annots="${input_dir}/enriched_terms_annotations.tsv"
+base_name=$(basename "$base_annots")
 data_lines=$(tail -n +2 "$base_annots" | wc -l)
-final_output="filtered_enriched_terms_annotations.tsv"
+final_output="filtered_${base_name}"
 
 # step 1: priority to max-occr (if set)
 if [[ -n "$max_occr" ]]; then
@@ -83,14 +84,13 @@ if [[ -n "$max_annot" || -n "$min_coverage" ]]; then
 	[[ -n "$max_annot" ]] && printf "Applying --max-annotations cutoff: %s\n" "$max_annot"
 	[[ -n "$min_coverage" ]] && printf "Applying --min-coverage cutoff: %s\n" "$min_coverage"
 
-	header=$(head -n 1 "$input_file")
-	IFS='\t' read -ra columns <<< "$header"
+	header=$(head -n 1 "$input_file" | tr -d '\r')
+	IFS=$'\t' read -ra columns <<< "$header"
 
 	# get required cols to filter (termcount and coverage - changed to coverage)
 	termcount_idx=""
 	coverage_idx=""
 	for i in "${!columns[@]}"; do
-		echo "${columns[$i]}"
 		if [[ "${columns[$i]}" == "TermSize" ]]; then
 			termcount_idx=$((i + 1))
 		elif [[ "${columns[$i]}" == "Coverage" ]]; then
@@ -103,7 +103,7 @@ if [[ -n "$max_annot" || -n "$min_coverage" ]]; then
 	fi
 
 	# Run awk with dynamic column positions
-	awk -F',' \
+	awk -F'\t' \
 		-v max_annot="$max_annot" \
 		-v min_coverage="$min_coverage" \
 		-v termcount="$termcount_idx" \
@@ -126,9 +126,9 @@ remain_lines=$(tail -n +2 "$final_output" | wc -l)
 
 if [[ "$remain_lines" -eq 0 ]]; then
 	printf "No data remains after filtering.\n"
-	rm -f "$final_output"
+	mv "$final_output" "${input_dir}/"
 	exit 2
 else
-	printf "Initial %d entries reduced to %d entries. Output saved to /data/%s/%s\n" "$data_lines" "$remain_lines" "$input_dir" "$final_output"
-	mv "$final_output" "/data/${input_dir}/"
+	printf "Initial %d entries reduced to %d entries. Output saved to %s/%s\n" "$data_lines" "$remain_lines" "$input_dir" "$final_output"
+	mv "$final_output" "${input_dir}/"
 fi

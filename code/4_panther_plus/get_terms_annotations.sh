@@ -37,6 +37,7 @@ while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS;
 
 	unset term_data
 
+	# safe name dir creation
 	s_term=$(echo "$term" | sed 's/:/_/g')
 	s_name=$(echo "$name" | sed 's/[^a-zA-Z0-9_-]/_/g' | sed 's/__+/_/g')
 	term_dir="${save_dir}/${source}/terms_annotations/${s_term}_${s_name}"
@@ -51,7 +52,7 @@ while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS;
 
 	unset term_data
 
-	# --- BRANCHING LOGIC ---
+	# different annotation process per source
 	if [[ "$source" == *PANTHER* ]]; then
 		term_data=$(grep -w "^$term" "$panther_annot")
 	elif [[ "$source" == *REAC* ]]; then
@@ -68,7 +69,7 @@ while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS;
 	echo "$term_data" | cut -f2 | sort -u > "$term_dir/uniprots_in_term"
 	echo "$term_data" | cut -f3 | sort -u > "$term_dir/genes_in_term"
 
-	# 4. Perform intersection (Memory-based)
+	# intersection of genes list with term
 	intersection_data=$(echo "$term_data" | awk -F'\t' -v list="$input_list" '
 		BEGIN { while((getline < list) > 0) seen[$2] }
 		$2 in seen && $3 != "" { print $3 }  # Ensure only non-empty symbols are printed

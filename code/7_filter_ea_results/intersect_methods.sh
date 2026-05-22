@@ -159,7 +159,7 @@ fi
 
 # interact over common results files and get common genes
 for common_file in common*.txt; do
-    # Skip empty files or if no common terms exist
+    # skip empty files
     [ -s "$common_file" ] || continue
     
     tools_involved=()
@@ -184,7 +184,7 @@ for common_file in common*.txt; do
             fi
         done
 
-        # Only proceed if we have gene data from all involved tools
+        # only proceed if gene data with involved tools
         if [ "${#gene_streams[@]}" -eq "${#tools_involved[@]}" ]; then
             if [ "${#tools_involved[@]}" -eq 2 ]; then
                 common_genes=$(eval "comm -12 ${gene_streams[0]} ${gene_streams[1]}" | paste -sd "," -)

@@ -616,7 +616,7 @@ for module in "${selected_modules[@]}"; do
 			filter_args=""
 			[[ -n "$max_occur" ]] && filter_args+=" --max-occurrence $max_occur"
 			[[ -n "$max_annot" ]] && filter_args+=" --max-annotations $max_annot"
-			[[ -n "$min_ratio" ]] && filter_args+=" --min-ratio $min_ratio"
+			[[ -n "$min_coverage" ]] && filter_args+=" --min-coverage $min_coverage"
 
 			if (( ${#filter_args[@]} == 0 )); then
 				printf "Filter arguments is empty, no enrichment analysis filtering done..."
@@ -634,9 +634,8 @@ for module in "${selected_modules[@]}"; do
 				if [[ -d "$base_dir" ]]; then
 					printf "\nFiltering %s results...\n" "$tool_name"
 					# Loop through every map directory's results folder
-					for results_dir in "$base_dir"/*/results; do
+					for results_dir in "$base_dir"/*; do
 						if [[ -d "$results_dir" && -f "$results_dir/enriched_terms_annotations.tsv" ]]; then
-							echo "$results_dir"
 							# Extract map name and strip '_map' suffix for logging
 							map_dir=$(basename "$(dirname "$results_dir")")
 							target="${map_dir%_map}"
@@ -668,6 +667,8 @@ for module in "${selected_modules[@]}"; do
 						if [[ $? -eq 0 ]]; then
 							printf "✅ GSEA results filtered successfully (%s).\n" "$target"
 							any_processed=true
+						elif [[ $? -eq 2 ]]; then
+							printf "⚠️ No enrichment results left after filtering.\n" "$tool_name" "$target"
 						else
 							printf "❌ Error: Filtering GSEA results failed (%s).\n" "$target"
 							exit 1
