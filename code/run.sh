@@ -84,19 +84,19 @@ else
 	if [[ -z "$result" ]]; then
 		printf "⚠️ [MAIN] No match found for '%s'. Try the exact Scientific Name or TaxonID.\n" "${species}"
 	else
-		IFS=$'\t' read -r display_name gprof_curl_id scientific_name taxon <<< "$result"
+		IFS=$'\t' read -r display_name gprof_curl_id scientific_name_ori taxon <<< "$result"
 		printf "[MAIN] Match Found!\n"
 		printf "   --------------------------------------\n"
 		printf "   Common Name: %s\n" "${display_name}"
 		printf "   gProf curl ID: %s\n" "${gprof_curl_id}"
-		printf "   Scientific Name: %s\n" "${scientific_name}"
+		printf "   Scientific Name: %s\n" "${scientific_name_ori}"
 		printf "   Taxon ID: %s\n" "${taxon}"
 		printf "   --------------------------------------\n"
 	fi
 fi
 
 # species ids map file (required in various modules, best to always have it)
-scientific_name=$(echo "$scientific_name" | tr ' ' '_')	# tr '[:upper:]' '[:lower:]'
+scientific_name=$(echo "$scientific_name_ori" | tr ' ' '_')	# tr '[:upper:]' '[:lower:]'
 species_map="/data/$annotations_dir/${scientific_name}_ids_map"
 basename=$(basename "$species_map")
 if [ ! -s "$species_map" ]; then
@@ -619,7 +619,7 @@ for module in "${selected_modules[@]}"; do
 			[[ -n "$min_coverage" ]] && filter_args+=" --min-coverage $min_coverage"
 
 			if (( ${#filter_args[@]} == 0 )); then
-				printf "Filter arguments is empty, no enrichment analysis filtering done..."
+				printf "Filter arguments is empty, no enrichment analysis filtering done...\n"
 				exit 1
 			fi
 
@@ -632,7 +632,7 @@ for module in "${selected_modules[@]}"; do
 				fi
 
 				if [[ -d "$base_dir" ]]; then
-					printf "\nFiltering %s results...\n" "$tool_name"
+					printf "Filtering %s results...\n" "$tool_name"
 					# Loop through every map directory's results folder
 					for results_dir in "$base_dir"/*; do
 						if [[ -d "$results_dir" && -f "$results_dir/enriched_terms_annotations.tsv" ]]; then
@@ -703,19 +703,14 @@ done
 # 	esac
 # fi
 
-# # build reactome hierarchy files (just for REAC dataset)
-# if [[ "$reac_hierarchy" == "y" ]]; then
-# 	for method in gprofiler panther; do
-# 		method_dir="/data/$method"
-# 		if [[ -d "$method_dir" ]]; then
-# 			printf "Generating REACTOME hierarchy trees for %s.\n" "$method"
-# 			source ./4_panther_plus/normalize_name.sh "${species}"
-# 			if [[ -z "$long_name" ]]; then
-# 				printf "Input species '%s' not found.\n" "${species}"
-# 				exit 1
-# 			fi
-# 			./flags/reactome_tree/run.sh "$method_dir" "$long_name"
-# 		fi
-# 	done
-# 	printf "Finished\n"
-# fi
+# build reactome hierarchy files (just for REAC dataset)
+if [[ "$reac_hierarchy" == "true" ]]; then
+	for method in gprofiler panther; do
+		method_dir="/data/$method"
+		if [[ -d "$method_dir" ]]; then
+			printf "Generating REACTOME hierarchy trees for %s.\n" "$method"
+			./flags/reactome_tree/run.sh "$method_dir" "$scientific_name_ori"
+		fi
+	done
+	printf "Finished\n"
+fi

@@ -16,6 +16,20 @@ tmp_reactome="${scientific_name}_tmp"
 awk -F'\t' -v sp="$scientific_name" '$6 == sp' uniprot2reactome > "$tmp_reactome"
 rm -r uniprot2reactome
 
-awk -F'\t' '{ key = $2 "\t" $4; map[key] = (key in map ? map[key] "," $1 : $1) } END { for (k in map) print k "\t" map[k] }' "$tmp_reactome" > "$output_file"
+awk -F'\t' '
+{ 
+	key = $2 "\t" $4; 
+	if (!seen[key, $1]++) {
+		if (list[key] == "") {
+			list[key] = $1
+		} else {
+			list[key] = list[key] "," $1
+		}
+	}
+} 
+END { 
+	for (k in list) print k "\t" list[k] 
+}
+' "$tmp_reactome" > "$output_file"
 rm -r "$tmp_reactome"
 

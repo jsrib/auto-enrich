@@ -31,7 +31,7 @@ total_terms=$(($(wc -l < "$enriched_fields_file") - 1))
 term_index=0
 
 while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS; do
-	[[ -z "$term" || "$term" == "TermID" || "$term" == "*UNCLASSIFIED*" ]] && continue
+	[[ -z "$term" || "$term" == "TermID" || "$term" == "UNCLASSIFIED" || "$source" == "UNCLASSIFIED" ]] && continue
 	((term_index++))
 	printf "Processing %s/%s: %s %s\n" "$term_index" "$total_terms" "$source" "$term"
 
@@ -39,8 +39,10 @@ while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS;
 
 	# safe name dir creation
 	s_term=$(echo "$term" | sed 's/:/_/g')
-	s_name=$(echo "$name" | sed 's/[^a-zA-Z0-9_-]/_/g' | sed 's/__+/_/g')
-	term_dir="${save_dir}/${source}/terms_annotations/${s_term}_${s_name}"
+	s_name=$(echo "$name")
+	source_dir="${save_dir}/${source}"
+	[[ ! -d "$source_dir" ]] && mkdir -p "$source_dir"
+	term_dir="${source_dir}/terms_annotations/${s_term}_${s_name}"
 	mkdir -p "$term_dir"
 
 	genes_in_term="$term_dir/genes_in_term"
@@ -56,12 +58,20 @@ while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS;
 	if [[ "$source" == *PANTHER* ]]; then
 		term_data=$(grep -w "^$term" "$panther_annot")
 	elif [[ "$source" == *REAC* ]]; then
-		term_data=$(awk -F'\t' -v term="$term" '$1 == term { n = split($3, arr, ","); for (i = 1; i <= n; i++) print term "\t" arr[i] }' "$reac_annot" | \
-					awk -F'\t' 'NR==FNR{map[$1]=$2; next} $2 in map {print $1 "\t" $2 "\t" map[$2]}' .gene_map_lookup.tmp -)
+		awk -F'\t' -v term="$term" '
+			$1 == term { 
+				n = split($3, arr, ","); 
+				for (i = 1; i <= n; i++) {
+					print term "\t" arr[i] 
+				} 
+			}
+		' "$reac_annot" > temp_matches.tmp
+		term_data=$(awk -F'\t' '
+			NR==FNR { map[$1] = $2; next } 
+			$2 in map { print $1 "\t" $2 "\t" map[$2] }
+		' .gene_map_lookup.tmp temp_matches.tmp)
 	elif [[ "$source" == GO_* ]]; then
 		./gos_annots.sh "$species_taxon" "$term" "$term_dir" "$go_annot"
-		# We assume gos_annots.sh populated the files, so we just read them back
-		# [[ -f "$term_dir/results.tsv" ]] && term_data=$(awk -v t="$term" '{print t "\t" $1 "\t" $2}' "$term_dir/results.tsv")
 	fi
 
 	[[ -z "$term_data" ]] && continue
@@ -71,14 +81,21 @@ while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS;
 
 	# intersection of genes list with term
 	intersection_data=$(echo "$term_data" | awk -F'\t' -v list="$input_list" '
-		BEGIN { while((getline < list) > 0) seen[$2] }
-		$2 in seen && $3 != "" { print $3 }  # Ensure only non-empty symbols are printed
+		BEGIN { 
+			while((getline < list) > 0) {
+				# Split $2 by comma and store each part individually
+				n = split($2, items, ",");
+				for (i = 1; i <= n; i++) {
+					seen[items[i]] = 1
+				}
+			}
+		}
+		$2 in seen && $3 != "" { print $3 }
 	')
 	
-	# Write intersection file
 	echo "$intersection_data" > "$term_dir/genes_in_intersection"
 
-	# 5. Calculate final metrics from variables
+	# final metrics
 	term_size=$(wc -l < "$term_dir/genes_in_term")
 	intersection_size=$(echo "$intersection_data" | wc -l)
 	[[ -z "$intersection_data" ]] && intersection_size=0
@@ -87,7 +104,6 @@ while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS;
 	
 	coverage=$(awk -v m="$intersection_size" -v t="$term_size" 'BEGIN { printf "%.4f", (t>0 ? (m/t) : 0) }')
 
-	# Output row
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
 		"$term" "$name" "$source" "$coverage" "$intersection_size" \
 		"$intersection_genes_str" "$term_size" "$all_genes_in_term" >> "$output_file"

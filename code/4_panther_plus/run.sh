@@ -39,10 +39,12 @@ if [[ -z "$scientific_name" || -z "$common_name" ]]; then
 fi
 
 if [[ ! -s "$panther_annot" ]]; then 
-	./panther_annotations.sh "$common_name" "$panther_annot" 2>/dev/null
-	if [[ ! -s "$panther_annot" ]]; then
-		printf "❌ [MODULE 4] Error: PANTHER Annotations file download failed or file is empty."
+	./panther_annotations.sh "$common_name" "panther_annotations" 2>/dev/null
+	if [[ ! -s "panther_annotations" ]]; then
+		printf "❌ [MODULE 4] Error: PANTHER Annotations file download failed or file is empty.\n"
 		exit 1
+	else
+		mv "panther_annotations" "${panther_annot}"
 	fi
 else
 	printf "PANTHER annotations file found: '%s'.\n" "$panther_annot"
@@ -51,7 +53,7 @@ fi
 if [[ ! -s "$reactome_annot" ]]; then
 	./reactome_annotations.sh "$scientific_name" "$reactome_annot" 2>/dev/null
 	if [[ ! -s "$reactome_annot" ]]; then
-		printf "❌ [MODULE 4] Error: REACTOME Annotations file download failed or file is empty."
+		printf "❌ [MODULE 4] Error: REACTOME Annotations file download failed or file is empty.\n"
 		exit 1
 	fi
 else
@@ -101,42 +103,34 @@ printf "Getting terms annotations results...\n"
 annots_results="enriched_terms_annotations.tsv"
 cp "$annots_results" "${save_dir}/"
 
-# # split results by source
-# for file in "$fields_results" "$annots_results"; do
-# 	[[ ! -f "$file" ]] && continue
+# split results by source
+for file in "$fields_results" "$annots_results"; do
+	[[ ! -f "$file" ]] && continue
 
-# 	# check if file empty
-# 	line_count=$(wc -l < "$file")
-# 	if (( line_count <= 1 )); then
-# 		printf "No statistically significant results in %s\n" "$file"
-# 		exit 1
-# 	fi
+	# check if file empty
+	line_count=$(wc -l < "$file")
+	if (( line_count <= 1 )); then
+		printf "No statistically significant results in %s\n" "$file"
+		exit 1
+	fi
 
-# 	# determine the Source column based on the filename (3 in fields_results, 4 in annots_results)
-# 	if [[ "$file" == "$fields_results" ]]; then
-# 		src_col=4
-# 	else
-# 		src_col=3
-# 	fi
+	# Source column
+	src_col=3
 
-# 	header=$(head -n 1 "$file")
+	header=$(head -n 1 "$file")
 	
-# 	# get unique sources from the file
-# 	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
+	# get unique sources from the file
+	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
 
-# 	for src in "${sources[@]}"; do
-# 		[[ -z "$src" ]] && continue
-		
-# 		# create source-specific directory
-# 		src_dir="$save_dir/$src"
-# 		if [[ ! -d "$src_dir" ]]; then
-# 			mkdir -p "$src_dir"
-# 		fi
-
-# 		# filter the file for this source and save as TSV
-# 		{
-# 			echo "$header"
-# 			awk -F'\t' -v col="$src_col" -v val="$src" '$col == val' "$file"
-# 		} > "$src_dir/${src}_$file"
-# 	done
-# done
+	for src in "${sources[@]}"; do
+		[[ -z "$src" ]] && continue
+		# create source-specific directory
+		src_dir="$save_dir/$src"
+		[[ ! -d "$src_dir" ]] && mkdir -p "$src_dir"
+		# filter the file for this source and save as TSV
+		{
+			echo "$header"
+			awk -F'\t' -v col="$src_col" -v val="$src" '$col == val' "$file"
+		} > "$src_dir/${src}_$file"
+	done
+done
