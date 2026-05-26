@@ -181,7 +181,7 @@ for module in "${selected_modules[@]}"; do
 			for input_map in "${files[@]}"; do
 				basename=$(basename "$input_map")
 				save_dir="/data/${gprof_dir}/${basename%_map}"
-				
+
 				printf "Running gProfiler for: %s\n" "$basename"
 				./3_gprofiler_plus/run.sh "${input_map}" "${gprof_curl_id}" "${gprof_gene_sets}" "${save_dir}" "${gprofiler_dbs}"
 
@@ -189,6 +189,7 @@ for module in "${selected_modules[@]}"; do
 				case $status in
 					0)
 						printf "✅ [MODULE 3] Run successful: Significant results stored in '%s'.\n" "$save_dir"
+						cp $input_map $save_dir
 						;;
 					2)
 						printf "⚠️ [MODULE 3] Run Completed: No significant results found for '%s' list.\n" "$basename"
@@ -206,7 +207,7 @@ for module in "${selected_modules[@]}"; do
 			printf "🚀 [MODULE 4] Initializing: Running PANTHER enrichment analysis...\n"
 			panther_gene_sets="/data/$annotations_dir/${scientific_name}_PTHR19.0_gene_sets.gmt"
 			reactome_gene_sets="/data/$annotations_dir/${scientific_name}_REAC_pathways.gmt"
-			gos_gene_sets="/data/$annotations_dir/${scientific_name}_go_terms.gmt"
+			gos_gene_sets="/data/$annotations_dir/${scientific_name}_GO_terms.gmt"
 
 			shopt -s nullglob
 			files=(/data/"$maps_dir"/*_map)
@@ -230,6 +231,7 @@ for module in "${selected_modules[@]}"; do
 				case $status in
 					0)
 						printf "✅ [MODULE 4] Run successful: Significant results stored in '%s'.\n" "$save_dir"
+						cp $input_map ../$save_dir
 						;;
 					2)
 						printf "⚠️ [MODULE 4] Run Completed: No significant results found for '%s'.\n" "$basename"
@@ -354,9 +356,9 @@ for module in "${selected_modules[@]}"; do
 						printf "❌ [MODULE 6] Configuration Error: 'collapse' method (%s) specified without a 'chip' file (set in the config).\n" "$collapse" >&2
 						exit 1
 					fi
-					# Case: Both collapse and chip are provided
+					# both collapse and chip are provided
 					parameters["collapse"]="$collapse"
-					# Resolve and copy the chip file safely
+					# resolve and copy the chip file safely
 					if [[ -f "/data/$chip" ]]; then
 						cp "/data/$chip" "${run_dir}/"
 						parameters["chip"]="$(basename "$chip")"
@@ -366,7 +368,7 @@ for module in "${selected_modules[@]}"; do
 					fi
 				elif [[ "$collapse" == "No_Collapse" ]]; then
 					parameters["collapse"]="No_Collapse"
-					# No chip needed for No_Collapse
+					# no chip needed for No_Collapse
 				else
 					printf "❌ [MAIN] Configuration Error: Invalid collapse '%s'. Options are: 'Collapse', 'Remap_only' or 'No_collpase'.\n" "$method" >&2
 				fi
@@ -546,7 +548,6 @@ for module in "${selected_modules[@]}"; do
 			gsea_results="/data/$gsea_dir/results"
 			common_results_dir="/data/common_results"
 
-			# create directory if doesnt exist
 			[[ ! -d "$common_results_dir" ]] && mkdir -p "$common_results_dir"
 
 			# funciton to run comparison agaisnt GSEA
@@ -598,7 +599,7 @@ for module in "${selected_modules[@]}"; do
 				printf "Found %d run directories across tools.\n" "${#DETECTED_RUNS[@]}"
 				# loop every run
 				for run in "${!DETECTED_RUNS[@]}"; do
-					# This array will dynamically hold the paths that actually exist for this sample
+					# dynamically hold the paths that actually exist for this sample
 					paths_to_intersect=()
 					# dynamically poll every tool to see if it has data for this specific sample
 					for tool in "${!TOOLS_DIR[@]}"; do
@@ -624,7 +625,6 @@ for module in "${selected_modules[@]}"; do
 			fi
 
 			for tool_name in "gProfiler" "PANTHER"; do
-				# Select the appropriate base directory
 				if [[ "$tool_name" == "gProfiler" ]]; then
 					base_dir="/data/$gprof_dir"
 				else
@@ -633,7 +633,7 @@ for module in "${selected_modules[@]}"; do
 
 				if [[ -d "$base_dir" ]]; then
 					printf "Filtering %s results...\n" "$tool_name"
-					# Loop through every map directory's results folder
+					# loop every map directory's results folder
 					for results_dir in "$base_dir"/*; do
 						if [[ -d "$results_dir" && -f "$results_dir/enriched_terms_annotations.tsv" ]]; then
 							# Extract map name and strip '_map' suffix for logging

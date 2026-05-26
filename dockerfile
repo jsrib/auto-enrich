@@ -18,7 +18,8 @@ RUN pip3 install --break-system-packages -Iv \
 	reportlab \
 	matplotlib \
 	pandas \
-	seaborn
+	seaborn \
+	goatools
 
 COPY code.zip /opt
 WORKDIR /opt

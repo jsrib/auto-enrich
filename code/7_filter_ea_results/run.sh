@@ -64,71 +64,74 @@ if [[ -z "$max_annot" && -z "$max_occr" && -z "$min_coverage" ]]; then
 	exit 1
 fi
 
-base_annots="${input_dir}/enriched_terms_annotations.tsv"
-base_name=$(basename "$base_annots")
-data_lines=$(tail -n +2 "$base_annots" | wc -l)
-final_output="filtered_${base_name}"
+for input_file in "${input_dir}"/enriched_terms_annotations*.tsv; do
+	[ -f "$input_file" ] || continue
 
-# step 1: priority to max-occr (if set)
-if [[ -n "$max_occr" ]]; then
-	printf "Applying --max-occurrence cutoff: %s\n" "$max_occr"
-	./common_genes.sh "${input_dir}" "$max_occr" || exit 1
-	./filter_genes.sh "${input_dir}" || exit 1
-	input_file="filtered_genes"
-else
-	input_file="$base_annots"
-fi
+	base_name=$(basename "$input_file")
+	data_lines=$(tail -n +2 "$input_file" | wc -l)
+	final_output="filtered_${base_name}"
 
-# step 2: apply other filters
-if [[ -n "$max_annot" || -n "$min_coverage" ]]; then
-	[[ -n "$max_annot" ]] && printf "Applying --max-annotations cutoff: %s\n" "$max_annot"
-	[[ -n "$min_coverage" ]] && printf "Applying --min-coverage cutoff: %s\n" "$min_coverage"
+	working_file="$input_file"
 
-	header=$(head -n 1 "$input_file" | tr -d '\r')
-	IFS=$'\t' read -ra columns <<< "$header"
-
-	# get required cols to filter (termcount and coverage - changed to coverage)
-	termcount_idx=""
-	coverage_idx=""
-	for i in "${!columns[@]}"; do
-		if [[ "${columns[$i]}" == "TermSize" ]]; then
-			termcount_idx=$((i + 1))
-		elif [[ "${columns[$i]}" == "Coverage" ]]; then
-			coverage_idx=$((i + 1))
-		fi
-	done
-	if [[ -z "$termcount_idx" || -z "$coverage_idx" ]]; then
-		echo "Error: Required columns 'TermSize' and/or 'Coverage' not found in header."
-		exit 1
+	# step 1: priority to max-occr (if set)
+	if [[ -n "$max_occr" ]]; then
+		printf "Applying --max-occurrence cutoff: %s\n" "$max_occr"
+		./common_genes.sh "${input_dir}" "$max_occr" || exit 1
+		./filter_genes.sh "${input_dir}" || exit 1
+		working_file="filtered_genes"
 	fi
 
-	# Run awk with dynamic column positions
-	awk -F'\t' \
-		-v max_annot="$max_annot" \
-		-v min_coverage="$min_coverage" \
-		-v termcount="$termcount_idx" \
-		-v coverage="$coverage_idx" '
-	BEGIN { OFS = FS }	#output separator same as input
-	NR == 1 { print; next }
-	{
-		annot_pass = (max_annot == "" || $termcount <= max_annot)	#filter empty pass, otherwise act
-		coverage_val = $coverage + 0
-		coverage_pass = (min_coverage == "" || coverage_val >= min_coverage) && coverage_val > 0	#filter empty pass, otherwise act
-		if (annot_pass && coverage_pass)
-			print
-	}
-	' "$input_file" > "$final_output"
-else
-	cp "$input_file" "$final_output"
-fi
+	# step 2: apply other filters
+	if [[ -n "$max_annot" || -n "$min_coverage" ]]; then
+		[[ -n "$max_annot" ]] && printf "Applying --max-annotations cutoff: %s\n" "$max_annot"
+		[[ -n "$min_coverage" ]] && printf "Applying --min-coverage cutoff: %s\n" "$min_coverage"
 
-remain_lines=$(tail -n +2 "$final_output" | wc -l)
+		header=$(head -n 1 "$working_file" | tr -d '\r')
+		IFS=$'\t' read -ra columns <<< "$header"
 
-if [[ "$remain_lines" -eq 0 ]]; then
-	printf "No data remains after filtering.\n"
-	mv "$final_output" "${input_dir}/"
-	exit 2
-else
-	printf "Initial %d entries reduced to %d entries. Output saved to %s/%s\n" "$data_lines" "$remain_lines" "$input_dir" "$final_output"
-	mv "$final_output" "${input_dir}/"
-fi
+		# get required cols to filter (termcount and coverage - changed to coverage)
+		termcount_idx=""
+		coverage_idx=""
+		for i in "${!columns[@]}"; do
+			if [[ "${columns[$i]}" == "TermSize" ]]; then
+				termcount_idx=$((i + 1))
+			elif [[ "${columns[$i]}" == "Coverage" ]]; then
+				coverage_idx=$((i + 1))
+			fi
+		done
+		if [[ -z "$termcount_idx" || -z "$coverage_idx" ]]; then
+			echo "Error: Required columns 'TermSize' and/or 'Coverage' not found in header."
+			exit 1
+		fi
+
+		# Run awk with dynamic column positions
+		awk -F'\t' \
+			-v max_annot="$max_annot" \
+			-v min_coverage="$min_coverage" \
+			-v termcount="$termcount_idx" \
+			-v coverage="$coverage_idx" '
+		BEGIN { OFS = FS }	#output separator same as input
+		NR == 1 { print; next }
+		{
+			annot_pass = (max_annot == "" || $termcount <= max_annot)	#filter empty pass, otherwise act
+			coverage_val = $coverage + 0
+			coverage_pass = (min_coverage == "" || coverage_val >= min_coverage) && coverage_val > 0	#filter empty pass, otherwise act
+			if (annot_pass && coverage_pass)
+				print
+		}
+		' "$working_file" > "$final_output"
+	else
+		cp "$input_file" "$final_output"
+	fi
+
+	remain_lines=$(tail -n +2 "$final_output" | wc -l)
+
+	if [[ "$remain_lines" -eq 0 ]]; then
+		printf "No data remains after filtering.\n"
+		mv "$final_output" "${input_dir}/"
+		exit 2
+	else
+		printf "Initial %d entries reduced to %d entries. Output saved to %s/%s\n" "$data_lines" "$remain_lines" "$input_dir" "$final_output"
+		mv "$final_output" "${input_dir}/"
+	fi
+done

@@ -1,13 +1,13 @@
 #!/bin/bash
 
 if [ $# -ne 8 ]; then
-	printf "Usage: %s <input_map_file> <results_file> <species_taxon> <save_dir> <panther_annotations> <reac_annotations> <go_annotations> <gene_map>\n" "$0"
+	printf "Usage: %s <input_map_file> <results_file> <species_taxon> <save_dir> <panther_annot> <reac_annot> <go_annot> <gene_map>\n" "$0"
 	exit 1
 fi
 
 input_list="$1"
 enriched_fields_file="$2"
-species_taxon="$3"	
+species_taxon="$3"
 save_dir="$4"
 panther_annot="$5"
 reac_annot="$6"
@@ -15,98 +15,79 @@ go_annot="$7"
 gene_map="$8"	# species gene map file (geneid, uniprot, symbol)
 output_file="enriched_terms_annotations.tsv"
 
-for file in "$panther_annot" "$reac_annot" "$gene_map"; do
+# validate files
+for file in "$panther_annot" "$reac_annot" "$go_annot" "$gene_map" "$input_list"; do
 	if [ ! -f "$file" ]; then
-		printf "❌ [MODULE 4] Error: Annotations/mapping file not found '%s'.\n" "$file"
+		printf "❌ Error: Required file not found: '%s'.\n" "$file"
 		exit 1
+	else
+		sed -i 's/\r$//' "$file"
 	fi
 done
 
 printf "TermID\tName\tSource\tCoverage\tIntersectionSize\tGenes_in_intersection\tTermSize\tGenes_in_term\n" > "$output_file"
 
-# temporary uniprot symbol map
-awk -F'\t' '{split($2, u, ","); for(i in u) print u[i] "\t" $3}' "$gene_map" > .gene_map_lookup.tmp
+# pre-extract input symbols for intersection
+cut -f3 "$input_list" | sort -u > .input_symbols.tmp
 
 total_terms=$(($(wc -l < "$enriched_fields_file") - 1))
 term_index=0
 
-while IFS=$'\t' read -r term name source _4 _5 _6 _7 querysize cov interS termS; do
+while IFS=$'\t' read -r term name source _4 _5 _6 direction querysize cov interS termS; do
 	[[ -z "$term" || "$term" == "TermID" || "$term" == "UNCLASSIFIED" || "$source" == "UNCLASSIFIED" ]] && continue
 	((term_index++))
 	printf "Processing %s/%s: %s %s\n" "$term_index" "$total_terms" "$source" "$term"
 
-	unset term_data
-
-	# safe name dir creation
-	s_term=$(echo "$term" | sed 's/:/_/g')
-	s_name=$(echo "$name")
 	source_dir="${save_dir}/${source}"
 	[[ ! -d "$source_dir" ]] && mkdir -p "$source_dir"
-	term_dir="${source_dir}/terms_annotations/${s_term}_${s_name}"
+
+	# Define paths
+	s_term="${term//:/_}"
+	term_dir="${source_dir}/terms_annotations/${s_term}_${name}"
 	mkdir -p "$term_dir"
 
 	genes_in_term="$term_dir/genes_in_term"
-	uniprots_in_term="$term_dir/uniprots_in_term"
 	genes_in_intersection="$term_dir/genes_in_intersection"
-	
-	: > "$genes_in_term"
-	: > "$uniprots_in_term"
 
-	unset term_data
+	# standardize extraction (always use unique gene symbols)
+	case "$source" in
+		*PANTHER*)
+			awk -F'\t' -v term="$term" '$3 ~ "(^|;)" term "(;|$)" {print $2}' "$panther_annot" 2>/dev/null | sort -u > "$genes_in_term"
+			;;
+		*REAC*)
+			# map UniProt (col 3) to symbol via gene_map (col 2=UniProt, col 3=Symbol)
+			awk -F'\t' -v t="$term" '$1 == t {print $3}' "$reac_annot" | tr ',' '\n' | \
+			awk -F'\t' 'NR==FNR {map[$2]=$3; next} $1 in map {print map[$1]}' "$gene_map" - | sort -u > "$genes_in_term"
+			;;
+		GO_BP|GO_MF|GO_CC)
+			awk -F'\t' -v t="$term" '$1 == t {print $2}' "$go_annot" | tr ',' '\n' | sort -u > "$genes_in_term"
+			;;
+	esac
 
-	# different annotation process per source
-	if [[ "$source" == *PANTHER* ]]; then
-		term_data=$(grep -w "^$term" "$panther_annot")
-	elif [[ "$source" == *REAC* ]]; then
-		awk -F'\t' -v term="$term" '
-			$1 == term { 
-				n = split($3, arr, ","); 
-				for (i = 1; i <= n; i++) {
-					print term "\t" arr[i] 
-				} 
-			}
-		' "$reac_annot" > temp_matches.tmp
-		term_data=$(awk -F'\t' '
-			NR==FNR { map[$1] = $2; next } 
-			$2 in map { print $1 "\t" $2 "\t" map[$2] }
-		' .gene_map_lookup.tmp temp_matches.tmp)
-	elif [[ "$source" == GO_* ]]; then
-		./gos_annots.sh "$species_taxon" "$term" "$term_dir" "$go_annot"
-	fi
+	[[ -s "$genes_in_term" ]] || echo "" > "$genes_in_term"
 
-	[[ -z "$term_data" ]] && continue
+	# intersection
+	grep -Fxf .input_symbols.tmp "$genes_in_term" > "$genes_in_intersection" || :
 
-	echo "$term_data" | cut -f2 | sort -u > "$term_dir/uniprots_in_term"
-	echo "$term_data" | cut -f3 | sort -u > "$term_dir/genes_in_term"
-
-	# intersection of genes list with term
-	intersection_data=$(echo "$term_data" | awk -F'\t' -v list="$input_list" '
-		BEGIN { 
-			while((getline < list) > 0) {
-				# Split $2 by comma and store each part individually
-				n = split($2, items, ",");
-				for (i = 1; i <= n; i++) {
-					seen[items[i]] = 1
-				}
-			}
-		}
-		$2 in seen && $3 != "" { print $3 }
-	')
-	
-	echo "$intersection_data" > "$term_dir/genes_in_intersection"
-
-	# final metrics
-	term_size=$(wc -l < "$term_dir/genes_in_term")
-	intersection_size=$(echo "$intersection_data" | wc -l)
-	[[ -z "$intersection_data" ]] && intersection_size=0
-	intersection_genes_str=$(echo "$intersection_data" | tr '\n' ' ' | sed 's/ $//')
-	all_genes_in_term=$(echo "$term_data" | cut -f3 | sort -u | tr '\n' ' ' | sed 's/ $//')
-	
+	# metrics
+	term_size=$(wc -l < "$genes_in_term")
+	intersection_size=$(wc -l < "$genes_in_intersection")
 	coverage=$(awk -v m="$intersection_size" -v t="$term_size" 'BEGIN { printf "%.4f", (t>0 ? (m/t) : 0) }')
 
+	genes_in_intersection_str="$(paste -sd ' ' "$genes_in_intersection" 2>/dev/null || echo '')"
+	genes_in_term_str="$(paste -sd ' ' "$genes_in_term" 2>/dev/null || echo '')"
+	
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-		"$term" "$name" "$source" "$coverage" "$intersection_size" \
-		"$intersection_genes_str" "$term_size" "$all_genes_in_term" >> "$output_file"
+			"$term" \
+			"$name" \
+			"$source" \
+			"$coverage" \
+			"$intersection_size" \
+			"$genes_in_intersection_str" \
+			"$term_size" \
+			"$genes_in_term_str" >> "$output_file"
+
 done < "$enriched_fields_file"
 
-rm .gene_map_lookup.tmp
+# Cleanup
+rm .input_symbols.tmp

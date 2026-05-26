@@ -51,13 +51,24 @@ else
 fi
 
 if [[ ! -s "$reactome_annot" ]]; then
-	./reactome_annotations.sh "$scientific_name" "$reactome_annot" 2>/dev/null
+	./reactome_annotations.sh "$scientific_name" "$reactome_annot"
 	if [[ ! -s "$reactome_annot" ]]; then
 		printf "❌ [MODULE 4] Error: REACTOME Annotations file download failed or file is empty.\n"
 		exit 1
 	fi
 else
 	printf "REACTOME annotations file found: '%s'.\n" "$reactome_annot"
+fi
+
+if [[ ! -s "$gos_annot" ]]; then
+	printf "Generating Gene Ontology GAF Annotations....\n" "$gos_annot"	
+	python3 build_gos_gaf_symbols.py "$scientific_name" "$gos_annot"
+	if [[ ! -s "$gos_annot" ]]; then
+		printf "❌ [MODULE 4] Error: Gene Ontology GAF Annotations file download failed or file is empty.\n"
+		exit 1
+	fi
+else
+	printf "Gene Ontology GAF Annotations file found: '%s'.\n" "$gos_annot"
 fi
 
 if [ ! -s "${gene_map}" ]; then
@@ -97,8 +108,8 @@ for file in "${result_files[@]}"; do
 done
 cp "$fields_results" "${save_dir}/"
 
-printf "Getting terms annotations results...\n"
 # get enriched terms annotations
+printf "Getting enriched terms annotations...\n"
 ./get_terms_annotations.sh "${input_file}" "${fields_results}" "${species_taxon}" "${save_dir}" "${panther_annot}" "${reactome_annot}" "${gos_annot}" "${gene_map}"
 annots_results="enriched_terms_annotations.tsv"
 cp "$annots_results" "${save_dir}/"
