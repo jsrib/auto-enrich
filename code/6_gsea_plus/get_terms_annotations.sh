@@ -8,7 +8,6 @@ fi
 results_dir="$1"
 enriched_fields_file="$2"
 gmx_file="$3"
-output_file="${results_dir}/enriched_terms_annotations.tsv"
 
 if [[ ! -d "$results_dir" ]]; then
 	printf "Error: Results directory '%s' is not valid.\n" "$results_dir"
@@ -23,39 +22,38 @@ if [[ ! -f "$gmx_file" ]]; then
 	exit 1
 fi
 
-# coverage coreenrichmentsize/termsize
-printf "Name\tSource\tPhenotype\tCoverage\tCoreEnrichmentSize\tGenes_in_CoreEnrichment\tTermSize\tGenes_in_term\n" > "$output_file"
-
 # read results
 tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name source phenotype es nes nom_p fdr_q fwer_p rank_at_max size leading_edge; do
+
+	phenotype_output_file="${results_dir}/enriched_terms_annotations_${phenotype}.tsv"
+
+	if [[ ! -f "$phenotype_output_file" ]]; then
+		printf "Name\tSource\tPhenotype\tCoverage\tCoreEnrichmentSize\tGenes_in_CoreEnrichment\tTermSize\tGenes_in_term\n" > "$phenotype_output_file"
+	fi
+
 	target_file="${results_dir}/${name}.tsv"
 	if [[ ! -f "$target_file" && -d "${results_dir}/raw_GSEA_output" ]]; then
 		target_file="${results_dir}/raw_GSEA_output/${name}.tsv"
 	else
-		printf "Detailed results file not found for '%s'" "$name" 
+		printf "Detailed results file not found for '%s'" "$name"
 	fi
 
 	# get core enrichment genes from detailed report file of the term
-	core_genes=""
+	core_genes="None"
 	core_size=0
 
 	if [[ -f "$target_file" ]]; then
-		# Capture clean comma-separated list of core enrichment genes from Column 2
-		core_genes=$(awk -F '\t' '
+		result=$(awk -F '\t' '
 			NR == 1 {
-				for (i = 1; i <= NF; i++) {
-					if ($i ~ /CORE/ && $i ~ /ENRICHMENT/) { col_idx = i }
-				}
+				for (i = 1; i <= NF; i++) { if ($i ~ /CORE/ && $i ~ /ENRICHMENT/) col_idx = i }
 				next
 			}
-			col_idx && ($col_idx == "Yes" || $col_idx == "yes") { 
-				print $2 
-			}
-		' "$target_file" | paste -sd "," -)
+			col_idx && ($col_idx ~ /^[Yy]es$/) { list = (list ? list "," $2 : $2); count++ }
+			END { print (list ? list : "None") "\t" (count ? count : 0) }
+		' "$target_file")
 		
-		if [[ -n "$core_genes" ]]; then
-			core_size=$(echo "$core_genes" | tr ',' '\n' | wc -l | xargs)
-		fi
+		core_genes=$(echo "$result" | cut -f1)
+		core_size=$(echo "$result" | cut -f2)
 	fi
 
 	# get term genes from used GMX file in analysis
@@ -79,7 +77,5 @@ tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name
 
 	# write final output
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-		"$name" "$source" "$phenotype" "$coverage" "$core_size" "$core_genes" "$gmx_size" "$gmx_genes" >> "$output_file"
+		"$name" "$source" "$phenotype" "$coverage" "$core_size" "$core_genes" "$gmx_size" "$gmx_genes" >> "$phenotype_output_file"
 done
-
-echo "Coverage profile successfully generated at: $output_file"

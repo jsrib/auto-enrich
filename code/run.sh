@@ -160,7 +160,7 @@ for module in "${selected_modules[@]}"; do
 					printf "✅ [MODULE 2] Success: Gene list '%s' mapped ! Saved in %s.\n" "$basename" "$output"
 				fi
 			done
-			printf "[MODULE 2] Mapping complete. Check '%s'.!\n\n" "$maps_dir"
+			printf "[MODULE 2] Mapping complete. Check '%s' directory!\n\n" "$maps_dir"
 			;;
 
 		3) # Module 3 (gProfiler plus) - mapped_gene_lists directory in /data, species and gprofiler dbs variables in config()
@@ -344,7 +344,7 @@ for module in "${selected_modules[@]}"; do
 						cat "$gene_set" >> "$combined_gmx_path"
 					done
 					cp "$combined_gmx_path" "/data/${gsea_dir}"
-					parameters["gmx"]="$combined_gmx_path"
+					parameters["gmx"]="$combined_gmx"
 				fi
 			fi
 
@@ -683,6 +683,25 @@ for module in "${selected_modules[@]}"; do
 done
 
 # ---- Additional flags -----
+# gene_occurences file, only if flag set to 'true', else dont create file
+gene_occurrences="${gene_occurrences,,}"
+if [[ "$gene_occurrences" == "true" ]]; then
+	for method in gprofiler panther gsea; do
+		method_dir="/data/$method"
+		if [[ -d "$method_dir" ]]; then
+			printf "Generating gene occurences files for %s.\n" "$method"
+			./flags/gene_occurrences.sh "$method_dir"
+		fi
+	done
+else
+	# common misspellings
+	case "$gene_occurrences" in
+		"gene_occurences"|"gene_ocurences"|"gene_ocurrences")
+			printf "Warning: Did you mean 'gene_occurrences'? Flag ignored.\n"
+			;;
+	esac
+fi
+
 # build reactome hierarchy files (just for REAC dataset)
 if [[ "$reac_hierarchy" == "true" ]]; then
 	for method in gprofiler panther; do

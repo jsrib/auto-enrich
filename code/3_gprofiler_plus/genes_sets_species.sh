@@ -23,6 +23,16 @@ else
 	exit 1
 fi
 
+{
+	echo "!Source: g:Profiler (https://biit.cs.ut.ee/gprofiler/)"
+	echo "!Species_ID: $species"
+	echo "!Generation_Date: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+	echo "!Generated_by: auto-Enrich Pipeline"
+	echo "!Description: Aggregated GMT files containing pathway and functional annotations."
+	echo "!Note: This file is a concatenation of all category-specific .gmt files provided by g:Profiler for this species."
+	echo "!License: g:Profiler data is typically subject to the terms of the individual source databases."
+} > "$output"
+
 # extract .gmt files
 mkdir -p "$temp_dir"
 printf "Extracting files...\n"
@@ -30,7 +40,7 @@ unzip -q -o "$zip_file" -d "$temp_dir"
 
 # merge .gmt files into one
 printf "Merging .gmt files into %s...\n" "$output"
-find "$temp_dir" -name "*.gmt" -exec cat {} + > "$output"
+find "$temp_dir" -name "*.gmt" -exec cat {} + >> "$output"
 
 rm -rf "$temp_dir" "$zip_file"
 

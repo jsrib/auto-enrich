@@ -18,6 +18,18 @@ if [[ ! -s "$tmp_file" ]]; then
 	exit 1
 fi
 
+generation_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Add metadata to the top of the output file
+{
+	echo "!Source: UniProtKB (https://www.uniprot.org)"
+	echo "!Taxon_ID: $taxon"
+	echo "!Generation_Date: $generation_date"
+	echo "!Generated_by: auto-Enrich Pipeline"
+	echo "!Description: Mapping file linking UniProt Accessions to Gene Symbols and NCBI GeneIDs."
+	echo "!Note: This file provides the translation layer between different gene/protein identifiers."
+} > "$output_file"
+
 # process file
 printf "Processing and cleaning data...\n"
 header="GeneID\tUniProtID\tSymbol\tFullName\tOrganism"
@@ -47,6 +59,6 @@ NR > 1 {
 	# exclude empty geneIDs rows (not references, simplify mapping)
 	awk -F'\t' 'NR > 1 && $1 != "" && $1 != "NA" && $1 != "-"' "unsorted" | sort -t$'\t' -k1,1n
 	
-} > "$output_file"
+} >> "$output_file"
 
 rm "$tmp_file" "unsorted"

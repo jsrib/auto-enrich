@@ -16,101 +16,102 @@ declare -A tools=(
 declare -A tools_dirs
 declare -A found_fields_files
 declare -A found_annots_files
+active_tools=()
 
 # assign input directories to tools
 for dir in "$@"; do
+	dir_base=$(basename "$dir")
 	matched=false
 	for key in "${!tools[@]}"; do
 		if [[ "$dir" == *"${tools[$key]}"* ]]; then
-			tools_dirs[$key]="$dir"
+			unique_key="${key}_${dir_base}"
+			tools_dirs[$unique_key]="$dir"
 			matched=true
 			break
 		fi
 	done
-	[[ "$matched" == false ]] && echo "Warning: No match found for $dir $key"
+	[[ "$matched" == false ]] && echo "Warning: No match found for $dir"
 done
 
 field_file="enrichment_fields.tsv"
-annot_file="enriched_terms_annotations.tsv"
+
+#function to find annotations results file since it can  vart between tools and doesnt follow a rule when it comes fo GSEA classic runs
+get_annot_file() {
+	local dir="$1"
+	local tool_key="${1%%_*}"
+	if [[ "$tool_key" == "panther" ]]; then
+		find "$dir" -maxdepth 2 -name "enriched_terms_annotations_pos.tsv" -print -quit
+	elif [[ "$tool_key" == "gsea" ]]; then
+		find "$dir" -maxdepth 2 -name "*_pos.tsv" -print -quit || \
+		find "$dir" -maxdepth 2 -name "enriched_terms_annotations*.tsv" -not -name "*_neg.tsv" -print -quit
+	else
+		find "$dir" -maxdepth 2 -name "enriched_terms_annotations.tsv" -print -quit
+	fi
+}
 
 # safely locate files for passed tools
-active_tools=()
 echo "Checking for $field_file in identified directories..."
 for key in "${!tools_dirs[@]}"; do
 	dir="${tools_dirs[$key]}"
-	
-	file_1=$(find "$dir" -maxdepth 2 -name "$field_file" -print -quit)
-	file_2=$(find "$dir" -maxdepth 2 -name "$annot_file" -print -quit)
-	
+	file_1=$(find "$dir" -maxdepth 2 -name "enrichment_fields.tsv" -print -quit)
+	file_2=$(get_annot_file "$dir" "$key")
 	if [[ -n "$file_1" && -n "$file_2" ]]; then
 		found_fields_files[$key]="$file_1"
 		found_annots_files[$key]="$file_2"
-		active_tools+=("$key") # Registered exactly once
 	else
-		echo "❌ [MODULE 7] Error: Required files not fully found for $key in $dir"
+		echo "❌ Error: Required files not found for $key"
 		exit 1
 	fi
 done
 
-gprof_fields="${found_fields_files[gprof]}"
-panther_fields="${found_fields_files[panther]}"
-gsea_fields="${found_fields_files[gsea]}"
-
 #check if the tool is in found_fields_files before trying to awk it
 # "${found_fields_files[tool]}" must match declared key [tool] in 'tools' array
 # gprofiler name column ($2) and source column ($4)
-if [[ -n "$gprof_fields" ]]; then
-	awk -F"\t" 'BEGIN {OFS="\t"} /GO_MF|GO_BP|GO_CC|REAC/ { print toupper($2), toupper($4) }' "$gprof_fields" > gprof_terms
-fi
+for key in "${!found_fields_files[@]}"; do
+	f_fields="${found_fields_files[$key]}"
+	f_annot="${found_annots_files[$key]}"
+	base_key="${key%%_*}"
 
-# panther name ($2), source ($3), FDR($5), diretion ($7, positive; "pos")
-if [[ -n "$panther_fields" ]]; then
-	awk -F"\t" 'BEGIN {OFS="\t"} $5 < 0.05 && $7 == "+" && /GO_MF|GO_BP|GO_CC|REAC/ { print toupper($2), toupper($3) }' "$panther_fields" > panther_terms
-fi
-
-# gsea name ($1) and phenotype/direction ($3)
-if [[ -n "$gsea_fields" ]]; then
-	awk -F"\t" 'BEGIN {OFS="\t"} (/GOMF|GOBP|GOCC|REACTOME/) && $3 == "pos" {
-		term = $1; prefix = substr(term, 1, index(term, "_") - 1); rest = substr(term, index(term, "_") + 1);
-		gsub(/_/, " ", rest); gsub(/GOBP/, "GO_BP", prefix); gsub(/GOMF/, "GO_MF", prefix); gsub(/GOCC/, "GO_CC", prefix); gsub(/REACTOME/, "REAC", prefix);
-		print toupper(rest), toupper(prefix)
-	}' "$gsea_fields" > gsea_terms
-fi
+	if [[ "$base_key" == "gsea" ]]; then
+		phenotypes=($(awk -F"\t" '{print $3}' "$f_fields" | grep -v "Phenotype" | sort -u))
+		for pk in "${phenotypes[@]}"; do
+			t_file="gsea_${pk}_${key}_terms"
+			g_file="gsea_${pk}_${key}_genes"
+			awk -F"\t" -v pk="$pk" 'BEGIN {OFS="\t"} (/GOMF|GOBP|GOCC|REACTOME/) && $3 == pk {
+				term = $1; prefix = substr(term, 1, index(term, "_") - 1); rest = substr(term, index(term, "_") + 1);
+				gsub(/_/, " ", rest); gsub(/GOBP/, "GO_BP", prefix); gsub(/GOMF/, "GO_MF", prefix); gsub(/GOCC/, "GO_CC", prefix); gsub(/REACTOME/, "REAC", prefix);
+				print toupper(rest), toupper(prefix) }' "$f_fields" > "$t_file"
+			awk -F"\t" -v pk="$pk" 'BEGIN {OFS="\t"} (/GOMF|GOBP|GOCC|REACTOME/) && $3 == pk {
+				term = $1; prefix = substr(term, 1, index(term, "_") - 1); rest = substr(term, index(term, "_") + 1);
+				gsub(/_/, " ", rest); gsub(/GOBP/, "GO_BP", prefix); gsub(/GOMF/, "GO_MF", prefix); gsub(/GOCC/, "GO_CC", prefix); gsub(/REACTOME/, "REAC", prefix);
+				print toupper(rest), toupper(prefix), $7 }' "$f_annot" > "$g_file"
+			processed_tools+=("gsea_${pk}_${key}")
+		done
+	else
+		awk -F"\t" 'BEGIN {OFS="\t"} /GO_MF|GO_BP|GO_CC|REAC/ { print toupper($2), toupper($4) }' "$f_fields" > "${key}_terms"
+		awk -F"\t" 'BEGIN {OFS="\t"} /GO_MF|GO_BP|GO_CC|REAC/ {print toupper($2), toupper($3), $6}' "$f_annot" > "${key}_genes"
+		processed_tools+=("$key")
+	fi
+done
 
 # report generation
 > report
 declare -A totals
-
-# calculate totals tools
-for tool in "${active_tools[@]}"; do
-	dir_path=$(dirname "${found_fields_files[$tool]}")
-	run_dir_name=$(basename "$dir_path")
-	echo "- $tool: $run_dir_name ($dir_path)" >> report
-	totals[$tool]=$(wc -l < "${tool}_terms")
-	echo "Total number of GO terms and pathways by ${tools[$tool]}: ${totals[$tool]}" >> report
+for t in "${processed_tools[@]}"; do
+	totals[$t]=$(wc -l < "${t}_terms")
+	echo "Total terms for $t: ${totals[$t]}" >> report
 done
 
 # dynamically calculate pairwise pntersections and jaccard
-num_active=${#active_tools[@]}
+num_active=${#processed_tools[@]}
 for (( i=0; i<num_active; i++ )); do
 	for (( j=i+1; j<num_active; j++ )); do
-		t1="${active_tools[$i]}"
-		t2="${active_tools[$j]}"
-
+		t1="${processed_tools[$i]}"; t2="${processed_tools[$j]}"
 		out_common="common_terms_${t1}_${t2}.txt"
-
 		comm -12 <(sort "${t1}_terms") <(sort "${t2}_terms") > "$out_common"
-
 		sim=$(wc -l < "$out_common")
-		echo "Number of similar terms between $t1 and $t2: ${sim}" >> report
-		
-		# prevent division by zero
 		denom=$(( totals[$t1] + totals[$t2] - sim ))
-		if [ "$denom" -gt 0 ]; then
-			jacc=$(echo "scale=6; $sim / $denom" | bc)
-		else
-			jacc="0.000000"
-		fi
+		jacc=$( [ "$denom" -gt 0 ] && echo "scale=6; $sim / $denom" | bc || echo "0.000000" )
 		echo "Jaccard similarity between $t1 and $t2: ${jacc}" >> report
 	done
 done
@@ -137,7 +138,7 @@ cat report
 gprof_annot="${found_annots_files[gprof]}"
 panther_annot="${found_annots_files[panther]}"
 gsea_annot="${found_annots_files[gsea]}"
-# Create optimized mapping files [TERM \t SOURCE \t GENES] for lookup
+# optimized mapping files [TERM \t SOURCE \t GENES] for lookup
 # gProfiler (Term: $2, Source: $3, Genes: $6)
 if [[ -n "$gprof_annot" ]]; then
 	awk -F"\t" 'BEGIN {OFS="\t"} /GO_MF|GO_BP|GO_CC|REAC/ {print toupper($2), toupper($3), $6}' "$gprof_annot" > gprof_genes
@@ -148,19 +149,10 @@ if [[ -n "$panther_annot" ]]; then
 	awk -F"\t" 'BEGIN {OFS="\t"} /GO_MF|GO_BP|GO_CC|REAC/ {print toupper($2), toupper($3), $6}' "$panther_annot" > panther_genes
 fi
 
-# GSEA (Needs name processing to match comparison format, Genes: $7)
-if [[ -n "$gsea_annot" ]]; then
-	awk -F"\t" 'BEGIN {OFS="\t"} (/GOMF|GOBP|GOCC|REACTOME/) && $3 == "pos" {
-		term = $1; prefix = substr(term, 1, index(term, "_") - 1); rest = substr(term, index(term, "_") + 1);
-		gsub(/_/, " ", rest); gsub(/GOBP/, "GO_BP", prefix); gsub(/GOMF/, "GO_MF", prefix); gsub(/GOCC/, "GO_CC", prefix); gsub(/REACTOME/, "REAC", prefix);
-		print toupper(rest), toupper(prefix), $7
-	}' "$gsea_annot" > gsea_genes
-fi
-
 # interact over common results files and get common genes
-for common_file in common*.txt; do
-	# skip empty files
+for common_file in common_terms_*_*.txt; do
 	[ -s "$common_file" ] || continue
+	output_genes_file="${common_file%.txt}_genes.txt" do
 	
 	tools_involved=()
 	if [[ "$common_file" == *"all"* ]]; then

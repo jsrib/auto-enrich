@@ -13,6 +13,20 @@ printf "Downloading PANTHER annotations file...\n"
 curl -O "https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/PTHR19.0_${name}"
 annotations_file="PTHR19.0_${name}"
 
+# current date
+generation_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# metadata header
+{
+	echo "!PANTHER_Source: https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/"
+	echo "!PANTHER_Release: 19.0"
+	echo "!Organism: $name"
+	echo "!Included_Datasets: PANTHER Pathways, PANTHER GO Slim (BP, MF, CC), PANTHER Protein Class"
+	echo "!Generation_Date: $generation_date"
+	echo "!Generated_by: auto-Enrich Pipeline"
+	echo "!Note: This file contains functional classifications inferred via PANTHER HMMs."
+} > "$output"
+
 if [[ $? -eq 0 && -s "$annotations_file" ]]; then
 	printf "Download successful: %s\n" "$annotations_file"
 else
@@ -44,5 +58,5 @@ awk -F'\t' '
 	}
 
 	print id "\t" gene "\t" matches;
-}' "$annotations_file" > "$output"
+}' "$annotations_file" >> "$output"
 

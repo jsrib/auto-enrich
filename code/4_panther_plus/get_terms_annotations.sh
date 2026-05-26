@@ -13,7 +13,8 @@ panther_annot="$5"
 reac_annot="$6"
 go_annot="$7"
 gene_map="$8"	# species gene map file (geneid, uniprot, symbol)
-output_file="enriched_terms_annotations.tsv"
+pos_output_file="enriched_terms_annotations_pos.tsv"
+neg_output_file="enriched_terms_annotations_neg.tsv"
 
 # validate files
 for file in "$panther_annot" "$reac_annot" "$go_annot" "$gene_map" "$input_list"; do
@@ -25,23 +26,31 @@ for file in "$panther_annot" "$reac_annot" "$go_annot" "$gene_map" "$input_list"
 	fi
 done
 
-printf "TermID\tName\tSource\tCoverage\tIntersectionSize\tGenes_in_intersection\tTermSize\tGenes_in_term\n" > "$output_file"
+printf "TermID\tName\tSource\tCoverage\tIntersectionSize\tGenes_in_intersection\tTermSize\tGenes_in_term\n" > "$pos_output_file"
+printf "TermID\tName\tSource\tCoverage\tIntersectionSize\tGenes_in_intersection\tTermSize\tGenes_in_term\n" > "$neg_output_file"
 
 # pre-extract input symbols for intersection
 cut -f3 "$input_list" | sort -u > .input_symbols.tmp
 
-total_terms=$(($(wc -l < "$enriched_fields_file") - 1))
-term_index=0
+#total_terms=$(($(wc -l < "$enriched_fields_file") - 1))
+#term_index=0
 
 while IFS=$'\t' read -r term name source _4 _5 _6 direction querysize cov interS termS; do
 	[[ -z "$term" || "$term" == "TermID" || "$term" == "UNCLASSIFIED" || "$source" == "UNCLASSIFIED" ]] && continue
-	((term_index++))
-	printf "Processing %s/%s: %s %s\n" "$term_index" "$total_terms" "$source" "$term"
+	#((term_index++))
+	#printf "Processing %s/%s: %s %s\n" "$term_index" "$total_terms" "$source" "$term"
 
-	source_dir="${save_dir}/${source}"
-	[[ ! -d "$source_dir" ]] && mkdir -p "$source_dir"
+	if [[ $direction == "+" ]]; then
+		output_file="$pos_output_file"
+	elif [[ $direction == "-" ]]; then
+		output_file="$neg_output_file"
+	else
+		continue
+	fi
 
 	# Define paths
+	source_dir="${save_dir}/${source}"
+	[[ ! -d "$source_dir" ]] && mkdir -p "$source_dir"
 	s_term="${term//:/_}"
 	term_dir="${source_dir}/terms_annotations/${s_term}_${name}"
 	mkdir -p "$term_dir"

@@ -111,28 +111,25 @@ cp "$fields_results" "${save_dir}/"
 # get enriched terms annotations
 printf "Getting enriched terms annotations...\n"
 ./get_terms_annotations.sh "${input_file}" "${fields_results}" "${species_taxon}" "${save_dir}" "${panther_annot}" "${reactome_annot}" "${gos_annot}" "${gene_map}"
-annots_results="enriched_terms_annotations.tsv"
-cp "$annots_results" "${save_dir}/"
+pos_annots_results="enriched_terms_annotations_pos.tsv"
+neg_annots_results="enriched_terms_annotations_neg.tsv"
+cp "$pos_annots_results" "${save_dir}/"
+cp "$neg_annots_results" "${save_dir}/"
 
 # split results by source
-for file in "$fields_results" "$annots_results"; do
+for file in "$fields_results" "$pos_annots_results" "$neg_annots_results"; do
 	[[ ! -f "$file" ]] && continue
-
 	# check if file empty
 	line_count=$(wc -l < "$file")
 	if (( line_count <= 1 )); then
 		printf "No statistically significant results in %s\n" "$file"
 		exit 1
 	fi
-
 	# Source column
 	src_col=3
-
 	header=$(head -n 1 "$file")
-	
 	# get unique sources from the file
 	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
-
 	for src in "${sources[@]}"; do
 		[[ -z "$src" ]] && continue
 		# create source-specific directory

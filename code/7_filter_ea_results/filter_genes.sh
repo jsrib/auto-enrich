@@ -6,7 +6,7 @@ if [ $# -ne 1 ]; then
 fi
 
 input_dir="$1"
-input_file="${input_dir}/terms_annotations_results.csv"
+input_file="${input_dir}/enriched_terms_annotations.tsv"
 excluded_genes="${input_dir}/excluded_genes"
 output_file="filtered_genes"
 
@@ -28,22 +28,19 @@ while read -r count gene; do
 done < "$excluded_genes"
 
 header_line=$(head -n 1 "$input_file")
-IFS=',' read -ra headers <<< "$header_line"
+IFS='\t' read -ra headers <<< "$header_line"
 
 # determine col idxs
-geneids_col=-1
 genesym_col=-1
 
 for i in "${!headers[@]}"; do
-	if [[ "${headers[$i]}" == "GeneIDs_in_list" ]]; then
-		geneids_col=$i
-	elif [[ "${headers[$i]}" == "Genes_in_list" ]]; then
+	if [[ "${headers[$i]}" == "Genes_in_intersection" ]]; then
 		genesym_col=$i
 	fi
 done
 
 if [[ $genesym_col -eq -1 ]]; then
-	printf "Error: Column 'Genes_in_list' not found.\n"
+	printf "Error: Column 'Genes_in_intersection' not found.\n"
 	exit 1
 fi
 
@@ -52,42 +49,12 @@ fi
 	echo "$header_line"
 
 	tail -n +2 "$input_file" | while IFS= read -r line; do
-		IFS=',' read -ra cols <<< "$line"
+		IFS='\t' read -ra cols <<< "$line"
 
 		gene_symbols="${cols[$genesym_col]}"
 		IFS=' ' read -ra symbols_array <<< "$gene_symbols"
 
-		if [[ $geneids_col -ge 0 ]]; then
-			gene_ids="${cols[$geneids_col]}"
-			IFS=' ' read -ra ids_arr <<< "$gene_ids"
-
-			# #ids = #arrays?
-			if [[ ${#ids_arr[@]} -ne ${#symbols_array[@]} ]]; then
-				continue
-			fi
-
-			filt_ids=()
-			filt_symbols=()
-
-			# filter out common genes
-			for i in "${!ids_arr[@]}"; do
-				clean_id="${ids_arr[$i]//\'/}"	#remove single quotes
-				if [[ -z "${common_genes[$clean_id]}" ]]; then
-					filt_ids+=("'$clean_id'")
-					filt_symbols+=("${symbols_array[$i]}")
-				fi
-			done
-
-			# no ids left, skip line
-			if [[ ${#filt_ids[@]} -eq 0 ]]; then
-				continue
-			fi
-
-			# reconstruct row
-			cols[$((geneids_col))]="${filt_ids[*]}"
-			cols[$((genesym_col))]="${filt_symbols[*]}"
-
-		else
+		if [[ $genesym_col -ge 0 ]]; then
 			# deal with symbols
 			filt_symbols=()
 			for sym in "${symbols_array[@]}"; do

@@ -149,9 +149,9 @@ mv "$gsea_result_dir" "raw_GSEA_output"
 mv "raw_GSEA_output" "$results_dir"
 # get reports file for results
 report_files=$(find "$results_dir/raw_GSEA_output" -type f -name "gsea_report_*.tsv")
-for file in $report_files; do
-	cp "$file" "$results_dir/"
-done
+# for file in $report_files; do
+# 	cp "$file" "$results_dir/"
+# done
 
 printf "Processing report files...\n"
 fields_results="enrichment_fields.tsv"
