@@ -107,7 +107,7 @@ for file in "${result_files[@]}"; do
 	fi
 done
 cp "$fields_results" "${save_dir}/"
-
+ 
 # get enriched terms annotations
 printf "Getting enriched terms annotations...\n"
 ./get_terms_annotations.sh "${input_file}" "${fields_results}" "${species_taxon}" "${save_dir}" "${panther_annot}" "${reactome_annot}" "${gos_annot}" "${gene_map}"

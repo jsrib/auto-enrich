@@ -683,26 +683,6 @@ for module in "${selected_modules[@]}"; do
 done
 
 # ---- Additional flags -----
-# gene_occurences file, only if flag set to y, else dont create file
-# gene_occurrences="${gene_occurrences,,}"
-# if [[ "$gene_occurrences" == "y" ]]; then
-# 	for method in gprofiler panther gsea; do
-# 		method_dir="/data/$method"
-# 		if [[ -d "$method_dir" ]]; then
-# 			printf "Generating gene occurences files for %s.\n" "$method"
-# 			./flags/gene_occurrences.sh "$method_dir"
-# 		fi
-# 	done
-# 	printf "Finished\n"
-# else
-# 	# common misspellings
-# 	case "$gene_occurrences" in
-# 		"gene_occurences"|"gene_ocurences"|"gene_ocurrences")
-# 			printf "Warning: Did you mean 'gene_occurrences'? Flag ignored.\n"
-# 			;;
-# 	esac
-# fi
-
 # build reactome hierarchy files (just for REAC dataset)
 if [[ "$reac_hierarchy" == "true" ]]; then
 	for method in gprofiler panther; do
