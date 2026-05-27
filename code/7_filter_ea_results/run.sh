@@ -66,7 +66,6 @@ fi
 
 for input_file in "${input_dir}"/enriched_terms_annotations*.tsv; do
 	[ -f "$input_file" ] || continue
-
 	base_name=$(basename "$input_file")
 	data_lines=$(tail -n +2 "$input_file" | wc -l)
 	final_output="filtered_${base_name}"

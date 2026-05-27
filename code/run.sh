@@ -550,7 +550,7 @@ for module in "${selected_modules[@]}"; do
 
 			[[ ! -d "$common_results_dir" ]] && mkdir -p "$common_results_dir"
 
-			# funciton to run comparison agaisnt GSEA
+			# funciton to run comparison agaisnt GSEA (agaisnt every available result)
 			run_intersection() {
 				local run_name="$1"
 				local primary_args=("$@")
@@ -572,14 +572,15 @@ for module in "${selected_modules[@]}"; do
 							[[ ! -d "$save_dir" ]] && mkdir -p "$save_dir"
 							# run and copy to dir
 							./7_filter_ea_results/intersect_methods.sh "${primary_args[@]}" "$gsea_subdir"
-							cd ./7_filter_ea_results && mv common*.txt report "$save_dir" && cd ..
+							cd ./7_filter_ea_results && mv common_*_genes.txt report "$save_dir" && cd ..
 						fi
 					done
+				# only compare gprofiler and panther
 				else
 					save_dir="$common_results_dir/${run_name}_ONLY"
 					[[ ! -d "$save_dir" ]] && mkdir -p "$save_dir"
 					./7_filter_ea_results/intersect_methods.sh "${primary_args[@]}"
-					cd ./7_filter_ea_results && mv common_* report "$save_dir" && cd ..
+					cd ./7_filter_ea_results && mv common_*_genes.txt report "$save_dir" && cd ..
 				fi
 			}
 
@@ -635,7 +636,7 @@ for module in "${selected_modules[@]}"; do
 					printf "Filtering %s results...\n" "$tool_name"
 					# loop every map directory's results folder
 					for results_dir in "$base_dir"/*; do
-						if [[ -d "$results_dir" && -f "$results_dir/enriched_terms_annotations.tsv" ]]; then
+						if [[ -d "$results_dir" && -n $(find "$results_dir" -maxdepth 1 -name "enriched_terms_annotations*.tsv" -print -quit) ]]; then
 							# Extract map name and strip '_map' suffix for logging
 							map_dir=$(basename "$(dirname "$results_dir")")
 							target="${map_dir%_map}"
@@ -659,10 +660,8 @@ for module in "${selected_modules[@]}"; do
 				printf "\nFiltering GSEA results...\n"
 				# Loop through every subdirectory inside results/
 				for subdir in "$base_dir"/*/; do
-					if [[ -d "$subdir" && -f "$subdir/enriched_terms_annotations.tsv" ]]; then
+					if [[ -d "$subdir" && -n $(find "$subdir" -maxdepth 1 -name "enriched_terms_annotations*.tsv" -print -quit) ]]; then
 						target=$(basename "$subdir")
-						results_dir="${subdir%/}"
-						# Run the filter script
 						./7_filter_ea_results/run.sh "${results_dir}" $filter_args
 						if [[ $? -eq 0 ]]; then
 							printf "✅ GSEA results filtered successfully (%s).\n" "$target"
@@ -683,26 +682,8 @@ for module in "${selected_modules[@]}"; do
 done
 
 # ---- Additional flags -----
-# gene_occurences file, only if flag set to 'true', else dont create file
-gene_occurrences="${gene_occurrences,,}"
-if [[ "$gene_occurrences" == "true" ]]; then
-	for method in gprofiler panther gsea; do
-		method_dir="/data/$method"
-		if [[ -d "$method_dir" ]]; then
-			printf "Generating gene occurences files for %s.\n" "$method"
-			./flags/gene_occurrences.sh "$method_dir"
-		fi
-	done
-else
-	# common misspellings
-	case "$gene_occurrences" in
-		"gene_occurences"|"gene_ocurences"|"gene_ocurrences")
-			printf "Warning: Did you mean 'gene_occurrences'? Flag ignored.\n"
-			;;
-	esac
-fi
-
 # build reactome hierarchy files (just for REAC dataset)
+# not available for GSEA (since it doesnt provide REACTOME Identifiers)
 if [[ "$reac_hierarchy" == "true" ]]; then
 	for method in gprofiler panther; do
 		method_dir="/data/$method"

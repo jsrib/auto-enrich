@@ -164,7 +164,7 @@ if (( line_count <= 1 )); then
 	exit 0
 fi
 
-printf "Getting enriched terms annotations...\n"
+printf "Getting enriched terms annotations (may take a while)...\n"
 ./get_terms_annotations.sh "${results_dir}" "$fields_results" "$gmx_file"
 
 files=("$fields_results" enriched_terms_annotations*.tsv)
@@ -189,4 +189,7 @@ for file in "${files[@]}"; do
 	done
 done
 
+cd "$results_dir" && \
+zip -r raw_GSEA_output.zip raw_GSEA_output && \
+rm -rf raw_GSEA_output
 mv "${results_dir}" "${save_dir}"

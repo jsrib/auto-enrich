@@ -23,7 +23,7 @@ if [ ! -f "$enriched_fields_file" ]; then
 	exit 1
 fi
 
-printf "Processing enriched terms annotations...\n"
+printf "Getting enriched terms annotations (may take a while)...\n"
 
 printf "TermID\tName\tSource\tCoverage\tIntersectionSize\tGenes_in_intersection\tTermSize\tGenes_in_term\n" > "$output_file"
 
@@ -88,14 +88,14 @@ awk -F'\t' -v save_dir="$save_dir" -v out_file="$output_file" '
 				gene = $i
 				if (gene == "") continue
 				term_size++
-				term_str = (term_str == "" ? "" : term_str " ") gene
+				term_str = (term_str == "" ? "" : term_str ",") gene
 				print gene > term_file
 				
 				# check if gene symbol is in input symbols (intersection)
 				if (gene in input_symbols) {
 					gid = input_symbols[gene]
 					inter_size++
-					inter_str = (inter_str == "" ? "" : inter_str " ") gene
+					inter_str = (inter_str == "" ? "" : inter_str ",") gene
 					print gid "\t" id_to_sym[gid] "\t" id_to_uni[gid] >> inter_file
 				}
 			}

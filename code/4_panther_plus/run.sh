@@ -109,7 +109,7 @@ done
 cp "$fields_results" "${save_dir}/"
  
 # get enriched terms annotations
-printf "Getting enriched terms annotations...\n"
+printf "Getting enriched terms annotations (may take a while)...\n"
 ./get_terms_annotations.sh "${input_file}" "${fields_results}" "${species_taxon}" "${save_dir}" "${panther_annot}" "${reactome_annot}" "${gos_annot}" "${gene_map}"
 pos_annots_results="enriched_terms_annotations_pos.tsv"
 neg_annots_results="enriched_terms_annotations_neg.tsv"

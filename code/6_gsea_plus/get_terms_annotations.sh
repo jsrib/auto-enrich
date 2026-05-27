@@ -25,12 +25,33 @@ fi
 # read results
 tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name source phenotype es nes nom_p fdr_q fwer_p rank_at_max size leading_edge; do
 
-	phenotype_output_file="${results_dir}/enriched_terms_annotations_${phenotype}.tsv"
+	phenotype_output_file="enriched_terms_annotations_${phenotype}.tsv"
 
 	if [[ ! -f "$phenotype_output_file" ]]; then
 		printf "Name\tSource\tPhenotype\tCoverage\tCoreEnrichmentSize\tGenes_in_CoreEnrichment\tTermSize\tGenes_in_term\n" > "$phenotype_output_file"
 	fi
 
+	# get term genes from used GMX file in analysis
+	gmx_genes=""
+	gmx_size=0
+
+	gmx_line=$(grep -P "^${name}\t" "$gmx_file")
+	if [[ -n "$gmx_line" ]]; then
+		# clean sources of Pubmed like Pubmed 16611997
+		if [[ $source == *Pubmed* ]]; then
+			source="Pubmed"
+		fi
+		term_dir="${results_dir}/${source}/annotations/${name}"
+		mkdir -p "$term_dir"
+
+		gmx_genes_raw=$(printf "%s\n" "$gmx_line" | cut -f3-)
+		printf "%s\n" "$gmx_genes_raw" | tr '\t' '\n' > "${term_dir}/genes_in_term"
+		# parse into a comma-separated list
+		gmx_genes=$(printf "%s\n" "$gmx_genes_raw" | tr '\t' '\n' | grep -v '^$' | paste -sd "," -)
+		gmx_size=$(printf "%s\n" "$gmx_genes_raw" | tr '\t' '\n' | grep -v -c '^$')
+	fi
+
+	# get core enrichment genes from detailed report file of the term
 	target_file="${results_dir}/${name}.tsv"
 	if [[ ! -f "$target_file" && -d "${results_dir}/raw_GSEA_output" ]]; then
 		target_file="${results_dir}/raw_GSEA_output/${name}.tsv"
@@ -38,7 +59,6 @@ tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name
 		printf "Detailed results file not found for '%s'" "$name"
 	fi
 
-	# get core enrichment genes from detailed report file of the term
 	core_genes="None"
 	core_size=0
 
@@ -51,22 +71,9 @@ tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name
 			col_idx && ($col_idx ~ /^[Yy]es$/) { list = (list ? list "," $2 : $2); count++ }
 			END { print (list ? list : "None") "\t" (count ? count : 0) }
 		' "$target_file")
-		
-		core_genes=$(echo "$result" | cut -f1)
-		core_size=$(echo "$result" | cut -f2)
-	fi
 
-	# get term genes from used GMX file in analysis
-	gmx_genes=""
-	gmx_size=0
-
-	gmx_line=$(grep -P "^${name}\t" "$gmx_file")
-	if [[ -n "$gmx_line" ]]; then
-		# get genes block
-		gmx_genes_raw=$(printf "%s\n" "$gmx_line" | cut -f3-)
-		# parse into a comma-separated list
-		gmx_genes=$(printf "%s\n" "$gmx_genes_raw" | tr '\t' '\n' | grep -v '^$' | paste -sd "," -)
-		gmx_size=$(printf "%s\n" "$gmx_genes_raw" | tr '\t' '\n' | grep -v -c '^$')
+		IFS=$'\t' read -r core_genes core_size <<< "$result"
+		echo "$core_genes" > "${term_dir}/genes_in_core_enrichment"
 	fi
 
 	# calculate coverage

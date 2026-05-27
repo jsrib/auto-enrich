@@ -83,8 +83,8 @@ while IFS=$'\t' read -r term name source _4 _5 _6 direction querysize cov interS
 	intersection_size=$(wc -l < "$genes_in_intersection")
 	coverage=$(awk -v m="$intersection_size" -v t="$term_size" 'BEGIN { printf "%.4f", (t>0 ? (m/t) : 0) }')
 
-	genes_in_intersection_str="$(paste -sd ' ' "$genes_in_intersection" 2>/dev/null || echo '')"
-	genes_in_term_str="$(paste -sd ' ' "$genes_in_term" 2>/dev/null || echo '')"
+	genes_in_intersection_str="$(paste -sd ',' "$genes_in_intersection" 2>/dev/null || echo '')"
+	genes_in_term_str="$(paste -sd ',' "$genes_in_term" 2>/dev/null || echo '')"
 	
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
 			"$term" \

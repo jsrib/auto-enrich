@@ -9,16 +9,9 @@ RUN apt-get update && \
 	rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --break-system-packages -Iv \
-	unipressed==1.2.0 \
-	beautifulsoup4==4.12.2 \
-	click==8.1.7 \
-	requests==2.31.0 \
 	anytree \
 	pydot \
 	reportlab \
-	matplotlib \
-	pandas \
-	seaborn \
 	goatools
 
 COPY code.zip /opt
@@ -26,4 +19,4 @@ WORKDIR /opt
 RUN unzip code.zip && rm code.zip
 RUN chmod -R 777 *
 
-#ENTRYPOINT ["./run.sh"]
+ENTRYPOINT ["./run.sh"]
