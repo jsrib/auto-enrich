@@ -21,7 +21,7 @@ if [ ! -f "${input_file}" ]; then
 	exit 1
 fi
 
-if [[ -d "$save_dir" ]]; then
+if [[ ! -d "$save_dir" ]]; then
 	if [[ -n "$(ls -A "$save_dir" 2>/dev/null)" ]]; then
 		printf "❌ [MODULE 4] Error: Directory '%s' already exists and is NOT empty. Please clear it first.\n" "$save_dir" >&2
 		exit 1

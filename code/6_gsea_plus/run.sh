@@ -143,53 +143,50 @@ else
 	exit 1
 fi
 
-mkdir -p "$results_dir"
+mkdir -p "${results_dir}"
 # change gsea results directory
 mv "$gsea_result_dir" "raw_GSEA_output"
 mv "raw_GSEA_output" "$results_dir"
 # get reports file for results
 report_files=$(find "$results_dir/raw_GSEA_output" -type f -name "gsea_report_*.tsv")
-# for file in $report_files; do
-# 	cp "$file" "$results_dir/"
-# done
+for file in $report_files; do
+	cp "$file" "$results_dir/"
+done
 
 printf "Processing report files...\n"
 fields_results="enrichment_fields.tsv"
 ./process_reports.sh "${results_dir}" "${fields_results}"
 
+line_count=$(wc -l < "$fields_results")
+if (( line_count <= 1 )); then
+	printf "⚠️ No statistically significant results in %s\n" "$file"
+	cp "$fields_results" "$save_dir/$results_dir"
+	exit 0
+fi
+
 printf "Getting enriched terms annotations...\n"
 ./get_terms_annotations.sh "${results_dir}" "$fields_results" "$gmx_file"
-annots_results="enriched_terms_annotations.tsv"
 
-mv "$results_dir" "$save_dir"
+files=("$fields_results" enriched_terms_annotations*.tsv)
 
-# split results by source
-for file in "$fields_results" "$annots_results"; do
+for file in "${files[@]}"; do
 	[[ ! -f "$file" ]] && continue
-	# check if file empty
-	line_count=$(wc -l < "$file")
-	if (( line_count <= 1 )); then
-		printf "No statistically significant results in %s\n" "$file"
-		exit 1
-	fi
-	# copy files to results directory (already in save_dir)
-	cp "${file}" "${save_dir}/${results_dir}/"
-	src_col=2 #source column in files
+	cp "$file" "${results_dir}/"
+	
+	src_col=2
 	header=$(head -n 1 "$file")
-	# get unique sources from the file
-	mapfile -t sources < <(tail -n +2 "$file" | awk -F'\t' -v col="$src_col" '{print $col}' | sort -u)
+
+	mapfile -t sources < <(tail -n +2 "$file" | cut -f "$src_col" | sort -u)
+	
 	for src in "${sources[@]}"; do
 		[[ -z "$src" ]] && continue
-		# create source-specific directory
-		src_dir="${save_dir}/${results_dir}/$src"
-		if [[ ! -d "$src_dir" ]]; then
-			mkdir -p "$src_dir"
-		fi
-		# filter the file for this source and save as TSV
+		src_dir="${results_dir}/$src"
+		mkdir -p "$src_dir"
 		{
-			echo "$header"
+			printf "%s\n" "$header"
 			awk -F'\t' -v col="$src_col" -v val="$src" '$col == val' "$file"
-		} > "$src_dir/${src}_$file"
+		} > "$src_dir/${src}_${file##*/}" # Stripped path for filename
 	done
 done
 
+mv "${results_dir}" "${save_dir}"

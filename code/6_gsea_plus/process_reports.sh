@@ -8,7 +8,13 @@ fi
 results_dir="$1"
 output_file="$2"
 
-# Write out the exact header order requested
+file_count=$(find "${results_dir}" -maxdepth 1 -type f -name "gsea_report_for_*.tsv" | wc -l)
+
+if [ "$file_count" -eq 0 ]; then
+	printf "Error: No files matching 'gsea_report_for_*.tsv' found in %s\n" "$results_dir"
+	exit 1
+fi
+
 printf "Name\tSource\tPhenotype\tES\tNES\tNOM_p-val\tFDR_q-val\tFWER_p-val\tRANK-AT-MAX\tIntersectionSize\tLeading_Edge\n" > "$output_file"
 
 # Use a safe 'while read' loop to handle paths cleanly

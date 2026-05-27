@@ -38,11 +38,12 @@ field_file="enrichment_fields.tsv"
 #function to find annotations results file since it can  vart between tools and doesnt follow a rule when it comes fo GSEA classic runs
 get_annot_file() {
 	local dir="$1"
-	local tool_key="${1%%_*}"
+	local tool_key="$2"
+	echo "$dir $tool_key"
 	if [[ "$tool_key" == "panther" ]]; then
 		find "$dir" -maxdepth 2 -name "enriched_terms_annotations_pos.tsv" -print -quit
 	elif [[ "$tool_key" == "gsea" ]]; then
-		find "$dir" -maxdepth 2 -name "*_pos.tsv" -print -quit || \
+		find "$dir" -maxdepth 2 -name "enriched_terms_annotations_pos.tsv" -print -quit || \
 		find "$dir" -maxdepth 2 -name "enriched_terms_annotations*.tsv" -not -name "*_neg.tsv" -print -quit
 	else
 		find "$dir" -maxdepth 2 -name "enriched_terms_annotations.tsv" -print -quit
@@ -55,6 +56,8 @@ for key in "${!tools_dirs[@]}"; do
 	dir="${tools_dirs[$key]}"
 	file_1=$(find "$dir" -maxdepth 2 -name "enrichment_fields.tsv" -print -quit)
 	file_2=$(get_annot_file "$dir" "$key")
+	echo "  file_1 (enrichment_fields.tsv) found: ${file_1:-NOT FOUND}"
+	echo "  file_2 (annot file) result: ${file_2:-NOT FOUND}"
 	if [[ -n "$file_1" && -n "$file_2" ]]; then
 		found_fields_files[$key]="$file_1"
 		found_annots_files[$key]="$file_2"
@@ -85,28 +88,28 @@ for key in "${!found_fields_files[@]}"; do
 				term = $1; prefix = substr(term, 1, index(term, "_") - 1); rest = substr(term, index(term, "_") + 1);
 				gsub(/_/, " ", rest); gsub(/GOBP/, "GO_BP", prefix); gsub(/GOMF/, "GO_MF", prefix); gsub(/GOCC/, "GO_CC", prefix); gsub(/REACTOME/, "REAC", prefix);
 				print toupper(rest), toupper(prefix), $7 }' "$f_annot" > "$g_file"
-			processed_tools+=("gsea_${pk}_${key}")
+			active_tools+=("gsea_${pk}_${key}")
 		done
 	else
 		awk -F"\t" 'BEGIN {OFS="\t"} /GO_MF|GO_BP|GO_CC|REAC/ { print toupper($2), toupper($4) }' "$f_fields" > "${key}_terms"
 		awk -F"\t" 'BEGIN {OFS="\t"} /GO_MF|GO_BP|GO_CC|REAC/ {print toupper($2), toupper($3), $6}' "$f_annot" > "${key}_genes"
-		processed_tools+=("$key")
+		active_tools+=("$key")
 	fi
 done
 
 # report generation
 > report
 declare -A totals
-for t in "${processed_tools[@]}"; do
+for t in "${active_tools[@]}"; do
 	totals[$t]=$(wc -l < "${t}_terms")
 	echo "Total terms for $t: ${totals[$t]}" >> report
 done
 
 # dynamically calculate pairwise pntersections and jaccard
-num_active=${#processed_tools[@]}
+num_active=${#active_tools[@]}
 for (( i=0; i<num_active; i++ )); do
 	for (( j=i+1; j<num_active; j++ )); do
-		t1="${processed_tools[$i]}"; t2="${processed_tools[$j]}"
+		t1="${active_tools[$i]}"; t2="${active_tools[$j]}"
 		out_common="common_terms_${t1}_${t2}.txt"
 		comm -12 <(sort "${t1}_terms") <(sort "${t2}_terms") > "$out_common"
 		sim=$(wc -l < "$out_common")
