@@ -75,9 +75,11 @@ for input_file in "${input_dir}"/enriched_terms_annotations*.tsv; do
 	# step 1: priority to max-occr (if set)
 	if [[ -n "$max_occr" ]]; then
 		printf "Applying --max-occurrence cutoff: %s\n" "$max_occr"
-		./common_genes.sh "${input_dir}" "$max_occr" || exit 1
-		./filter_genes.sh "${input_dir}" || exit 1
-		working_file="filtered_genes"
+		./gene_occurrences.sh "${input_file}" "$max_occr" "excluded_genes_list" || exit 1
+		./filter_genes.sh "${input_file}" "excluded_genes_list" "input_filtered_genes" || exit 1
+		working_file="input_filtered_genes"
+		cp "excluded_genes_list" "${input_dir}/excluded_genes_after_filtering"
+		cp "input_filtered_genes" "${input_dir}"
 	fi
 
 	# step 2: apply other filters

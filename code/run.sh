@@ -633,7 +633,7 @@ for module in "${selected_modules[@]}"; do
 				fi
 
 				if [[ -d "$base_dir" ]]; then
-					printf "Filtering %s results...\n" "$tool_name"
+					printf "\nFiltering %s results...\n" "$tool_name"
 					# loop every map directory's results folder
 					for results_dir in "$base_dir"/*; do
 						if [[ -d "$results_dir" && -n $(find "$results_dir" -maxdepth 1 -name "enriched_terms_annotations*.tsv" -print -quit) ]]; then
@@ -641,14 +641,20 @@ for module in "${selected_modules[@]}"; do
 							map_dir=$(basename "$(dirname "$results_dir")")
 							target="${map_dir%_map}"
 							./7_filter_ea_results/run.sh "${results_dir}" $filter_args
-							if [[ $? -eq 0 ]]; then
-								printf "✅ %s results filtered successfully (%s).\n" "$tool_name" "$target"
-							elif [[ $? -eq 2 ]]; then
-								printf "⚠️ No enrichment results left after filtering.\n" "$tool_name" "$target"
-							else
-								printf "❌ Error: Filtering %s results failed (%s).\n" "$tool_name" "$target"
-								exit 1
-							fi
+							status=$?
+
+							case $status in
+								0)
+									printf "✅ %s results filtered successfully (%s).\n" "$tool_name" "$target"
+									;;
+								2)
+									printf "⚠️ No enrichment results left after filtering.\n" "$tool_name" "$target"
+									;;
+								*)
+									printf "❌ [MAIN - MODULE 7] Error: Filtering %s results failed (%s).\n" "$tool_name" "$target"
+									exit 1
+									;;
+							esac
 						fi
 					done
 				fi
@@ -663,15 +669,20 @@ for module in "${selected_modules[@]}"; do
 					if [[ -d "$subdir" && -n $(find "$subdir" -maxdepth 1 -name "enriched_terms_annotations*.tsv" -print -quit) ]]; then
 						target=$(basename "$subdir")
 						./7_filter_ea_results/run.sh "${results_dir}" $filter_args
-						if [[ $? -eq 0 ]]; then
-							printf "✅ GSEA results filtered successfully (%s).\n" "$target"
-							any_processed=true
-						elif [[ $? -eq 2 ]]; then
-							printf "⚠️ No enrichment results left after filtering.\n" "$tool_name" "$target"
-						else
-							printf "❌ Error: Filtering GSEA results failed (%s).\n" "$target"
-							exit 1
-						fi
+						status=$?
+						
+						case $status in
+							0)
+								printf "✅ GSEA results filtered successfully (%s).\n" "$target"
+								;;
+							2)
+								printf "⚠️ No enrichment results left after filtering.\n" "$target"
+								;;
+							*)
+								printf "❌ [MAIN - MODULE 7] Error: Filtering GSEA results failed (%s).\n" "$target"
+								exit 1
+								;;
+						esac
 					fi
 				done
 			fi
