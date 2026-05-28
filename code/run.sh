@@ -703,7 +703,7 @@ if [[ "$reac_hierarchy" == "true" ]]; then
 	for method in gprofiler panther; do
 		method_dir="/data/$method"
 		if [[ -d "$method_dir" ]]; then
-			printf "Generating REACTOME hierarchy trees for %s.\n" "$method"
+			printf "\n [FLAG] Generating REACTOME hierarchy trees for %s.\n" "$method"
 			./flags/reactome_tree/run.sh "$method_dir" "$scientific_name_ori"
 		fi
 	done

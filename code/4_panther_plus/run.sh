@@ -124,7 +124,7 @@ for file in "$fields_results" "$pos_annots_results" "$neg_annots_results"; do
 	line_count=$(wc -l < "$file")
 	if (( line_count <= 1 )); then
 		printf "No statistically significant results in %s\n" "$file"
-		exit 1
+		continue
 	fi
 	# Source column
 	src_col=3
