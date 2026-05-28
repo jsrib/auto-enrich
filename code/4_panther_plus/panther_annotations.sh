@@ -10,8 +10,12 @@ output="$2"	# short species name
 
 # panther datasets annots file
 printf "Downloading PANTHER annotations file...\n"
-curl -O "https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/PTHR19.0_${name}"
-annotations_file="PTHR19.0_${name}"
+base_url="https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/"
+# find latest release version
+latest=$(curl -s "$base_url" | grep -oE "PTHR[0-9]+\.[0-9]+" | head -n 1)
+printf "Latest detected version: %s\n" "$latest"
+annotations_file="${latest}_${name}"
+curl -O "${base_url}${annotations_file}"
 
 # current date
 generation_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -19,7 +23,7 @@ generation_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # metadata header
 {
 	echo "!PANTHER_Source: https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/"
-	echo "!PANTHER_Release: 19.0"
+	echo "!PANTHER_Release: $latest"
 	echo "!Organism: $name"
 	echo "!Included_Datasets: PANTHER Pathways, PANTHER GO Slim (BP, MF, CC), PANTHER Protein Class"
 	echo "!Generation_Date: $generation_date"
