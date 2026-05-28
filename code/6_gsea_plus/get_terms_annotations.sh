@@ -52,16 +52,10 @@ tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name
 	fi
 
 	# get core enrichment genes from detailed report file of the term
-	target_file="${results_dir}/${name}.tsv"
-	if [[ ! -f "$target_file" && -d "${results_dir}/raw_GSEA_output" ]]; then
-		target_file="${results_dir}/raw_GSEA_output/${name}.tsv"
-	else
-		printf "Detailed results file not found for '%s'" "$name"
-	fi
-
 	core_genes="None"
 	core_size=0
 
+	target_file="${results_dir}/raw_GSEA_output/${name}.tsv"
 	if [[ -f "$target_file" ]]; then
 		result=$(awk -F '\t' '
 			NR == 1 {
@@ -73,7 +67,7 @@ tr -d '\r' < "$enriched_fields_file" | tail -n +2 | while IFS=$'\t' read -r name
 		' "$target_file")
 
 		IFS=$'\t' read -r core_genes core_size <<< "$result"
-		echo "$core_genes" > "${term_dir}/genes_in_core_enrichment"
+		echo "$core_genes" | tr ',' '\n' > "${term_dir}/genes_in_core_enrichment"
 	fi
 
 	# calculate coverage

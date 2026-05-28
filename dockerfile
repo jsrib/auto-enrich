@@ -19,4 +19,4 @@ WORKDIR /opt
 RUN unzip code.zip && rm code.zip
 RUN chmod -R 777 *
 
-#ENTRYPOINT ["./run.sh"]
+ENTRYPOINT ["./run.sh"]

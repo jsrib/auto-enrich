@@ -36,10 +36,10 @@ for dir in "$input_dir"/*/REAC/; do
 
 	# ascii tree file exists?
 	if [[ -s "$tree" ]]; then
-		# reorder results files
-		# for file in "$dir"/*_results.tsv; do
-		# 	./reorder_results.sh "$tree" "$file"
-		# done
+		reorder results files
+		for file in "$dir"/*.tsv; do
+			./add_depth.sh "$tree" "$file"
+		done
 		mv "$tree" "$tree_pdf" "$dir"
 	else
 		printf "Warning: hierarchy tree for %s is empty or missing, skipping it.\n" "$dir"

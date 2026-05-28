@@ -287,7 +287,7 @@ for module in "${selected_modules[@]}"; do
 				[chip]=""					# chip file
 				[collapse]=""				# collapse method (default: collapse, no_collapse, remap_only)
 				# visualization and report
-				[plot_top_x]=20			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
+				[plot_top_x]=1000			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
 				[make_sets]=""
 				#[gui]="false"
 				#[save_details]="false"
@@ -703,7 +703,7 @@ if [[ "$reac_hierarchy" == "true" ]]; then
 	for method in gprofiler panther; do
 		method_dir="/data/$method"
 		if [[ -d "$method_dir" ]]; then
-			printf "\n [FLAG] Generating REACTOME hierarchy trees for %s.\n" "$method"
+			printf "\n[FLAG] Generating REACTOME hierarchy trees for %s.\n" "$method"
 			./flags/reactome_tree/run.sh "$method_dir" "$scientific_name_ori"
 		fi
 	done
