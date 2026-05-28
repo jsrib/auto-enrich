@@ -1,7 +1,7 @@
 #!/bin/bash
 # Filter EA results Module 7
 cd /opt/7_filter_ea_results
-set -euo pipefail
+#set -euo pipefail
 
 if [ $# -lt 2 ]; then
 	printf "Usage: %s <results_directory> [--max-annotations N] [--max-occurrence N] [--min-coverage N]\n" "$0"
@@ -18,7 +18,6 @@ fi
 
 max_annot=""
 max_occr=""
-# changed to coverage
 min_coverage=""
 
 print_usage() {
@@ -64,6 +63,7 @@ if [[ -z "$max_annot" && -z "$max_occr" && -z "$min_coverage" ]]; then
 	exit 1
 fi
 
+# filter enriched terms annotations file
 for input_file in "${input_dir}"/enriched_terms_annotations*.tsv; do
 	[ -f "$input_file" ] || continue
 	base_name=$(basename "$input_file")
@@ -133,6 +133,31 @@ for input_file in "${input_dir}"/enriched_terms_annotations*.tsv; do
 		exit 2
 	else
 		printf "Initial %d entries reduced to %d entries. Output saved to %s/%s\n" "$data_lines" "$remain_lines" "$input_dir" "$final_output"
-		mv "$final_output" "${input_dir}/"
+		cp "$final_output" "${input_dir}/"
 	fi
 done
+
+# filter enrichment fields file
+fields_to_filter="$input_dir/enrichment_fields.tsv"
+base_fields=$(basename "$fields_to_filter")
+output_fields="filtered_${base_fields}"
+
+if [[ -f "$fields_to_filter" && -f "$final_output" ]]; then
+	awk -F'\t' -v OFS='\t' '
+	NR == FNR {
+		if (FNR > 1) allowed[$1] = 1
+		next
+	}
+	FNR == 1 {
+		print
+		next
+	}
+	{
+		if ($1 in allowed)
+			print
+	}
+	' "$final_output" "$fields_to_filter" > "$output_fields"
+	cp "$output_fields" "${input_dir}/"
+else
+    echo "Missing enrichment_fields.tsv or final_output file"
+fi

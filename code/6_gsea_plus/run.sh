@@ -57,8 +57,8 @@ else
 fi
 
 # create save dir if doesnt exist
-if [[ ! -d "/$save_dir" ]]; then
-	mkdir -p "/$save_dir"
+if [[ ! -d "$save_dir" ]]; then
+	mkdir -p "$save_dir"
 fi
 
 # handle chip file, only necessary if collapse ON
@@ -189,7 +189,5 @@ for file in "${files[@]}"; do
 	done
 done
 
-cd "$results_dir" && \
-zip -r raw_GSEA_output.zip raw_GSEA_output && \
-rm -rf raw_GSEA_output
-mv "${results_dir}" "${save_dir}"
+cd "$results_dir" && zip -q -r raw_GSEA_output.zip raw_GSEA_output && rm -rf raw_GSEA_output && cd ..
+mv "./${results_dir}" "${save_dir}"

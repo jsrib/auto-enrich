@@ -21,7 +21,7 @@ if [ ! -f "${input_file}" ]; then
 	exit 1
 fi
 
-if [[ ! -d "$save_dir" ]]; then
+if [[ -d "$save_dir" ]]; then
 	if [[ -n "$(ls -A "$save_dir" 2>/dev/null)" ]]; then
 		printf "❌ [MODULE 4] Error: Directory '%s' already exists and is NOT empty. Please clear it first.\n" "$save_dir" >&2
 		exit 1
@@ -106,15 +106,16 @@ for file in "${result_files[@]}"; do
 		printf "⚠️ No statistically significant results found for '%s' gene set.\n" "$file"
 	fi
 done
-cp "$fields_results" "$save_dir"
- 
+
+cp "./$fields_results" "$save_dir/"
+
 # get enriched terms annotations
 printf "Getting enriched terms annotations (may take a while)...\n"
 ./get_terms_annotations.sh "${input_file}" "${fields_results}" "${species_taxon}" "${save_dir}" "${panther_annot}" "${reactome_annot}" "${gos_annot}" "${gene_map}"
 pos_annots_results="enriched_terms_annotations_pos.tsv"
 neg_annots_results="enriched_terms_annotations_neg.tsv"
-cp "$pos_annots_results" "$save_dir"
-cp "$neg_annots_results" "$save_dir"
+cp "./$pos_annots_results" "$save_dir/"
+cp "./$neg_annots_results" "$save_dir/"
 
 # split results by source
 for file in "$fields_results" "$pos_annots_results" "$neg_annots_results"; do

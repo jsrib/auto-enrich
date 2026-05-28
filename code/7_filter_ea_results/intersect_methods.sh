@@ -57,8 +57,13 @@ for key in "${!tools_dirs[@]}"; do
 	file_1=$(find "$dir" -maxdepth 2 -name "enrichment_fields.tsv" -print -quit)
 	# find one (or multiple) enriched annotations files (priority *_pos; then any phenotypes from gsea Classic)
 	all_files_2=$(get_annot_file "$dir")
-	if [[ -z "$file_1" || -z "$all_files_2" ]]; then
-		echo "❌ Error: Required files not found for $key"
+	if [[ -z "$file_1" ]]; then
+		echo "❌ Error: Required file '$file_1' not found for $key"
+		exit 1
+	fi
+
+	if [[ -z "$all_files_2" ]]; then
+		echo "❌ Error: Required files 'enriched_terms_annotations*.tsv' not found for $key"
 		exit 1
 	fi
 

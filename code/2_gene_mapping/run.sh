@@ -1,7 +1,7 @@
 #!/bin/bash
 # Mapping info module 2
 cd /opt/2_gene_mapping
-set -euo pipefail
+#set -euo pipefail
 
 if [ $# -ne 4 ]; then
 	printf "Usage: %s <gene_ids_list> <species_ids_map> <taxon> <output_file>\n" "$0"
@@ -32,7 +32,7 @@ elif [[ "$test_entry" =~ ^[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]
 fi
 
 if [[ "${col_type}" != "symbol" ]] && [[ "${col_type}" != "geneid" ]] && [[ "${col_type}" != "uniprot" ]]; then
-    printf "❌ [MODULE 2] Error: Unknow gene identifier found in '%s'." "$input_file"
+	printf "❌ [MODULE 2] Error: Unknow gene identifier found in '%s'." "$input_file"
 	printf "Valid identifiers: Entrez GeneIDs, Gene Symbols or UniprotKB IDs."
 	exit 1
 fi
@@ -88,6 +88,4 @@ if [[ ! -f "$output_file" ]]; then
 			}
 		}
 	' "$species_map" "$input_file" > "$output_file"
-else
-	exit 2
 fi

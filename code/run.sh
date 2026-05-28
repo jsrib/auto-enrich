@@ -116,7 +116,7 @@ for module in "${selected_modules[@]}"; do
 				printf "✅ [MODULE 1] Success: Gene lists generated! Saved in %s.\n" "/data/$prepared_lists_dir"
 				prepare_lists_ran=true
 			elif [ $? -eq 2 ]; then	# no results found
-				printf "⚠️ [MODULE 1] No genes left after set calculations and thresholds.\n"
+				printf "⚠️  [MODULE 1] No genes left after set calculations and thresholds.\n"
 			else
 				printf "❌ [MAIN - MODULE 1] Critical Error: Failed to process expression matrix. Check logs for details.\n" >&2
 				exit 1
@@ -146,16 +146,18 @@ for module in "${selected_modules[@]}"; do
 				
 				printf "Processing: %s\n" "$basename"
 				sed -i 's/\r$//' "$glist"
-
-				./2_gene_mapping/run.sh "${glist}" "${species_map}" "${taxon}"  "${output}"
-
-				status=$?
-				if [[ $status -ne 0 && $status -ne 2 ]]; then
-					printf "❌ [MAIN - MODULE 2] Critical Error: Failed to map GeneIDs lists. Check logs for details.\n" >&2
-					exit 1
-				elif [[ $status -eq 2 ]]; then
-					printf "⚠️ [MODULE 2] Warning: Mapped list file '%s' already exists. Skipping...\n" "$output"
+				
+				if [[ ! -f "$output" ]]; then
+					./2_gene_mapping/run.sh "${glist}" "${species_map}" "${taxon}"  "${output}"
+					status=$?
+				else
+					printf "⚠️  [MODULE 2] Warning: Mapped list file '%s' already exists. Skipping...\n" "$output"
 					continue
+				fi
+
+				if [[ $status -ne 0 ]]; then
+					printf "❌ [MAIN - MODULE 2] Critical Error: Failed to map GeneIDs lists. Check logs for details.\n" >&2
+					exit 1	
 				else
 					printf "✅ [MODULE 2] Success: Gene list '%s' mapped ! Saved in %s.\n" "$basename" "$output"
 				fi
@@ -285,7 +287,7 @@ for module in "${selected_modules[@]}"; do
 				[chip]=""					# chip file
 				[collapse]=""				# collapse method (default: collapse, no_collapse, remap_only)
 				# visualization and report
-				[plot_top_x]=1000			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
+				[plot_top_x]=20			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
 				[make_sets]=""
 				#[gui]="false"
 				#[save_details]="false"
@@ -611,7 +613,9 @@ for module in "${selected_modules[@]}"; do
 						fi
 					done
 					# run intersection of collected runs
-					run_intersection "$run" "${paths_to_intersect[@]}"
+					if (( ${#paths_to_intersect[@]} > 0 )); then
+						run_intersection "$run" "${paths_to_intersect[@]}"
+					fi
 				done
 			fi
 
@@ -670,7 +674,7 @@ for module in "${selected_modules[@]}"; do
 						target=$(basename "$subdir")
 						./7_filter_ea_results/run.sh "${results_dir}" $filter_args
 						status=$?
-						
+
 						case $status in
 							0)
 								printf "✅ GSEA results filtered successfully (%s).\n" "$target"

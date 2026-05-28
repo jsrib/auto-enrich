@@ -73,5 +73,10 @@ for dataset in "${datasets[@]}"; do
 		--data-urlencode "correction=FDR" \
 		-o "$output_file"
 
+	if [[ $? -ne 0 ]]; then
+		echo "curl error for $dataset"
+		continue
+	fi
+
 	printf "Output saved to %s.\n" "$output_file"
 done
