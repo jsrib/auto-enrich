@@ -4,22 +4,21 @@
 
 ---------------------------------------
 
-# auto-enrich
+# auto-Enrich
 
 ---------------------------------------
 
-This image facilitates the usage of auto-enrich, a pipeline for streamlined Enrichment Analysis.
+This image is a modular pipeline that facilitates the usage g:Profiler, PANTHER and GSEA for streamlined Enrichment Analysis. Includes support features for input building and output processing.
 
 ## Versions
 
 ---------------------------------------
 
-### V1.0 - October 2025
+### 1.0.0 - May 2026
+
+The documentation is available at `/html/index.html`...
 
 ---------------------------------------
-
-The documentation is available at `/online-manual/docs/...`
-Soon to be published online...
 
 ## Using the auto-enrich image in Linux
 
@@ -27,25 +26,24 @@ Soon to be published online...
 
 First you need to have Docker installed in your computing environment. If you don't, follow the installation guidelines at pegi3s Bioinformatics Docker Images Project website:    [http://bdip.i3s.up.pt/](http://bdip.i3s.up.pt/getting-started#install-docker)
 
-After pulling the required files to build the Docker Image (**auto_enrich.zip** and the **dockerfile**) you have to build the Image under the pegi3s domain using the following command:
-`docker build ./ -t pegi3s/auto-enrich`
+To pull the docker image you should run the following command:
+`docker pull pegi3s/auto-enrich`
 
-You should adpat and run the following command:
+To run an analysis you must set up the pipeline configuration file, name it `config` and have in a folder alongside one, or more, `input data file/s` (such as a Gene Expression matrix, Genes Lists, GSEA Preranked lists, Gene Sets, etc.) under the `/your/data/directory` in order for the pipeline to properly work.
+Detailed instructions are given in the `documentation` (open `/html/index.html`), where the available modules and parameters to be configured are described in detail.
+
+After setting ip the require files you should adapt and run the following command:
 `docker run --rm -v /your/data/directory:/data pegi3s/auto-enrich`
 
-In this command, you should replace `/your/data/directory` to point to the directory that contains the input files for the pipeline.
+In this command, you should replace `/your/data/directory` to point to the folder that contains the input files for the pipeline.
 
-Please note that you must have, at least, a `config0` and `data file` (Gene Expression matrix or a Gene Identifiers list) under the `/your/data/directory` in order for the pipeline to properly work.
-Detailed instructions are given in the `online_manual` (at `/online-manual/docs/...`), where the available modules, as well as parameters that must be declared for each module, are described in detail.
 
 ## Test data
+--------------------------------------
 
----------------------------------------
+In either of the following test dataset, the input files are pre-configured inside the `/inputs` directory and the expected output inside the `/outputs` directory. 
 
-In either of the following test data sets, the input files are pre-configured inside the /inputs directory. 
-
-To run the pipeline you should adapt and run following command:
-    `docker run --rm -v /your/data/directory:/data pegi3s/auto-enrich`
+To run the pipeline you should adapt and run following command: `docker run --rm -v /your/data/directory:/data pegi3s/auto-enrich`
 
 In this command, you should replace `/your/data/directory` to point to the directory that contains the input files for the pipeline.
 
@@ -54,95 +52,71 @@ In this command, you should replace `/your/data/directory` to point to the direc
 
 ---------------------------------------
 
-This test demonstrates how **auto-Enrich** can be run with all modules (except Module 8) and flags.  
-The input includes an expression matrix from *Mus musculus*, the necessary configuration files, and a gene set file from the Mouse Collections of MSigDB.
+This test demonstrates how the **auto-Enrich pipeline** can be run using all modules to perform Over-Representation Analysis (ORA; with g:Profiler and PANTHER) and Gene Set Enrichment Analysis (GSEA).   
 
-**Test files:** `test1.zip`
+The input includes a Gene Expression matrix from *Mus musculus*, the necessary configuration files, and two gene set files from the Mouse Collections of Molecular Signature DataBase ([MSigDB](https://www.gsea-msigdb.org/gsea/msigdb/mouse/collections.jsp)).
 
-**Contents inside the `inputs` directory of `test1.zip`**
+**Test files:** `test_data.zip`
 
-- **config0:** Pipeline configuration file, setup to run input preparation (Modules 1, 2, and 5), enrichment analysis (Modules 3, 4, and 6) on pre-selected sources, and filtering (Module 7).  
-- **config1:** Configuration file to coordinate Module 1, to extract differentially expressed genes (in this test genes with fold change > 1, up-regulated) from the selected data samples.  
-- **config5:** Configuration file to coordinate Module 5, to transform the input expression matrix into the expression dataset (`.gct`) and phenotype labels (`.cls`) to run GSEA classic.  
-- **expression_matrix.tsv:** Gene expression data matrix (Gene ID and gene expression samples data, from Nogueira-Rodrigues et al. (2022) https://www.researchgate.net/publication/357595784).  
-- **gsea_parameters:** GSEA run settings.  
-- **m2.all.v2024.Mm.entrez.gmt:** Gene Set file (GMT) containing the gene sets to run GSEA.  
+**Contents inside the `inputs` directory of `test_data.zip`**:
+
+- **expression_matrix.tsv:** Gene expression data matrix (Gene ID and respective gene expression samples data, from Nogueira-Rodrigues et al. (2022) https://www.researchgate.net/publication/357595784).
+- **config:** Pipeline configuration file, setup to run input file generation for ORA and GSEA methods (Modules 1, 2, and 5), enrichment analysis (Modules 3, 4, and 6) on pre-selected sources, and output processing (Module 7).
+- **/gene_sets:** Folder holding the Gene Sets from the MSigDB to be provided to the GSEA runs (includes the Reactome Pathways gene set: *m2.cp.reactome.v2026.1.Mm.symbols.gmt*; and the Gene Ontology gene set: *m5.go.v2026.1.Mm.symbols.gmt*)
+
+**Pipeline behaviour workflow (`tools="1,2,3,4,5,6,7"`)**:
+
+**1.** The gene expression matrix is processed to build a genes list (from column index set in the variable `gene`) of the pre-selected differentially expressed genes marked (1) at the column index (set in the variable `selected`) [Module 1]
+
+**2.** The given input gene identifiers are mapped to GeneID, UniProtKBs, HUGO Gene Symbol and Full Name [Module 2] 
+
+**3.** Over-Representation Enrichment Analysis are perfomed, with the mapped genes list, using g:Profiler g:GOSt tool on selected annotations-sources (set in the variable `gprofiler_dbs`), outputs are processed and enriched terms annotations are mapped [Module 3] 
+
+**4.** Over-Representation Enrichment Analysis are perfomed, with the mapped genes list, using PANTHER Overrepresentation test on selected annotations-sources (set in the variable `panther_dbs`), outputs are processed and enriched terms annotations are mapped [Module 4] 
+
+**5.** The gene expression matrix is partitioned into scoring Preranked Genes lists (`.rnk`) by calculating the set fold-changes (in the variables `preranked1; preranked2`) between computed experimental groups averages (set with the variables `number_groups`, `number_samples`, `samples`, `groups`, `calculate_averages`, `isoform`) [Module 5] 
+
+**6.** Preranked Gene Set Enrichment Analysis (GSEA) are executed using the previously generated Preranked Genes lists with set paramters (`method`, `gene_set`, `nperm`, others set by default) [Module 6] 
+
+**7.** The enrichment results from the different tools are intersected to find common results (`intersection` boolean variable) and individual tool results are filtered (by set variable `max_annot`; maximum allowed enriched term size ) [Module 7] 
 
 **Output directories after the run:**
-- /prepared_gene_lists → gene list prepared by Module 1
-- /mapped_gene_lists → mapped gene identifier list by Module 2
-- /gprofiler → enrichment results from Module 3 (g:Profiler plus)
-- /panther → enrichment results from Module 4 (PANTHER plus)
-- /gsea → input and analysis outputs from Modules 5 and 6
-- /annotations → consolidated mapping and term annotation files from Modules 2–4
 
-### Test 2 – Running Enrichment Analysis with Multiple Gene Lists
+    # Generated inputs for Enrichment Analysis
+    /data/
+    ├── annotations/*                   → Utilized sources to map gene identifiers and terms annotations
+    ├── preranked_gene_lists/
+    │   └── selected_genes_list           → Selected genes list
+    ├── mapped_gene_lists/
+    │   └── selected_genes_list_map       → Mapped selected genes list
+    └── gsea/
+        ├── parameters_log2FC_A_SCI_A_Sham      → GSEA parameters run files (one per set run)
+        └── preranked_gene_lists/               → Generated Preranked Gene lists
+            ├── log2FC_A_SCI_A_Sham.rnk
+            ├── log2FC_A_SCI_A_Sham.rnk
+            └── log2FC_A_Sham_M_Sham.rnk
 
----------------------------------------
-
-This test demonstrates how **auto-Enrich** can perform **g:Profiler** and **PANTHER** Over-Representation Analysis using one or more pre-prepared gene ID lists.
-
-A single gene list can be run by specifying its name in the `gene_list` variable in `config0`.  
-Multiple gene lists can be run together by placing all desired gene lists in a directory named `/prepared_gene_lists` within your data directory (`/data`).
-
-In this test, four gene ID lists are included, all from *Mus musculus*.
-
-**Test files:** `test2.zip`
-
-**Contents inside the `inputs` directory of `test2.zip`:**
-
-- **config0:** Pipeline configuration file, setup to map input gene IDs (Module 2) and run over-representation analysis (Modules 3 and 4).  
-- **/prepared_gene_lists:** Contains the four input gene ID lists.  
-
-**After running Over-Representation analysis with multiple gene lists, results are organized by tool and gene list:**
-
-    /data/gprofiler/
-    ├── gene_list1/results/ → Enrichment results for gene_list1 using g:Profiler
-    └── gene_list2/results/ → Enrichment results for gene_list2 using g:Profiler
-
-    /data/panther/
-    ├── gene_list1/results/ → Enrichment results for gene_list1 using PANTHER
-    └── gene_list2/results/ → Enrichment results for gene_list2 using PANTHER
-
-**Each results directory contains:**
-
-- Short and long result tables: `short_results.tsv` and `long_results.tsv`  
-- Term annotation files: `terms_annotations_results.tsv`  
-- Subdirectories for each source, containing respective results files and enriched term annotations.
-
-### Test 3 – Preparing and Running GSEA Preranked
-
----------------------------------------
-
-This test demonstrates how **auto-Enrich** can be used to prepare **GSEA Preranked** inputs from an expression matrix and run GSEA.  
-The input includes an expression matrix with pre-calculated averages from *Mus musculus* gene IDs, the necessary configuration files, and a gene set file from the Mouse Collections of MSigDB.  
-In this test, two Preranked gene lists are generated, and two runs of GSEA are performed.
-
-**Test files:** `test3.zip`
-
-Contents inside the `inputs` directory of `test3.zip`:
-
-- **config0:** Pipeline configuration file, set up to run preparation of pre-ranked gene lists (Module 5) and GSEA Preranked run (Module 6).  
-- **config5:** Configuration file to coordinate Module 5, to transform the input expression matrix into two pre-ranked gene lists (`.rnk`).  
-- **expression_matrix.tsv:** Gene expression data matrix (Gene ID and gene expression averages data).  
-- **gsea_parameters:** GSEA run settings.  
-- **m2.all.v2024.Mm.entrez.gmt:** Gene Set file (GMT) containing the gene sets to run GSEA.  
-
-**Output directory structure after the run**
-
-    /data/gsea/
-    ├── preranked_gene_lists/ → Contains the preranked gene lists generated by Module 5
-    ├── results/ → Stores the GSEA results of both runs of the two preranked gene lists
-    │ ├── m2.all.logFC_M_naive_A_naive.GseaPreranked/
-    │ └── m2.all.logFC_M_SCI_A_SCI.GseaPreranked/
-    ├── gsea_parameters → GSEA settings files used in the runs
-    └── m2.all.v2024.Mm.entrez.gmt → Gene Set file (GMT) used for GSEA
-
-**Each results directory contains:**
-
-- Short and long result tables: `short_results.tsv` and `long_results.tsv`  
-- Term annotation files: `terms_annotations_results.tsv`  
-- Subdirectories for each source, containing respective results files and enriched term annotations.
+    # Enrichment Analysis results
+    /data/
+    ├── gprofiler/
+    │   └── selected_genes_list/
+    │       ├── enrichment_fields.tsv             → Enrichment results fields provided by gProfiler
+    │       ├── enrichmed_terms_annotations.tsv   → Enrichmed terms annotations mapping summary
+    │       └── source/annotations/*              → Raw enriched terms annotations sources
+    ├── panther/
+    │   └── selected_genes_list/
+    │       ├── enrichment_fields.tsv             → Enrichment results fields provided by PANTHER
+    │       ├── enrichmed_terms_annotations.tsv   → Enrichmed terms annotations mapping summary
+    │       └── source/annotations/*              → Raw enriched terms annotations sources
+    └── gsea/
+        └── results/
+            ├── log2FC_A_SCI_A_Sham.combined.GseaPreranked/*
+            ├── log2FC_M_SCI_M_Sham.combined.GseaPreranked/*
+            └── log2FC_A_Sham_M_Sham.combined.GseaPreranked/
+                ├── enrichment_fields.tsv                     → Enrichment results fields provided by GSEA
+                ├── enrichmed_terms_annotations.tsv           → Enrichmed terms annotations mapping summary
+                ├── source/annotations/*                      → Raw enriched terms annotations sources
+                └── raw_GSEA_output.zip                       → Raw GSEA output report files
 
 ## Credits
 

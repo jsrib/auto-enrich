@@ -1,9 +1,4 @@
-*.zip
-
-online-documentation/docs/*
-!online-documentation/docs/build/
-online-documentation/docs/build/*
-!online-documentation/docs/build/html/
+#*.zip
 
 **/test
 **/test/**

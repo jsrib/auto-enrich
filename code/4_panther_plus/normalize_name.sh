@@ -9,7 +9,7 @@ taxon_id="$1"
 sup_genomes="supported_genomes.json"
 
 # Fetch the supported genomes list from PANTHER
-curl -s -X GET "https://pantherdb.org/services/oai/pantherdb/supportedgenomes" \
+curl -X GET "https://pantherdb.org/services/oai/pantherdb/supportedgenomes" \
 	-H "accept: application/json" \
 	-o "$sup_genomes"
 

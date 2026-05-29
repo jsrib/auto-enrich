@@ -1,0 +1,228 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart &mdash; auto-Enrich v1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=e160b93e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Overview" href="overview.html" />
+    <link rel="prev" title="auto-Enrich documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-Enrich
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">AUTO-ENRICH:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><strong>Quickstart</strong></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation"><strong>Installation</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-command"><strong>Run command</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#minimal-config-example"><strong>Minimal config example</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#expected-results"><strong>Expected results</strong></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html"><strong>Overview</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html#module-index-reference"><strong>Module Index Reference</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html"><strong>Setup and Run</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html"><strong>Test data</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><strong>Description</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="outputs.html"><strong>Outputs</strong></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html"><strong>Credits</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html#tools-references"><strong>Tools References</strong></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-Enrich</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><strong>Quickstart</strong></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/quickstart.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quickstart">
+<h1><strong>Quickstart</strong><a class="headerlink" href="#quickstart" title="Link to this heading"></a></h1>
+<p>auto-Enrich is a Docker-based pipeline that automates gene set
+enrichment analysis using <strong>g:Profiler</strong>, <strong>PANTHER</strong>, and <strong>GSEA</strong>. It
+integrates preparation, enrichment, and post-processing into a modular
+framework, where each of the 8 modules (<a class="reference internal" href="overview.html#index-table"><span class="std std-ref">reference table</span></a>)
+can be run independently or combined into full workflows.</p>
+<p>The pipeline supports two input types:</p>
+<ul class="simple">
+<li><p><strong>Gene Identifiers lists</strong> (for g:Profiler and PANTHER)</p></li>
+<li><p><strong>Expression matrices</strong> (for Gene lists preparation, GSEA Classic or
+Preranked)</p></li>
+</ul>
+<p>At minimum, you need:</p>
+<ul class="simple">
+<li><p>A <strong>pipeline configuration file</strong> (defining modules, species, and sources) named <strong>config0</strong></p></li>
+<li><p>One <strong>input file</strong> (gene list or expression matrix)</p></li>
+</ul>
+<p>auto-Enrich streamlines:</p>
+<ul class="simple">
+<li><p>Extracting differentially expressed genes</p></li>
+<li><p>Mapping Gene IDs</p></li>
+<li><p>Running g:Profiler and PANTHER enrichment tests</p></li>
+<li><p>Preparing inputs and running GSEA</p></li>
+<li><p>Filtering and plotting enrichment results</p></li>
+</ul>
+<section id="installation">
+<h2><strong>Installation</strong><a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>The auto-Enrich pipeline runs in any computing environment with Docker installed.
+It is distributed as part of the <a class="reference external" href="http://bdip.i3s.up.pt/">pegi3s Bioinformatics Docker Images Project</a>,
+and the corresponding image is available at: <a class="reference external" href="https://hub.docker.com/r/pegi3s/auto-enrich">https://hub.docker.com/r/pegi3s/auto-enrich</a>.
+That page also provides a short guide for installing Docker on both Linux and Windows systems.</p>
+</section>
+<section id="run-command">
+<h2><strong>Run command</strong><a class="headerlink" href="#run-command" title="Link to this heading"></a></h2>
+<p>After filling in the configuration files and making sure the input files
+are present, the user should run the following command to use the Docker
+image of the pipeline:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">rm</span> <span class="o">-</span><span class="n">v</span> <span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">working</span><span class="o">/</span><span class="n">directory</span><span class="p">:</span><span class="o">/</span><span class="n">data</span> <span class="n">pegi3s</span><span class="o">/</span><span class="n">auto_enrich</span>
+</pre></div>
+</div>
+<p>A mounted directory structure, where you should <strong>change your/working/directory</strong> to your data directory.</p>
+</section>
+<section id="minimal-config-example">
+<h2><strong>Minimal config example</strong><a class="headerlink" href="#minimal-config-example" title="Link to this heading"></a></h2>
+<p>This minimal configuration demonstrates the simplest way to run
+<strong>auto-Enrich</strong> for Over-Representation Enrichment Analysis. By
+specifying only the essential variables in <strong>config0</strong>, the pipeline
+configuration file.  This configuration file and inputs must be place
+in the mounted directory /data.</p>
+<p>Minimal configuration setup in <code class="docutils literal notranslate"><span class="pre">config0</span></code> (# are comments):</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">tools</span><span class="o">=</span><span class="s">&#39;2,3,4&#39;</span><span class="w">               </span><span class="c1"># Specify the tools to run.</span>
+<span class="na">species</span><span class="o">=</span><span class="s">&#39;mus_musculus&#39;</span><span class="w">      </span><span class="c1"># Indicate the target species name.</span>
+<span class="na">gene_list</span><span class="o">=</span><span class="s">&#39;gene_list&#39;</span><span class="w">       </span><span class="c1"># Name of the Gene Identifiers list file</span>
+</pre></div>
+</div>
+<p><strong>What happens?</strong></p>
+<p>The pipeline maps input Gene IDs (Module 2) and performs enrichment
+using both <strong>g:Profiler</strong> (Module 3) and <strong>PANTHER</strong> (Module 4). With
+this setup and a single gene list placed in the /data directory, users
+can quickly test the pipeline and generate basic enrichment results with
+minimal configuration effort.</p>
+</section>
+<section id="expected-results">
+<h2><strong>Expected results</strong><a class="headerlink" href="#expected-results" title="Link to this heading"></a></h2>
+<p>Enrichment outputs from <strong>g:Profiler</strong> (Module 3) and <strong>PANTHER</strong>
+(Module 4) are saved in /gprofiler and /panther, with one results
+subdirectory for the input gene list.</p>
+<p>Example of gProfiler results in the mounted directory (/data):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>/data
+└── gprofiler
+    └── gene_list
+        └── results
+            ├── short_results.csv
+            ├── long_results.csv
+            ├── terms_annotations_results.csv
+            └── REAC
+                └── terms_annotations
+                    ├── REAC:R-MMU-76002
+                    │   ├── genes_in_list
+                    │   └── genes_in_term
+                    ├── REAC:R-MMU-76005
+                    ├── ...
+                    └── REAC:R-MMU-6798695
+</pre></div>
+</div>
+<p>Each results directory includes:</p>
+<ul class="simple">
+<li><p><strong>short_results.csv</strong> → key fields (term ID, name, p-value, source)
+for quick review.</p></li>
+<li><p><strong>long_results.csv</strong> → full enrichment details (IDs, description,
+p-values, fold enrichment, parent terms, etc.).</p></li>
+<li><p><strong>terms_annotations_results.csv</strong> → consolidated summary with enriched
+terms, gene counts, and gene memberships.</p></li>
+</ul>
+<p>Per-source subdirectories contain the same outputs restricted to that source, plus per-term annotation folders with:</p>
+<ul class="simple">
+<li><p><strong>genes_in_list</strong> → input genes linked to the enriched term</p></li>
+<li><p><strong>genes_in_term</strong> → full enriched term annotations</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="auto-Enrich documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="overview.html" class="btn btn-neutral float-right" title="Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Phenotypic Evolution Group and SING Research Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
