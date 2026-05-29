@@ -91,16 +91,22 @@ if [[ -n "$rnk_file" ]]; then
 		fi
 	done
 
+	rnk_base=$(basename "${rnk_file%.*}") # remove file extension for name
+	results_dir="${rnk_base}.${gmx_prefix}.GseaPreranked"
+	if [[ -d "${save_dir}/${results_dir}" ]]; then
+		printf "[MODULE 6] Directory conflict: GSEA Preranked results directory already exists (%s). Please clean or rename it and rerun analysis.\n" "$save_dir/$results_dir"
+		exit 1
+	fi
+
 	printf "➡ Running GSEAPreranked...\n"
 	./GSEA_Linux_4.4.0/gsea-cli.sh GSEAPreranked -param_file "${param_file}" -collapse "${collapse_mode}" -chip "${chip_file}"
 	
 	# rename new directory to include rnk filename
 	gsea_result_dir=$(find "${out_dir}" -maxdepth 1 -type d -name "my_analysis.GseaPreranked.*" 2>/dev/null)
 	if [[ -n "$gsea_result_dir" ]]; then
-		rnk_base=$(basename "${rnk_file%.*}") # remove file extension for name
-		results_dir="${rnk_base}.${gmx_prefix}.GseaPreranked"
-		echo "Renamed GSEA Preranked result directory to: $results_dir"
+		printf "Renamed GSEA Preranked result directory to: %s\n" "$results_dir"
 	else
+		printf "GSEA produced an error, see report in %s\n" "$out_dir"
 		mv "$out_dir" "$save_dir"
 		exit 1
 	fi
@@ -119,18 +125,25 @@ elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 		fi
 	done
 
+	label_line=$(sed -n '2p' "$cls_file")
+	label_names=$(echo "$label_line" | cut -c3-)
+	label_name=$(echo "$label_names" | sed 's/ \+/_vs_/g')
+	results_dir="${label_name}.${gmx_prefix}.GseaClassic"
+	
+	if [[ -d "${save_dir}/${results_dir}" ]]; then
+		printf "[MODULE 6] Directory conflict: GSEA Classic results directory already exists (%s). Please clean or rename it and rerun analysis.\n" "$save_dir/$results_dir"
+		exit 0
+	fi
+
 	printf "➡ Running GSEA Classic...\n"
 	./GSEA_Linux_4.4.0/gsea-cli.sh GSEA -param_file "${param_file}" -collapse "${collapse_mode}" -chip "${chip_file}"
 
 	# rename new directory to include phenotypes
 	gsea_result_dir=$(find "${out_dir}" -maxdepth 1 -type d -name "my_analysis.Gsea.*" 2>/dev/null)
 	if [[ -n "$gsea_result_dir" ]]; then
-		label_line=$(sed -n '2p' "$cls_file")
-		label_names=$(echo "$label_line" | cut -c3-)
-		label_name=$(echo "$label_names" | sed 's/ \+/_vs_/g')
-		results_dir="${label_name}.${gmx_prefix}.GseaClassic"
 		printf "Renamed GSEA Classic result directory to: %s\n" "$results_dir"
 	else
+		printf "GSEA produced an error, see report in %s\n" "$out_dir"
 		mv "$out_dir" "$save_dir"
 		exit 1
 	fi
@@ -143,7 +156,6 @@ else
 	exit 1
 fi
 
-mkdir -p "${results_dir}"
 # change gsea results directory
 mv "$gsea_result_dir" "raw_GSEA_output"
 mv "raw_GSEA_output" "$results_dir"

@@ -26,9 +26,8 @@ else
 	esac
 fi
 
-if [[ ! -d "$save_dir" ]]; then
-	mkdir -p "$save_dir"
-fi
+rm -r "$save_dir"
+mkdir -p "$save_dir"
 
 if [[ -z "$input" ]]; then
 	printf "❌ [MODULE 5] Configuration Error: Variable 'input' is undefined or empty. Please specify input file name in the 'config' file.\n" >&2
@@ -132,7 +131,6 @@ case "$method" in
 	preranked)
 		printf "Preparing ranked list for GSEAPreranked mode...\n"
 		./build_preranked_list.sh "$config" "${input}"
-		mkdir -p "$save_dir"
 		mv *.rnk "$save_dir"
 		printf "Results saved in: %s\n" "${save_dir}"
 		;;
