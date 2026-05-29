@@ -26,7 +26,11 @@ else
 	esac
 fi
 
-rm -r "$save_dir"
+# empty and replace directory
+if [[ -d "$save_dir" ]]; then
+	printf "\nReplacing any previously generated input GSEA input files from %s\n" "$save_dir"
+	rm -r "$save_dir"
+fi
 mkdir -p "$save_dir"
 
 if [[ -z "$input" ]]; then

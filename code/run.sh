@@ -287,7 +287,7 @@ for module in "${selected_modules[@]}"; do
 				[chip]=""					# chip file
 				[collapse]=""				# collapse method (default: collapse, no_collapse, remap_only)
 				# visualization and report
-				[plot_top_x]=1000			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
+				[plot_top_x]=10			# number of top gene sets to plot in results (this also generates the 'core enrichment' genes <=> "genes_in_intersection"). pipeline default: 1000; gsea default: 20
 				[make_sets]=""
 				#[gui]="false"
 				#[save_details]="false"

@@ -94,8 +94,11 @@ if [[ -n "$rnk_file" ]]; then
 	rnk_base=$(basename "${rnk_file%.*}") # remove file extension for name
 	results_dir="${rnk_base}.${gmx_prefix}.GseaPreranked"
 	if [[ -d "${save_dir}/${results_dir}" ]]; then
-		printf "[MODULE 6] Directory conflict: GSEA Preranked results directory already exists (%s). Please clean or rename it and rerun analysis.\n" "$save_dir/$results_dir"
+		printf "❌ [MODULE 6] Directory conflict: GSEA Preranked results directory already exists for preranked list '%s' and gene set '%s'.\n" "$rnk_base" "$gmx_file"
+		printf "Please clean or rename '%s' and rerun analysis.\n" "$save_dir/$results_dir"
 		exit 1
+	else
+		mkdir -p "$results_dir"
 	fi
 
 	printf "➡ Running GSEAPreranked...\n"
@@ -131,8 +134,11 @@ elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 	results_dir="${label_name}.${gmx_prefix}.GseaClassic"
 	
 	if [[ -d "${save_dir}/${results_dir}" ]]; then
-		printf "[MODULE 6] Directory conflict: GSEA Classic results directory already exists (%s). Please clean or rename it and rerun analysis.\n" "$save_dir/$results_dir"
-		exit 0
+		printf "❌ [MODULE 6] Directory conflict: GSEA Classic results directory already exists (%s).\n" "$save_dir/$results_dir"
+		printf "Please clean or rename '%s' and rerun analysis.\n" "$save_dir/$results_dir"
+		exit 1
+	else
+		mkdir -p "$results_dir"
 	fi
 
 	printf "➡ Running GSEA Classic...\n"
