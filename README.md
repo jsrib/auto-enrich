@@ -16,7 +16,7 @@ This image is a modular pipeline that facilitates the usage g:Profiler, PANTHER 
 
 ### 1.0.0 - May 2026
 
-The documentation is available [here](http://evolution6.i3s.up.pt/auto-enrich/v1)
+The documentation is available [here](http://evolution6.i3s.up.pt/static/auto-enrich/v1)
 
 ---------------------------------------
 
@@ -30,7 +30,7 @@ To pull the docker image you should run the following command:
 `docker pull pegi3s/auto-enrich`
 
 To run an analysis you must set up the pipeline configuration file, name it `config` and have in a folder alongside one, or more, `input data file/s` (such as a Gene Expression matrix, Genes Lists, GSEA Preranked lists, Gene Sets, etc.) under the `/your/data/directory` in order for the pipeline to properly work.
-Detailed instructions are given in the [documentation](http://evolution6.i3s.up.pt/auto-enrich/v1), where the available modules and parameters to be configured are described in detail.
+Detailed instructions are given in the [documentation](http://evolution6.i3s.up.pt/static/auto-enrich/v1), where the available modules and parameters to be configured are described in detail.
 
 After setting ip the require files you should adapt and run the following command:
 `docker run --rm -v /your/data/directory:/data pegi3s/auto-enrich`
