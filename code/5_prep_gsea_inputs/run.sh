@@ -3,12 +3,18 @@
 cd /opt/5_prep_gsea_inputs
 set -euo pipefail
 
+<<<<<<< HEAD
 if [ $# -ne 2 ]; then
 	printf "Usage: %s <config> <save_dir>\n" "$0"
+=======
+if [ $# -ne 1 ]; then
+	printf "Usage: %s <config>\n" "$0"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 	exit 1
 fi
 
 config="$1"
+<<<<<<< HEAD
 source "$config"
 save_dir="$2"
 
@@ -35,10 +41,25 @@ mkdir -p "$save_dir"
 
 if [[ -z "$input" ]]; then
 	printf "❌ [MODULE 5] Configuration Error: Variable 'input' is undefined or empty. Please specify input file name in the 'config' file.\n" >&2
+=======
+gsea_dir="/data/gsea/inputs"
+
+if [ ! -f "$config" ]; then
+	printf "Error: Config file not found.\n"
+	exit 1
+else
+	sed -i 's/\r$//' "$config"
+	source "$config"
+fi
+
+if [[ -z "$method" ]]; then
+	printf "Error: 'method' not defined in config file.\n"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 	exit 1
 fi
 
 if [ ! -f "/data/${input}" ]; then
+<<<<<<< HEAD
 	printf "❌ [MODULE 5] Configuration Error: Input expression matrix file '%s' not found in set working directory (/data).\n" "${input}" >&2
 	exit 1
 else
@@ -121,10 +142,49 @@ else
 		fi
 	fi
 fi
+=======
+	printf "Error: Input file '%s' not found.\n" "${input}"
+	exit 1
+fi
+
+# normalize windows /r
+sed -i 's/\r$//' "/data/${input}"
+
+# filter isoforms
+./process_isoforms.sh "$config"
+filtered_isoforms="filtered_isoforms_gsea_${input}"
+
+run_config="run_config"	#runtime config to change input to filtered
+
+if [ -s "$filtered_isoforms" ]; then
+	printf "Filtered isoforms of %s. New file: %s\n" "${input}" "${filtered_isoforms}"
+	input="${filtered_isoforms}"
+	cp "$filtered_isoforms" "/data"
+
+	# update runtime config
+	awk -v new_input="$input" '
+		BEGIN { updated = 0 }
+		/^input=/ {
+			print "input=\"" new_input "\""
+			updated = 1
+			next
+		}
+		{ print }
+		END {
+			if (!updated) print "input=\"" new_input "\""
+		}
+	' "$config" > "$run_config"
+else
+	printf "No isoforms filtered. Using original file %s.\n" "$input"
+	cp "$config" "$run_config"
+fi
+source "$run_config"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 
 # classic or preranked method input, outputs
 case "$method" in
 	classic)
+<<<<<<< HEAD
 		printf "Preparing inputs for GSEA Classic mode...\n"
 		./generate_exp_data.sh "$config" "${input}"
 		mv expression_dataset.gct "${save_dir}"
@@ -143,3 +203,23 @@ case "$method" in
 		exit 1
 		;;
 esac
+=======
+		printf "\n➡ Preparing inputs for classic mode...\n"
+		./generate_exp_data.sh "$run_config"
+		mv expression_dataset.gct "$gsea_dir"
+		./generate_phenotype.sh "$run_config"
+		mv phenotype_labels.cls "$gsea_dir"
+		;;
+	preranked)
+		printf "\n➡ Preparing ranked list for GSEAPreranked mode...\n"
+		./build_preranked_list.sh "$run_config"
+		out_dir="$gsea_dir/preranked_lists"
+		mkdir -p $out_dir
+		mv *.rnk "$out_dir"
+		;;
+	*)
+		printf "Error: Unrecognized method '%s'. Valid options are: classic, preranked.\n" "$method"
+		exit 1
+		;;
+esac
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb

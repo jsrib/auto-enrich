@@ -3,12 +3,18 @@
 cd /opt/6_gsea_plus
 set -euo pipefail
 
+<<<<<<< HEAD
 if [ $# -ne 2 ]; then
 	printf "Usage: %s <parameters_file> <save_dir>\n" "$0"
+=======
+if [ $# -ne 1 ]; then
+	printf "Usage: %s <gsea_parameters>\n" "$0"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 	exit 1
 fi
 
 param_file="$1"
+<<<<<<< HEAD
 save_dir="$2"
 cp $param_file .
 
@@ -26,6 +32,22 @@ else
 	fi
 fi
 
+=======
+
+if [ ! -f "${param_file}" ]; then
+	printf "\nError: Input file '${param_file}' not found.\n"
+	exit 1
+else
+	sed -i 's/\r//' "${param_file}"	# nornalize windows /r to prevent erros with GSEA
+fi
+
+# auto-fix: add newline to end of file to precent GSEA error
+if [[ $(tail -c1 "${param_file}") != "" ]]; then
+	printf "\n" >> "${param_file}"
+fi
+
+param_file="$1"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 rnk_file=""
 res_file=""
 cls_file=""
@@ -48,7 +70,11 @@ done < "${param_file}"
 
 # gmx provided?
 if [[ -z "$gmx_file" ]]; then
+<<<<<<< HEAD
 	printf "❌ [MODULE 6] Configuration Error: 'gmx' parameter is required.\n"
+=======
+	printf "\nError: 'gmx' parameter is required.\n"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 	exit 1
 else
 	# prefix for output dir name
@@ -56,29 +82,51 @@ else
 	gmx_prefix=$(echo "$gmx_base" | sed -E 's/\.v[0-9]+\.[0-9]+.*//')
 fi
 
+<<<<<<< HEAD
 # create save dir if doesnt exist
 if [[ ! -d "$save_dir" ]]; then
 	mkdir -p "$save_dir"
+=======
+if [[ ! -d "/data/$out_dir" ]]; then
+	mkdir -p "/data/$out_dir"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 fi
 
 # handle chip file, only necessary if collapse ON
 if [[ "$collapse_mode" == "Collapse" || "$collapse_mode" == "Remap_Only" ]]; then
+<<<<<<< HEAD
 	if [[ ! -f "$chip_file" ]]; then
 		printf "❌ [MODULE 6] File Missing: chip file '%s' not found.\n" "${chip_file}"
+=======
+	if [[ -n "$chip_file" && -f "/data/$chip_file" ]]; then
+		cp "/data/$chip_file" .
+	else
+		printf "\nError: collapse=%s requires chip file, but it was missing or not found.\n" "$collapse_mode"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 		exit 1
 	fi
 fi
 
+<<<<<<< HEAD
 # unpack and run gsea cli
 zip_file="GSEA_LinuxIntel_4.4.0-WithJava.zip"
 	if [[ ! -f "GSEA_Linux_4.4.0/gsea-cli.sh" ]]; then
 		echo "Unzipping $zip_file..."
 		unzip -q "$zip_file"
 	fi
+=======
+zip_file="GSEA_LinuxIntel_4.4.0-WithJava.zip"
+
+if [[ ! -f "GSEA_Linux_4.4.0/gsea-cli.sh" ]]; then
+	echo "Unzipping $zip_file..."
+	unzip "$zip_file"
+fi
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 
 # GSEApreranked
 if [[ -n "$rnk_file" ]]; then
 	if [[ -n "$res_file" || -n "$cls_file" ]]; then
+<<<<<<< HEAD
 		printf "❌ [MODULE 6] Configuration Error: For GSEAPreranked, 'res' and 'cls' must NOT be set.\n"
 		exit 1
 	fi
@@ -103,10 +151,31 @@ if [[ -n "$rnk_file" ]]; then
 
 	printf "➡ Running GSEAPreranked...\n"
 	./GSEA_Linux_4.4.0/gsea-cli.sh GSEAPreranked -param_file "${param_file}" -collapse "${collapse_mode}" -chip "${chip_file}"
+=======
+		printf "\nError: For GSEAPreranked, 'res' and 'cls' must NOT be set.\n"
+		exit 1
+	fi
+
+	# copy required files
+	for file in "$rnk_file" "$gmx_file"; do
+		if [[ ! -f "/data/$file" && ! -f "/data/gsea/inputs/$file" ]]; then
+			printf "\nError: File %s not found in /data or /data/gsea/inputs.\n" "$file"
+			exit 1
+		fi
+
+		# copy from /gsea after module 5 run, or copy from /data running module 6 alone
+		[[ -f "/data/$file" ]] && cp "/data/$file" .
+		[[ -f "/data/gsea/inputs/$file" ]] && cp "/data/gsea/inputs/$file" .
+	done
+
+	printf "\n➡ Running GSEAPreranked...\n"
+	./GSEA_Linux_4.4.0/gsea-cli.sh GSEAPreranked -param_file "${param_file}"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 	
 	# rename new directory to include rnk filename
 	gsea_result_dir=$(find "${out_dir}" -maxdepth 1 -type d -name "my_analysis.GseaPreranked.*" 2>/dev/null)
 	if [[ -n "$gsea_result_dir" ]]; then
+<<<<<<< HEAD
 		printf "Renamed GSEA Preranked result directory to: %s\n" "$results_dir"
 	else
 		printf "GSEA produced an error, see report in %s\n" "$out_dir"
@@ -126,11 +195,37 @@ elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 			printf "File not found: '%s'.\n" "$file"
 			exit 1
 		fi
+=======
+		rnk_base=$(basename "$rnk_file" | sed 's/\.[^.]*$//')
+		new_dir="${out_dir}/${gmx_prefix}.${rnk_base}.GseaPreranked"
+		mv "$gsea_result_dir" "$new_dir"
+		echo "Renamed GSEA Preranked result directory to: $new_dir"
+	fi
+
+# GSEA classic
+elif [[ -n "$res_file" && -n "$cls_file" ]]; then
+	if [[ -n "$rnk_file" ]]; then
+		printf "\nError: For GSEA Classic, 'rnk' must NOT be set.\n"
+		exit 1
+	fi
+
+	# copy required files
+	for file in "$res_file" "$cls_file" "$gmx_file"; do
+		if [[ ! -f "/data/$file" && ! -f "/data/gsea/inputs/$file" ]]; then
+			printf "\nError: File %s not found in /data or /data/gsea/inputs.\n" "$file"
+			exit 1
+		fi
+
+		# copy from /gsea after module 5 run, or copy from /data running module 6 alone
+		[[ -f "/data/$file" ]] && cp "/data/$file" .
+		[[ -f "/data/gsea/inputs/$file" ]] && cp "/data/gsea/inputs/$file" .
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 	done
 
 	label_line=$(sed -n '2p' "$cls_file")
 	label_names=$(echo "$label_line" | cut -c3-)
 	label_name=$(echo "$label_names" | sed 's/ \+/_vs_/g')
+<<<<<<< HEAD
 	results_dir="${label_name}.${gmx_prefix}.GseaClassic"
 	
 	if [[ -d "${save_dir}/${results_dir}" ]]; then
@@ -143,16 +238,29 @@ elif [[ -n "$res_file" && -n "$cls_file" ]]; then
 
 	printf "➡ Running GSEA Classic...\n"
 	./GSEA_Linux_4.4.0/gsea-cli.sh GSEA -param_file "${param_file}" -collapse "${collapse_mode}" -chip "${chip_file}"
+=======
+	new_dir="${out_dir}/${gmx_prefix}.${label_name}.GseaClassic"
+
+	printf "\n➡ Running GSEA Classic...\n"
+	./GSEA_Linux_4.4.0/gsea-cli.sh GSEA -param_file "${param_file}"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 
 	# rename new directory to include phenotypes
 	gsea_result_dir=$(find "${out_dir}" -maxdepth 1 -type d -name "my_analysis.Gsea.*" 2>/dev/null)
 	if [[ -n "$gsea_result_dir" ]]; then
+<<<<<<< HEAD
 		printf "Renamed GSEA Classic result directory to: %s\n" "$results_dir"
 	else
 		printf "GSEA produced an error, see report in %s\n" "$out_dir"
 		mv "$out_dir" "$save_dir"
 		exit 1
 	fi
+=======
+		mv "$gsea_result_dir" "$new_dir"
+		printf "Renamed GSEA Classic result directory to: %s\n" "$new_dir"
+	fi
+
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
 # wrong config
 else
 	printf "\nError: Invalid parameter combination. Provide either:\n"
@@ -162,6 +270,7 @@ else
 	exit 1
 fi
 
+<<<<<<< HEAD
 # change gsea results directory
 mv "$gsea_result_dir" "raw_GSEA_output"
 mv "raw_GSEA_output" "$results_dir"
@@ -209,3 +318,47 @@ done
 
 cd "$results_dir" && zip -q -r raw_GSEA_output.zip raw_GSEA_output && rm -rf raw_GSEA_output && cd ..
 mv "./${results_dir}" "${save_dir}"
+=======
+printf "Organizing results directory...\n"
+./organize_directory.sh "${new_dir}"
+printf "Processing report files...\n"
+./process_reports.sh "${new_dir}"
+printf "Getting terms annotations...\n"
+./get_terms_annotations.sh "${out_dir}" "$gmx_file"	#output=terms_results_file
+
+terms_results_file="$new_dir/terms_annotations_results.csv"
+results_files=("$new_dir/short_results.csv" "$new_dir/long_results.csv")
+
+# add source column from termos results file to short and long
+for file in "${results_files[@]}"; do
+	tmp_name="$new_dir/tmp_name"
+	tmp_source="$new_dir/tmp_source"
+	tmp_rest="$new_dir/tmp_rest"
+
+	cut -d',' -f1 "$file" > "$tmp_name"
+	cut -d',' -f2 "$terms_results_file" > "$tmp_source"
+	cut -d',' -f2- "$file" > "$tmp_rest"
+	paste -d',' "$tmp_name" "$tmp_source" "$tmp_rest" > "$file.tmp"
+	mv "$file.tmp" "$file"
+	rm "$tmp_name" "$tmp_source" "$tmp_rest"
+done
+
+# organize sources directory
+for file in "$new_dir"/*_results.csv; do
+	[[ ! -f "$file" ]] && continue
+	base_file=$(basename "$file")
+	header=$(head -n 1 "$file")
+	# unique sources
+	mapfile -t sources < <(tail -n +2 "$file" | cut -d',' -f2 | sort -u)
+	for source in "${sources[@]}"; do
+		[[ -z "$source" ]] && continue
+		{
+			echo "$header"
+			awk -F',' -v col=2 -v val="$source" '$col == val' "$file"
+		} > "$new_dir/$source/${source}_$base_file"
+	done
+done
+
+rm "$new_dir"/*report*
+mv "$new_dir" "/data/$out_dir"
+>>>>>>> d10f8574b159040860fdef044c1d57a4b6832ffb
