@@ -7,26 +7,22 @@ import sys
 RELATIONS_URL = "https://reactome.org/download/current/ReactomePathwaysRelation.txt"
 PATHWAYS_URL = "https://reactome.org/download/current/ReactomePathways.txt"
 
-# Local cache filenames
+# local cache filenames
 relations_file = "ReactomePathwayRelation.txt"
 pathways_file = "ReactomePathways.txt"
 
-# Override defaults with command-line arguments
-# Usage: python script.py [species] [output_file]
-
-# Download function
 def download_file(url, dest):
 	print(f"Downloading {url} ...")
 	urllib.request.urlretrieve(url, dest)
 	print(f"Saved to {dest}")
 
-# Build hierarchy
+# build hierarchy
 def build_hierarchy(species_filter, output_file):
 	download_file(RELATIONS_URL, relations_file)
 	download_file(PATHWAYS_URL, pathways_file)
 	print(f"CHECK: Getting {species_filter} hierarchy")
 
-	# Load pathway names and filter species
+	# load pathway names and filter species
 	id_to_name = {}
 	with open(pathways_file, encoding="utf-8") as f:
 		for line in f:
@@ -36,7 +32,7 @@ def build_hierarchy(species_filter, output_file):
 				if species == species_filter:
 					id_to_name[pid] = name
 
-	# Build adjacency list
+	# build adjacency list
 	children_map = defaultdict(list)
 	all_nodes = set()
 	with open(relations_file, encoding="utf-8") as f:
@@ -46,11 +42,11 @@ def build_hierarchy(species_filter, output_file):
 				children_map[parent].append(child)
 				all_nodes.update([parent, child])
 
-	# Find roots (nodes never appearing as child)
+	# find roots (nodes never appearing as child)
 	children_set = {c for childs in children_map.values() for c in childs}
 	roots = [node for node in all_nodes if node not in children_set]
 
-	# Recursive tree building
+	# recursive tree building
 	def build_tree(node):
 		return {
 			"id": node,
@@ -60,12 +56,11 @@ def build_hierarchy(species_filter, output_file):
 
 	hierarchy = [build_tree(root) for root in roots]
 
-	# Save JSON
+	# save
 	with open(output_file, "w", encoding="utf-8") as out:
 		json.dump(hierarchy, out, indent=2)
 	print(f"Hierarchy saved to {output_file}")
 
-# Main
 if __name__ == "__main__":
 	import sys
 	species = sys.argv[1]   # e.g., "Mus musculus"

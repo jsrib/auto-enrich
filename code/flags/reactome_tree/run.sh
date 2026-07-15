@@ -19,11 +19,11 @@ if [[ ! -f "$json" ]]; then
 	fi
 fi
 
-for dir in "$input_dir"/*/results/REAC/; do
-	file="$dir/REAC_short_results.csv"
+for dir in "$input_dir"/*/REAC/; do
+	file="$dir/REAC_enrichment_fields.tsv"
 
 	if [[ ! -f "$file" ]]; then
-		echo "Skipping $dir (no short_results.csv found)"
+		echo "Skipping $dir (no REAC_enrichment_fields.tsv found)"
 		continue
 	fi
 
@@ -36,12 +36,12 @@ for dir in "$input_dir"/*/results/REAC/; do
 
 	# ascii tree file exists?
 	if [[ -s "$tree" ]]; then
-		# reorder results files
-		for file in "$dir"/*_results.csv; do
-			./reorder_results.sh "$tree" "$file"
+		reorder results files
+		for file in "$dir"/*.tsv; do
+			./add_depth.sh "$tree" "$file"
 		done
 		mv "$tree" "$tree_pdf" "$dir"
 	else
-		printf "Warning: hierarchy tree for %s is empty or missing, skipping it." "$dir"
+		printf "Warning: hierarchy tree for %s is empty or missing, skipping it.\n" "$dir"
 	fi
 done

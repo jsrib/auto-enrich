@@ -1,0 +1,91 @@
+import sys
+import os
+import requests
+import re
+import subprocess
+import datetime
+from collections import defaultdict
+from goatools.base import get_godag
+from goatools.anno.gaf_reader import GafReader
+
+def get_files_for_species(scientific_name):
+    """Automatically finds and downloads the GAF and OBO files."""
+    # download OBO file if not present
+    obo_path = "go.obo"
+    if not os.path.exists(obo_path):
+        print("[*] Downloading GO ontology...", file=sys.stderr)
+        subprocess.run(["wget", "-q", "-O", obo_path, "http://current.geneontology.org/ontology/go.obo"])
+    
+    # download GAF file
+    parts = scientific_name.strip().split()
+    if len(parts) < 2:
+        print("Error: Please provide 'Genus species'.", file=sys.stderr)
+        sys.exit(1)
+        
+    formatted_name = f"{parts[0][0].lower()}_{parts[1].lower()}"
+    base_url = "https://ftp.ebi.ac.uk/pub/databases/GO/goa/proteomes/"
+    print(f"[*] Searching EBI for {formatted_name}...", file=sys.stderr)
+    
+    r = requests.get(base_url)
+    match = re.search(rf'>(?P<filename>\d+\.[A-Za-z]_{parts[1].lower()}\.goa)', r.text, re.IGNORECASE)
+    
+    if not match:
+        print("Error: Could not find GAF file for this species.", file=sys.stderr)
+        sys.exit(1)
+        
+    gaf_filename = match.group('filename')
+    gaf_path = f"{formatted_name}.gaf"
+    
+    if not os.path.exists(gaf_path):
+        print(f"[*] Downloading {gaf_filename}...", file=sys.stderr)
+        subprocess.run(["wget", "-q", "-O", gaf_path, f"{base_url}{gaf_filename}"])
+        
+    return gaf_path, obo_path
+
+# generate GOs annotations files by gettting genes from the term and from descendants terms too (all in gene symbols)
+def generate_full_map(scientific_name, output_path):
+    gaf_path, obo_path = get_files_for_species(scientific_name)
+
+    header_lines = []
+    with open(gaf_path, 'r') as f:
+        for _ in range(4): # first 4 lines metadata
+            line = f.readline()
+            if line.startswith('!'):
+                header_lines.append(line)
+    
+    print(f"[*] Loading Ontology: {obo_path}...", file=sys.stderr)
+    godag = get_godag(obo_path, optional_attrs={'relationship'})
+    
+    print(f"[*] Reading GAF: {gaf_path}...", file=sys.stderr)
+    direct_map = defaultdict(set)
+    for anno in GafReader(gaf_path).associations:
+        if anno.DB_Symbol and anno.GO_ID:
+            direct_map[anno.GO_ID].add(anno.DB_Symbol)
+
+    print("[*] Propagating annotations (this may take a moment)...", file=sys.stderr)
+    full_map = defaultdict(set)
+    for go_id, term in godag.items():
+        all_descendants = term.get_all_children()
+        all_descendants.add(go_id)
+        for descendant_id in all_descendants:
+            if descendant_id in direct_map:
+                full_map[go_id].update(direct_map[descendant_id])
+    
+    print(f"[*] Saving to {output_path}...", file=sys.stderr)
+    with open(output_path, 'w') as f:
+        f.writelines(header_lines)
+        f.write(f"!Processed_by: auto-Enrich pipeline\n")
+        f.write(f"!Processed_date: {datetime.datetime.now().isoformat()}\n")
+        f.write(f"!Method: Transitive propagation of GO annotations via GO DAG.\n")
+        f.write(f"!Note: Annotations for each GO ID include all direct gene associations plus associations from all descendant terms in the ontology hierarchy.\n")
+        f.write(f"!Source_Ontology: {obo_path}\n")
+        f.write(f"!Source_GAF: {gaf_path}\n")
+        for go_id, genes in full_map.items():
+            f.write(f"{go_id}\t{','.join(sorted(genes))}\n")
+    print("[*] Complete.", file=sys.stderr)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python generate_go_map.py <'Genus species'> <output.tsv>")
+        sys.exit(1)
+    generate_full_map(sys.argv[1], sys.argv[2])

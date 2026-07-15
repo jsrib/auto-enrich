@@ -2,7 +2,7 @@
 set -e
 
 if [ $# -lt 2 ]; then
-	printf "Usage: %s <ids_map_file> <taxon_id> [panther_dbs]\n" "$0"
+	printf "Usage: %s <input_map_file> <taxon_id> [panther_dbs]\n" "$0"
 	exit 1
 fi
 
@@ -10,7 +10,9 @@ input_file="$1"
 taxon_id="$2"
 panther_dbs="${3:-}"
 
-query_ids=$(awk -F'\t' 'NF && $1 != "" { print "GeneID:" $1 }' "$input_file" | paste -sd',' -)
+query_file=$(mktemp)
+awk -F'\t' 'NF && $1 != "" { print "GeneID:" $1 }' "$input_file" | paste -sd',' - > "$query_file"
+trap 'rm -f "$query_file"' EXIT
 
 panther_dbs=$(printf '%s' "$panther_dbs" | tr -d '[:space:]')
 
@@ -51,7 +53,7 @@ else
 fi
 
 if [ ${#datasets[@]} -eq 0 ]; then
-	printf "No valid datasets selected. Exiting.\n"
+	printf "❌ [MODULE 4] Configuration Error: Variable invalid values in 'panther_dbs'.\n" >&2
 	exit 1
 fi
 
@@ -64,12 +66,17 @@ for dataset in "${datasets[@]}"; do
 	curl -s -X POST "https://www.pantherdb.org/services/oai/pantherdb/enrich/overrep" \
 		-H "accept: application/json" \
 		-H "Content-Type: application/x-www-form-urlencoded" \
-		--data-urlencode "geneInputList=${query_ids}" \
+		--data-urlencode "geneInputList@$query_file" \
 		--data-urlencode "organism=${taxon_id}" \
 		--data-urlencode "annotDataSet=${dataset}" \
 		--data-urlencode "enrichmentTestType=FISHER" \
 		--data-urlencode "correction=FDR" \
 		-o "$output_file"
 
-	printf "Output saved to %s.\n\n" "$output_file"
+	if [[ $? -ne 0 ]]; then
+		echo "curl error for $dataset"
+		continue
+	fi
+
+	printf "Output saved to %s.\n" "$output_file"
 done

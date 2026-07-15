@@ -13,14 +13,13 @@ def load_reactome_hierarchy(json_file):
 		return json.load(f)
 
 # load set of enriched pathways from csv
-def load_enriched_ids(csv_file):
+def load_enriched_ids(tsv_file):
 	enriched_ids = set()
-	with open(csv_file, newline='', encoding='utf-8') as f:
-		reader = csv.reader(f)
+	with open(tsv_file, newline='', encoding='utf-8') as f:
+		reader = csv.reader(f, delimiter='\t')
 		for row in reader:
 			if row:
 				raw_id = row[0].strip()
-				# Keep only part after first ":" if present
 				clean_id = raw_id.split(":", 1)[-1]
 				enriched_ids.add(clean_id)
 	return enriched_ids
@@ -109,12 +108,12 @@ def export_dot_and_png(roots, dot_filename="enriched_tree.dot", png_filename="en
 def main():
 	parser = argparse.ArgumentParser(description="Build Reactome enriched pathway tree.")
 	parser.add_argument("json", help="Reactome hierarchy JSON file")
-	parser.add_argument("csv", help="CSV file with enriched IDs one FIRST column.")
+	parser.add_argument("tsv", help="TSV file with enriched IDs one FIRST column.")
 
 	args = parser.parse_args()
 
 	hierarchy_data = load_reactome_hierarchy(args.json)
-	enriched_ids = load_enriched_ids(args.csv)
+	enriched_ids = load_enriched_ids(args.tsv)
 
 	full_roots = build_full_tree(hierarchy_data)
 	enriched_roots = extract_enriched_tree(full_roots, enriched_ids)

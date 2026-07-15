@@ -15,10 +15,10 @@ fi
 shopt -s nullglob
 case "$input_dir" in
 	"/data/gprofiler")
-		dirs=("$input_dir"/*/results/)
+		dirs=("$input_dir"/*)
 		;;
 	"/data/panther")
-		dirs=("$input_dir"/*/results/)
+		dirs=("$input_dir"/*)
 		;;
 	"/data/gsea")
 		dirs=("$input_dir"/results/*/)
@@ -30,15 +30,15 @@ case "$input_dir" in
 esac
 
 for dir in "${dirs[@]}"; do
-	input_file="$dir/terms_annotations_results.csv"
+	input_file="$dir/enriched_terms_annotations.tsv"
 	output_file="$dir/gene_occurrences.tsv"
 	gene_counts="$dir/gene_counts"
 
-	col_idx=$(head -1 "$input_file" | tr ',' '\n' | grep -nx "Genes_in_list" | cut -d: -f1)
+	col_idx=$(head -1 "$input_file" | tr '\t' '\n' | grep -nx "Genes_in_intersection" | cut -d: -f1)
 
 	# count each gene n occurs
 	tail -n +2 "$input_file" | \
-		cut -d',' -f${col_idx} | \
+		cut -d'\t' -f${col_idx} | \
 		tr ' ' '\n' | \
 		sed '/^$/d' | \
 		sort | \

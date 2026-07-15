@@ -1,17 +1,35 @@
 #!/bin/bash
 
 if [ $# -ne 2 ]; then
-	printf "Usage: %s <organism_name> <short_species_name>\n" "$0"
+	printf "Usage: %s <organism_name> <output_file>\n" "$0"
 	exit 1
 fi
 
 name="$1"	# same organism name as referenced in the field "name" in the panther supported_genomes file
-short="$2"	# short species name
+output="$2"	# short species name
 
 # panther datasets annots file
 printf "Downloading PANTHER annotations file...\n"
-curl -O "https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/PTHR19.0_${name}"
-annotations_file="PTHR19.0_${name}"
+base_url="https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/"
+# find latest release version
+latest=$(curl -s "$base_url" | grep -oE "PTHR[0-9]+\.[0-9]+" | head -n 1)
+printf "Latest detected version: %s\n" "$latest"
+annotations_file="${latest}_${name}"
+curl -O "${base_url}${annotations_file}"
+
+# current date
+generation_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# metadata header
+{
+	echo "!PANTHER_Source: https://data.pantherdb.org/ftp/sequence_classifications/current_release/PANTHER_Sequence_Classification_files/"
+	echo "!PANTHER_Release: $latest"
+	echo "!Organism: $name"
+	echo "!Included_Datasets: PANTHER Pathways, PANTHER GO Slim (BP, MF, CC), PANTHER Protein Class"
+	echo "!Generation_Date: $generation_date"
+	echo "!Generated_by: auto-Enrich Pipeline"
+	echo "!Note: This file contains functional classifications inferred via PANTHER HMMs."
+} > "$output"
 
 if [[ $? -eq 0 && -s "$annotations_file" ]]; then
 	printf "Download successful: %s\n" "$annotations_file"
@@ -19,8 +37,6 @@ else
 	printf "Download failed!\n" >&2
 	exit 1
 fi
-
-simple_annot="${short}_PTHR19.0_annotations"
 
 awk -F'\t' '
 {
@@ -46,6 +62,5 @@ awk -F'\t' '
 	}
 
 	print id "\t" gene "\t" matches;
-}' "$annotations_file" > "$simple_annot"
+}' "$annotations_file" >> "$output"
 
-printf "...processing completed. Processed annotations file saved as %s\n" "$simple_annot"

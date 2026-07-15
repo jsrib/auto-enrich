@@ -1,36 +1,32 @@
 #!/bin/bash
+set -euo pipefail
 
-if [ $# -ne 1 ]; then
-	printf "Usage: %s <config_file>\n" "$0"
+if [ $# -ne 2 ]; then
+	printf "Usage: %s <config> <input>\n" "$0"
 	exit 1
 fi
 
-config="$1"
+source "$1"
+input_file="/data/$2" # possible new input if averages preivous calculated or isoform filtered
 output="expression_dataset.gct"
 
-source "$config"
-
-if [[ -z "/data/$input" || -z "$gene" || -z "$samples" || -z "$number_samples" ]]; then
-	echo "Error: Config must define input, gene, samples, and number_samples"
-	exit 1
-else
-	sed -i 's/\r$//' "/data/$input"
+if [ ! -f "${input_file}" ]; then
+	printf "❌ [MODULE 5] Input File Missing: Input expression matrix file '%s' not found for GSEA Classic inputs generation.\n" "${input_file}" >&2
+	exit 1	
 fi
 
-# read sample cols idxs
-IFS=',' read -ra sample_cols <<< "$samples"
-actual_sample_count=${#sample_cols[@]}
-
-# valid?
-if [[ "$number_samples" -ne "$actual_sample_count" ]]; then
-	echo "Error: number_samples=$number_samples but samples= has $actual_sample_count columns" >&2
-	exit 1
-fi
+required_vars=("gene" "number_groups" "number_samples" "samples" "groups")
+for var in "${required_vars[@]}"; do
+	if [[ -z "${!var}" ]]; then
+		printf "❌ [MODULE 5] Configuration Error: Variable '%s' is undefined or empty.\n" "$var"
+		exit 1
+	fi
+done
 
 # num data rows, -header -empty lines
-num_data_rows=$(( $(grep -cve '^\s*$' "/data/$input") - 1))
+num_data_rows=$(( $(grep -cve '^\s*$' "$input_file") - 1))
 
-header=$(head -n 1 "/data/$input" | sed $'s/\r//;s/^\xEF\xBB\xBF//')
+header=$(head -n 1 "$input_file" | sed $'s/\r//;s/^\xEF\xBB\xBF//')
 IFS=$'\t' read -ra cols <<< "$header"
 
 #col idxs array
@@ -40,20 +36,16 @@ for i in "${!cols[@]}"; do
 	col_indices["$col"]=$((i + 1))
 done
 
-gene_col="${col_indices[$gene]}"
-if [[ -z "$gene_col" ]]; then
-	printf "Error: Gene column '%s' not found\n" "$gene"
-	exit 1
-fi
+IFS=',' read -ra sample_indices <<< "$samples"
 
-# .gct output format
+# .gct output format spec: https://docs.gsea-msigdb.org/#GSEA/GSEA_User_Guide/#preparing-data-files-for-gsea
 {
 	echo "#1.2"	#first row default
 	echo -e "${num_data_rows}\t${number_samples}"	#second row data count
 
 	# third row header: name, description, and sample names
 	printf "NAME\tDescription"
-	for idx in "${sample_cols[@]}"; do
+	for idx in "${sample_indices[@]}"; do
 		col_name="${cols[idx-1]}"
 		clean_name=$(echo "$col_name" | sed 's/[^[:alnum:]_]/_/g')
 		printf "\t%s" "$clean_name"
@@ -61,8 +53,8 @@ fi
 	echo ""
 
 	# fifth row data rows
-	tail -n +2 "/data/$input" | awk -v FS="\t" -v OFS="\t" \
-		-v gene_col="$gene_col" -v desc_col="$description" -v samples="$samples" '
+	tail -n +2 "$input_file" | awk -v FS="\t" -v OFS="\t" \
+		-v gene_col="$gene" -v desc_col="$description" -v samples="$samples" '
 		BEGIN {
 			split(samples, sample_idx, ",")
 			use_desc = (desc_col != "" && desc_col != "0")
@@ -79,4 +71,4 @@ fi
 	'
 } > "$output"
 
-echo "✔ GCT expression file created: $output"
+echo "GCT expression file created: $output"
